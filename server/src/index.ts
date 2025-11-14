@@ -22,7 +22,7 @@ connectDB();
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:3001",
-  "https://akram-musallam-platform-server.vercel.app",
+  "https://mr-akram-musallam-dashboard.vercel.app",
 ];
 
 const corsOptions = {
