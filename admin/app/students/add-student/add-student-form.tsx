@@ -32,6 +32,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "react-hot-toast";
 import { ArrowRight, ImagePlus } from "lucide-react";
+import imageCompression from "browser-image-compression";
 
 const studentSchema = z.object({
   name: z.string().min(1, "الاسم مطلوب"),
@@ -136,17 +137,33 @@ export function AddStudentForm() {
     }
   };
 
-  function onSubmit(data: StudentFormValues) {
+  async function onSubmit(data: StudentFormValues) {
     const formData = new FormData();
+
+    if (data.profile_image && data.profile_image[0]) {
+      const imageFile = data.profile_image[0];
+      const options = {
+        maxSizeMB: 0.5,
+        maxWidthOrHeight: 1024,
+        useWebWorker: true,
+      };
+
+      try {
+        const compressedFile = await imageCompression(imageFile, options);
+        formData.append("profile_image", compressedFile, compressedFile.name);
+      } catch (error) {
+        console.error("Image compression error:", error);
+        toast.error("حدث خطأ أثناء معالجة الصورة.");
+        return;
+      }
+    }
+
     Object.entries(data).forEach(([key, value]) => {
-      if (key === "profile_image") {
-        if (value && value[0]) {
-          formData.append("profile_image", value[0]);
-        }
-      } else if (value) {
+      if (key !== "profile_image" && value) {
         formData.append(key, value as any);
       }
     });
+
     studentMutation.mutate(formData);
   }
 
