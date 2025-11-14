@@ -23,19 +23,19 @@ import {
 } from "@/components/ui/accordion";
 import { Student, PerformanceEvaluation, HomeworkCompletion } from "@/types";
 
-const API_URL = "http://localhost:5000/api/students";
+const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/students`;
 
 const performanceEvaluationOptions: PerformanceEvaluation[] = [
-  "Excellent",
-  "Very Good",
-  "Good",
-  "Fair",
-  "Poor",
+  "ممتاز",
+  "جيد جدًا",
+  "جيد",
+  "مقبول",
+  "ضعيف",
 ];
 const homeworkCompletionOptions: HomeworkCompletion[] = [
-  "Consistent",
-  "Inconsistent",
-  "Needs Improvement",
+  "مواظب",
+  "غير مواظب",
+  "يحتاج لتحسين",
 ];
 
 const formSchema = z.object({
@@ -81,11 +81,11 @@ export function StudentForm({
       gender: "",
       "profile-image": "/images/students/male-01.png",
       performance: {
-        "monthly-evaluation": "Good",
-        "teacher-evaluation": "Good",
+        "monthly-evaluation": "جيد",
+        "teacher-evaluation": "جيد",
         absences: 0,
-        responsiveness: "Good",
-        "homework-completion": "Consistent",
+        responsiveness: "جيد",
+        "homework-completion": "مواظب",
       },
     },
   });
@@ -118,11 +118,11 @@ export function StudentForm({
 
     if (!isEditMode) {
       values.performance = {
-        "monthly-evaluation": "Good",
-        "teacher-evaluation": "Good",
+        "monthly-evaluation": "جيد",
+        "teacher-evaluation": "جيد",
         absences: 0,
-        responsiveness: "Good",
-        "homework-completion": "Consistent",
+        responsiveness: "جيد",
+        "homework-completion": "مواظب",
       };
       values.exams = [];
     }

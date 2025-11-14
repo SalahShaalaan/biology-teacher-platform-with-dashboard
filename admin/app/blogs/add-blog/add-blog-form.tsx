@@ -81,7 +81,7 @@ const blogSchema = z.discriminatedUnion("type", [videoSchema, pdfSchema]);
 
 type BlogFormData = z.infer<typeof blogSchema>;
 
-const API_URL = "http://localhost:5000/api/blogs";
+const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/blogs`;
 
 // --- Improved API Request Function ---
 const createBlog = async (formData: FormData) => {

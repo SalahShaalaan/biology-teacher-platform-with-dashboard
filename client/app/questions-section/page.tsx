@@ -94,7 +94,7 @@ export default function QuestionsPage() {
     setError(null);
     try {
       const res = await fetch(
-        `http://localhost:5000/api/students/${studentCode}`
+        `${process.env.NEXT_PUBLIC_API_URL}/api/students/${studentCode}`
       );
       if (!res.ok)
         throw new Error("لم يتم العثور على الطالب. يرجى التحقق من الكود.");
@@ -114,7 +114,7 @@ export default function QuestionsPage() {
         setIsLoadingCurriculum(true);
         try {
           const res = await fetch(
-            "http://localhost:5000/api/questions/curriculum"
+            `${process.env.NEXT_PUBLIC_API_URL}/api/questions/curriculum`
           );
           const data = await res.json();
           setCurriculum(data.data);
@@ -144,7 +144,7 @@ export default function QuestionsPage() {
 
         try {
           await fetch(
-            `http://localhost:5000/api/students/${student.code}/quiz-results`,
+            `${process.env.NEXT_PUBLIC_API_URL}/api/students/${student.code}/quiz-results`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -184,7 +184,9 @@ export default function QuestionsPage() {
   ) => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/questions?grade=${encodeURIComponent(
+        `${
+          process.env.NEXT_PUBLIC_API_URL
+        }/api/questions?grade=${encodeURIComponent(
           grade
         )}&unitTitle=${encodeURIComponent(
           unitTitle

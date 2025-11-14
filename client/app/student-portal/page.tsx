@@ -23,7 +23,9 @@ const fetchStudent = async (studentCode: string): Promise<StudentInfo> => {
   if (!studentCode) {
     throw new Error("Student code is required");
   }
-  const res = await fetch(`http://localhost:5000/api/students/${studentCode}`);
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/students/${studentCode}`
+  );
   if (res.status === 404) {
     throw new Error("لم يتم العثور على الطالب");
   }

@@ -133,7 +133,7 @@ export default function ResultsPage() {
     setError(null);
     try {
       const res = await fetch(
-        `http://localhost:5000/api/students/${studentCode}`
+        `${process.env.NEXT_PUBLIC_API_URL}/api/students/${studentCode}`
       );
       if (!res.ok) {
         throw new Error("لم يتم العثور على الطالب. يرجى التحقق من الكود.");

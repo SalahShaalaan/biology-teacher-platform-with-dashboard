@@ -65,7 +65,7 @@ const questionSchema = z.object({
 type QuestionFormData = z.infer<typeof questionSchema>;
 
 // --- API Functions ---
-const API_URL = "http://localhost:5000/api/questions";
+const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/questions`;
 const fetchCurriculum = async (): Promise<Curriculum[]> => {
   const res = await fetch(`${API_URL}/curriculum`);
   if (!res.ok) throw new Error("فشل في جلب المنهج الدراسي");

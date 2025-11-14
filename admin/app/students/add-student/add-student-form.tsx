@@ -44,8 +44,8 @@ const studentSchema = z.object({
 
 type StudentFormValues = z.infer<typeof studentSchema>;
 
-const API_STUDENTS_URL = "http://localhost:5000/api/students";
-const API_GRADES_URL = "http://localhost:5000/api/grades";
+const API_STUDENTS_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/students`;
+const API_GRADES_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/grades`;
 
 // --- API Functions ---
 const fetchGrades = async (): Promise<string[]> => {

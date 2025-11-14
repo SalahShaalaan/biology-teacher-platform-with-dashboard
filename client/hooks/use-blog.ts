@@ -2,7 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Blog } from "./use-blogs";
 
 async function getBlog(slug: string): Promise<Blog> {
-  const res = await fetch(`http://localhost:5000/api/blogs/${slug}`);
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/blogs/${slug}`
+  );
   if (!res.ok) {
     throw new Error("Failed to fetch blog");
   }

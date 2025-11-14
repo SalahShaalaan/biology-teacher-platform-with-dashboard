@@ -2,10 +2,12 @@ import DashboardClient from "@/components/dashboard/dashboard-client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Suspense } from "react";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 // Server-side data fetching function
 async function getDashboardData() {
   try {
-    const res = await fetch("http://localhost:5000/api/dashboard/stats", {
+    const res = await fetch(`${API_URL}/api/dashboard/stats`, {
       cache: "no-store", // Fetch fresh data on every request
     });
     if (!res.ok) {

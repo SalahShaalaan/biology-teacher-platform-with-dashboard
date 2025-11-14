@@ -34,7 +34,7 @@ import { Student } from "@/types";
 import { DataTable } from "@/components/ui/data-table";
 import { getColumns } from "./columns";
 
-const API_URL = "http://localhost:5000/api/students";
+const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/students`;
 
 const fetchStudents = async (): Promise<Student[]> => {
   const res = await fetch(API_URL);

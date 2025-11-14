@@ -5,9 +5,12 @@ import { Terminal } from "lucide-react";
 
 async function getStudent(id: string): Promise<Student | null> {
   try {
-    const res = await fetch(`http://localhost:5000/api/students/${id}`, {
-      cache: "no-store", // لضمان الحصول على أحدث البيانات دائماً
-    });
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/students/${id}`,
+      {
+        cache: "no-store", // لضمان الحصول على أحدث البيانات دائماً
+      }
+    );
 
     if (!res.ok) {
       return null;
