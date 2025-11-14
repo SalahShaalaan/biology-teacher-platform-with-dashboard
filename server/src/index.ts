@@ -29,6 +29,10 @@ app.use("/api/questions", questionRoutes);
 app.use("/api/grades", gradeRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
+app.get("/", (req, res) => {
+  res.send("Akram Platform API is running!");
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
