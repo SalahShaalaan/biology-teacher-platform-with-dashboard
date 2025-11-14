@@ -1,0 +1,103 @@
+[
+  {
+    "code": "2001",
+    "name": "أحمد محمود",
+    "age": 16,
+    "gender": "ذكر",
+    "grade": "الثاني الثانوي",
+    "phoneNumber": "01234567890",
+    "profile_image": "/images/students/male-01.png",
+    "performance": {
+      "monthly-evaluation": "ممتاز",
+      "teacher-evaluation": "ممتاز",
+      "absences": 1,
+      "responsiveness": "جيد جدًا",
+      "homework-completion": "مواظب"
+    },
+    "exams": [
+      {
+        "exam-name": "اختبار الوحدة الأولى: الحركة والسرعة",
+        "subject": "الفيزياء",
+        "score": 28,
+        "total-score": 30,
+        "feedback": "أداء رائع! أظهرت فهمًا عميقًا لمفاهيم الحركة. يُنصح بمراجعة قوانين نيوتن مرة أخرى لضمان التميز الكامل.",
+        "date": "2024-03-15T00:00:00.000Z"
+      },
+      {
+        "exam-name": "اختبار الوحدة الثانية: الطاقة والشغل",
+        "subject": "الفيزياء",
+        "score": 29,
+        "total-score": 30,
+        "feedback": "مستوى ممتاز، مع فهم واضح للعلاقة بين الشغل والطاقة. استمر في هذا التقدم.",
+        "date": "2024-04-15T00:00:00.000Z"
+      }
+    ],
+    "classResults": [
+      {
+        "title": "شهادة تقدير لتفوقه في اختبار شهر مارس",
+        "imageUrls": ["/results/march-exam.png"],
+        "note": "تكريم الطالب أحمد محمود لحصوله على درجة ممتازة في اختبار الفيزياء لشهر مارس، مع تمنياتنا له بدوام التفوق والنجاح.",
+        "date": "2024-03-20T00:00:00.000Z"
+      }
+    ],
+    "monthlyPayment": true
+
+  },
+  {
+    "code": "2002",
+    "name": "يمنى محمود",
+    "age": 16,
+    "gender": "أنثى",
+    "grade": "الثاني الثانوي",
+    "phoneNumber": "01234567891",
+    "profile_image": "/images/students/female-01.png",
+    "performance": {
+      "monthly-evaluation": "ممتاز",
+      "teacher-evaluation": "ممتاز",
+      "absences": 0,
+      "responsiveness": "ممتاز",
+      "homework-completion": "مواظب"
+    },
+    "exams": [
+      {
+        "exam-name": "اختبار الوحدة الأولى: الكيمياء العضوية",
+        "subject": "الكيمياء",
+        "score": 30,
+        "total-score": 30,
+        "feedback": "درجة كاملة! أداء استثنائي يعكس فهمًا كاملاً للمادة. أحسنتِ.",
+        "date": "2024-03-15T00:00:00.000Z"
+      }
+    ],
+    "classResults": [],
+    "monthlyPayment": true
+
+  },
+  {
+    "code": "1001",
+    "name": "عمرو محمود",
+    "age": 15,
+    "gender": "ذكر",
+    "grade": "الأول الثانوي",
+    "phoneNumber": "01234567892",
+    "profile_image": "/images/students/male-02.png",
+    "performance": {
+      "monthly-evaluation": "جيد جدًا",
+      "teacher-evaluation": "جيد جدًا",
+      "absences": 2,
+      "responsiveness": "جيد جدًا",
+      "homework-completion": "مواظب"
+    },
+    "exams": [
+      {
+        "exam-name": "اختبار الوحدة الأولى: الجبر",
+        "subject": "الرياضيات",
+        "score": 25,
+        "total-score": 30,
+        "feedback": "مستوى جيد جدًا، لكن تحتاج إلى المزيد من التدريب على حل المعادلات المعقدة لزيادة السرعة والدقة.",
+        "date": "2024-03-16T00:00:00.000Z"
+      }
+    ],
+    "classResults": [],
+    "monthlyPayment": true
+  }
+]
