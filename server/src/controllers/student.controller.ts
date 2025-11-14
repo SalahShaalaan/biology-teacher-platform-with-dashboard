@@ -4,7 +4,8 @@ import { put, del } from "@vercel/blob";
 
 // --- Vercel Blob Helper ---
 const deleteBlob = async (url: string | undefined) => {
-  if (url) {
+  // Only attempt to delete if it's a valid blob URL
+  if (url && url.includes("vercel.app")) {
     try {
       await del(url);
     } catch (error) {
@@ -120,12 +121,7 @@ export const updateStudentImage = async (req: Request, res: Response) => {
     }
 
     // Delete the old image from Vercel Blob, unless it's a default image
-    if (
-      studentToUpdate.profile_image &&
-      studentToUpdate.profile_image.includes("vercel.app")
-    ) {
-      await deleteBlob(studentToUpdate.profile_image);
-    }
+    await deleteBlob(studentToUpdate.profile_image);
 
     // Upload the new image
     const blob = await put(req.file.originalname, req.file.buffer, {
@@ -146,6 +142,7 @@ export const updateStudentImage = async (req: Request, res: Response) => {
 
 export const deleteStudent = async (req: Request, res: Response) => {
   try {
+    // First, find the student to get their data
     const student = await Student.findOne({ code: req.params.id });
 
     if (!student) {
@@ -154,12 +151,16 @@ export const deleteStudent = async (req: Request, res: Response) => {
         .json({ success: false, message: "Student not found" });
     }
 
-    // Delete profile image from Vercel Blob
-    if (student.profile_image && student.profile_image.includes("vercel.app")) {
-      await deleteBlob(student.profile_image);
+    // Delete profile image and all class result images from Vercel Blob
+    await deleteBlob(student.profile_image);
+    if (student.classResults && student.classResults.length > 0) {
+      const imageDeletePromises = student.classResults.flatMap((result) =>
+        result.imageUrls.map((url) => deleteBlob(url))
+      );
+      await Promise.all(imageDeletePromises);
     }
 
-    // Now, delete the student document
+    // Now, delete the student document from the database
     await Student.deleteOne({ code: req.params.id });
 
     res.status(200).json({ success: true, message: "Student deleted" });
@@ -263,4 +264,68 @@ export const deleteClassResult = async (req: Request, res: Response) => {
   }
 };
 
-// ... (other functions like addQuizResult, updateStudent, etc. can remain as they don't handle files)
+// Functions like updateStudent and addQuizResult can be added here if they don't handle files
+export const updateStudent = async (req: Request, res: Response) => {
+  try {
+    const student = await Student.findOneAndUpdate(
+      { code: req.params.id },
+      { $set: req.body },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+    if (!student) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Student not found" });
+    }
+    res.status(200).json({ success: true, data: student });
+  } catch (error) {
+    res
+      .status(400)
+      .json({ success: false, message: "Error updating student", error });
+  }
+};
+
+export const addQuizResult = async (req: Request, res: Response) => {
+  try {
+    const student = await Student.findOne({ code: req.params.id });
+    if (!student) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Student not found" });
+    }
+
+    const { grade, unitTitle, lessonTitle, score, totalQuestions } = req.body;
+
+    const newResult = {
+      grade,
+      unitTitle,
+      lessonTitle,
+      score,
+      totalQuestions,
+      date: new Date(),
+    };
+
+    const resultIndex = (student.quizResults ?? []).findIndex(
+      (r) =>
+        r.grade === grade &&
+        r.unitTitle === unitTitle &&
+        r.lessonTitle === lessonTitle
+    );
+
+    if (resultIndex > -1) {
+      student.quizResults![resultIndex] = newResult;
+    } else {
+      student.quizResults = [...(student.quizResults ?? []), newResult];
+    }
+
+    await student.save();
+    res.status(200).json({ success: true, data: student.quizResults });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, message: "Error adding quiz result" });
+  }
+};
