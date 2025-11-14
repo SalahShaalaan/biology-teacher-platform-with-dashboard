@@ -146,16 +146,22 @@ export const updateStudentImage = async (req: Request, res: Response) => {
 
 export const deleteStudent = async (req: Request, res: Response) => {
   try {
-    const student = await Student.findOneAndDelete({ code: req.params.id });
+    const student = await Student.findOne({ code: req.params.id });
+
     if (!student) {
       return res
         .status(404)
         .json({ success: false, message: "Student not found" });
     }
+
     // Delete profile image from Vercel Blob
     if (student.profile_image && student.profile_image.includes("vercel.app")) {
       await deleteBlob(student.profile_image);
     }
+
+    // Now, delete the student document
+    await Student.deleteOne({ code: req.params.id });
+
     res.status(200).json({ success: true, message: "Student deleted" });
   } catch (error) {
     res.status(500).json({ success: false, message: "Error deleting student" });
