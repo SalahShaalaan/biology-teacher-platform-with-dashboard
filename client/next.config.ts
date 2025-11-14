@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+
   images: {
     qualities: [25, 50, 75, 80, 90, 100],
     remotePatterns: [
