@@ -1,12 +1,249 @@
+// // ============================================================================
+// // API Configuration
+// // ============================================================================
+
+// // IMPORTANT: Ensure your .env.local has the FULL API path including /api
+// // Production: NEXT_PUBLIC_API_URL=https://akram-musallam-platform-server.vercel.app/api
+// // Development: NEXT_PUBLIC_API_URL=http://localhost:5000/api
+// const API_BASE_URL =
+//   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
+// // ============================================================================
+// // Types
+// // ============================================================================
+
+// export interface Blog {
+//   _id: string;
+//   name: string;
+//   description: string;
+//   grade: string;
+//   unit: string;
+//   lesson: string;
+//   coverImage: string;
+//   url?: string;
+//   videoUrl?: string;
+//   createdAt: string;
+//   updatedAt: string;
+// }
+
+// interface ApiResponse<T> {
+//   success: boolean;
+//   data: T;
+//   message?: string;
+// }
+
+// interface ApiErrorResponse {
+//   success: false;
+//   message: string;
+//   error?: string;
+//   missingFields?: string[];
+// }
+
+// // ============================================================================
+// // Error Handling
+// // ============================================================================
+// export class ApiError extends Error {
+//   constructor(message: string, public status?: number, public details?: any) {
+//     super(message);
+//     this.name = "ApiError";
+//   }
+// }
+
+// async function handleResponse<T>(response: Response): Promise<T> {
+//   // Check if response is actually JSON before parsing
+//   const contentType = response.headers.get("content-type");
+
+//   if (!response.ok) {
+//     // Try to parse error response
+//     let errorData: ApiErrorResponse;
+
+//     if (contentType?.includes("application/json")) {
+//       errorData = await response.json();
+//     } else {
+//       // Got HTML or other non-JSON response (likely 404 page)
+//       const text = await response.text();
+//       console.error("Non-JSON error response:", text.substring(0, 200));
+
+//       throw new ApiError(
+//         `Server error (${response.status}): The endpoint may not exist. Check your API_BASE_URL configuration.`,
+//         response.status
+//       );
+//     }
+
+//     throw new ApiError(
+//       errorData.message || `Request failed with status ${response.status}`,
+//       response.status,
+//       errorData
+//     );
+//   }
+
+//   if (!contentType || !contentType.includes("application/json")) {
+//     const text = await response.text();
+//     console.error("Expected JSON but got:", contentType);
+//     console.error("Response preview:", text.substring(0, 200));
+
+//     throw new ApiError(
+//       `Invalid response format. Expected JSON but got ${contentType}`,
+//       response.status
+//     );
+//   }
+
+//   const responseData: ApiResponse<T> = await response.json();
+//   return responseData.data;
+// }
+
+// // ============================================================================
+// // Blog API Functions
+// // ============================================================================
+
+// /**
+//  * Fetches all blogs from the server
+//  */
+// export async function getBlogs(): Promise<Blog[]> {
+//   const url = `${API_BASE_URL}/api/blogs`;
+//   console.log("[API] GET", url);
+
+//   const response = await fetch(url);
+//   return handleResponse<Blog[]>(response);
+// }
+
+// /**
+//  * Fetches a single blog by ID
+//  */
+// export async function getBlogById(id: string): Promise<Blog> {
+//   const url = `${API_BASE_URL}/blogs/${id}`;
+//   console.log("[API] GET", url);
+
+//   const response = await fetch(url);
+//   return handleResponse<Blog>(response);
+// }
+
+// /**
+//  * Creates a new blog with file uploads
+//  */
+// export async function createBlog(formData: FormData): Promise<Blog> {
+//   const url = `${API_BASE_URL}/api/blogs`;
+//   console.log("[API] POST", url);
+//   console.log("[API] FormData contents:");
+//   for (const [key, value] of formData.entries()) {
+//     if (value instanceof File) {
+//       console.log(
+//         `  ${key}: [File] ${value.name} (${value.size} bytes, ${value.type})`
+//       );
+//     } else {
+//       console.log(`  ${key}:`, value);
+//     }
+//   }
+
+//   const response = await fetch(url, {
+//     method: "POST",
+//     body: formData,
+//     // Don't set Content-Type header - browser will set it with boundary for multipart/form-data
+//   });
+
+//   return handleResponse<Blog>(response);
+// }
+
+// /**
+//  * Updates an existing blog
+//  */
+// export async function updateBlog({
+//   id,
+//   formData,
+// }: {
+//   id: string;
+//   formData: FormData;
+// }): Promise<Blog> {
+//   const url = `${API_BASE_URL}/api/blogs/${id}`;
+//   console.log("[API] PUT", url);
+
+//   const response = await fetch(url, {
+//     method: "PUT",
+//     body: formData,
+//   });
+
+//   return handleResponse<Blog>(response);
+// }
+
+// /**
+//  * Deletes a blog by ID
+//  */
+// export async function deleteBlog(id: string): Promise<{ message: string }> {
+//   const url = `${API_BASE_URL}/api/blogs/${id}`;
+//   console.log("[API] DELETE", url);
+
+//   const response = await fetch(url, {
+//     method: "DELETE",
+//   });
+
+//   return handleResponse<{ message: string }>(response);
+// }
+
+// // ============================================================================
+// // Grade API Functions
+// // ============================================================================
+
+// /**
+//  * Fetches all grades from the server
+//  */
+// export async function fetchGrades(): Promise<string[]> {
+//   const response = await fetch(`${API_BASE_URL}/api/grades`);
+//   return handleResponse<string[]>(response);
+// }
+
+// /**
+//  * Adds a new grade to the database
+//  */
+// export async function addNewGrade(newGrade: string): Promise<any> {
+//   const response = await fetch(`${API_BASE_URL}/api/grades`, {
+//     method: "POST",
+//     headers: { "Content-Type": "application/json" },
+//     body: JSON.stringify({ newGrade }),
+//   });
+//   return handleResponse<any>(response);
+// }
+
+// // ============================================================================
+// // Student API Functions
+// // ============================================================================
+
+// /**
+//  * Creates a new student with a profile image
+//  */
+// export async function createStudent(formData: FormData): Promise<Student> {
+//   const response = await fetch(`${API_BASE_URL}/api/students`, {
+//     method: "POST",
+//     body: formData,
+//   });
+//   return handleResponse<Student>(response);
+// }
+
+// // You can add an interface for Student here if needed, similar to the Blog interface
+// export interface Student {
+//   _id: string;
+//   code: string;
+//   name: string;
+//   age: number;
+//   gender: string;
+//   grade: string;
+//   phoneNumber: string;
+//   profile_image: string;
+// }
+
 // ============================================================================
 // API Configuration
 // ============================================================================
 
-// IMPORTANT: Ensure your .env.local has the FULL API path including /api
-// Production: NEXT_PUBLIC_API_URL=https://akram-musallam-platform-server.vercel.app/api
+// IMPORTANT: Ensure your .env.local has the correct API path
+// Production: NEXT_PUBLIC_API_URL=https://your-api.vercel.app/api
 // Development: NEXT_PUBLIC_API_URL=http://localhost:5000/api
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
+// Log API URL for debugging (only in development)
+if (process.env.NODE_ENV === "development") {
+  console.log("[API Config] API_BASE_URL:", API_BASE_URL);
+}
 
 // ============================================================================
 // Types
@@ -26,6 +263,28 @@ export interface Blog {
   updatedAt: string;
 }
 
+export interface Student {
+  _id: string;
+  code: string;
+  name: string;
+  age: number;
+  gender: string;
+  grade: string;
+  phoneNumber: string;
+  profile_image: string;
+  performance?: {
+    "monthly-evaluation": string;
+    "teacher-evaluation": string;
+    absences: number;
+    responsiveness: string;
+    "homework-completion": string;
+  };
+  exams?: any[];
+  quizResults?: any[];
+  classResults?: any[];
+  monthlyPayment?: boolean;
+}
+
 interface ApiResponse<T> {
   success: boolean;
   data: T;
@@ -36,12 +295,14 @@ interface ApiErrorResponse {
   success: false;
   message: string;
   error?: string;
+  errors?: any;
   missingFields?: string[];
 }
 
 // ============================================================================
 // Error Handling
 // ============================================================================
+
 export class ApiError extends Error {
   constructor(message: string, public status?: number, public details?: any) {
     super(message);
@@ -50,25 +311,27 @@ export class ApiError extends Error {
 }
 
 async function handleResponse<T>(response: Response): Promise<T> {
-  // Check if response is actually JSON before parsing
   const contentType = response.headers.get("content-type");
 
   if (!response.ok) {
-    // Try to parse error response
     let errorData: ApiErrorResponse;
 
     if (contentType?.includes("application/json")) {
       errorData = await response.json();
     } else {
-      // Got HTML or other non-JSON response (likely 404 page)
       const text = await response.text();
-      console.error("Non-JSON error response:", text.substring(0, 200));
+      console.error("[API Error] Non-JSON response:", text.substring(0, 200));
 
       throw new ApiError(
         `Server error (${response.status}): The endpoint may not exist. Check your API_BASE_URL configuration.`,
         response.status
       );
     }
+
+    // Log detailed error for debugging
+    console.error("[API Error] Status:", response.status);
+    console.error("[API Error] Message:", errorData.message);
+    console.error("[API Error] Details:", errorData);
 
     throw new ApiError(
       errorData.message || `Request failed with status ${response.status}`,
@@ -79,8 +342,8 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
   if (!contentType || !contentType.includes("application/json")) {
     const text = await response.text();
-    console.error("Expected JSON but got:", contentType);
-    console.error("Response preview:", text.substring(0, 200));
+    console.error("[API Error] Expected JSON but got:", contentType);
+    console.error("[API Error] Response preview:", text.substring(0, 200));
 
     throw new ApiError(
       `Invalid response format. Expected JSON but got ${contentType}`,
@@ -103,7 +366,9 @@ export async function getBlogs(): Promise<Blog[]> {
   const url = `${API_BASE_URL}/api/blogs`;
   console.log("[API] GET", url);
 
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    cache: "no-store", // Always fetch fresh data
+  });
   return handleResponse<Blog[]>(response);
 }
 
@@ -111,7 +376,7 @@ export async function getBlogs(): Promise<Blog[]> {
  * Fetches a single blog by ID
  */
 export async function getBlogById(id: string): Promise<Blog> {
-  const url = `${API_BASE_URL}/blogs/${id}`;
+  const url = `${API_BASE_URL}/api/blogs/${id}`;
   console.log("[API] GET", url);
 
   const response = await fetch(url);
@@ -138,7 +403,6 @@ export async function createBlog(formData: FormData): Promise<Blog> {
   const response = await fetch(url, {
     method: "POST",
     body: formData,
-    // Don't set Content-Type header - browser will set it with boundary for multipart/form-data
   });
 
   return handleResponse<Blog>(response);
@@ -187,7 +451,12 @@ export async function deleteBlog(id: string): Promise<{ message: string }> {
  * Fetches all grades from the server
  */
 export async function fetchGrades(): Promise<string[]> {
-  const response = await fetch(`${API_BASE_URL}/api/grades`);
+  const url = `${API_BASE_URL}/api/grades`;
+  console.log("[API] GET", url);
+
+  const response = await fetch(url, {
+    cache: "no-store",
+  });
   return handleResponse<string[]>(response);
 }
 
@@ -195,7 +464,11 @@ export async function fetchGrades(): Promise<string[]> {
  * Adds a new grade to the database
  */
 export async function addNewGrade(newGrade: string): Promise<any> {
-  const response = await fetch(`${API_BASE_URL}/api/grades`, {
+  const url = `${API_BASE_URL}/api/grades`;
+  console.log("[API] POST", url);
+  console.log("[API] Body:", { newGrade });
+
+  const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ newGrade }),
@@ -208,24 +481,207 @@ export async function addNewGrade(newGrade: string): Promise<any> {
 // ============================================================================
 
 /**
- * Creates a new student with a profile image
+ * Fetches all students from the server
  */
-export async function createStudent(formData: FormData): Promise<Student> {
-  const response = await fetch(`${API_BASE_URL}/api/students`, {
-    method: "POST",
-    body: formData,
+export async function fetchStudents(): Promise<Student[]> {
+  const url = `${API_BASE_URL}/api/students`;
+  console.log("[API] GET", url);
+
+  const response = await fetch(url, {
+    cache: "no-store",
   });
+  return handleResponse<Student[]>(response);
+}
+
+/**
+ * Fetches a single student by code
+ */
+export async function fetchStudentByCode(code: string): Promise<Student> {
+  const url = `${API_BASE_URL}/api/students/${code}`;
+  console.log("[API] GET", url);
+
+  const response = await fetch(url);
   return handleResponse<Student>(response);
 }
 
-// You can add an interface for Student here if needed, similar to the Blog interface
-export interface Student {
-  _id: string;
+/**
+ * Creates a new student with a profile image
+ */
+export async function createStudent(formData: FormData): Promise<Student> {
+  const url = `${API_BASE_URL}/api/students`;
+  console.log("[API] POST", url);
+  console.log("[API] FormData contents:");
+
+  for (const [key, value] of formData.entries()) {
+    if (value instanceof File) {
+      console.log(
+        `  ${key}: [File] ${value.name} (${value.size} bytes, ${value.type})`
+      );
+    } else {
+      console.log(`  ${key}:`, value);
+    }
+  }
+
+  const response = await fetch(url, {
+    method: "POST",
+    body: formData,
+  });
+
+  return handleResponse<Student>(response);
+}
+
+/**
+ * Updates an existing student
+ */
+export async function updateStudent({
+  code,
+  data,
+}: {
   code: string;
-  name: string;
-  age: number;
-  gender: string;
-  grade: string;
-  phoneNumber: string;
-  profile_image: string;
+  data: Partial<Student>;
+}): Promise<Student> {
+  const url = `${API_BASE_URL}/api/students/${code}`;
+  console.log("[API] PATCH", url);
+  console.log("[API] Body:", data);
+
+  const response = await fetch(url, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  return handleResponse<Student>(response);
+}
+
+/**
+ * Updates student profile image
+ */
+export async function updateStudentImage({
+  code,
+  formData,
+}: {
+  code: string;
+  formData: FormData;
+}): Promise<Student> {
+  const url = `${API_BASE_URL}/api/students/${code}/update-image`;
+  console.log("[API] PATCH", url);
+
+  const response = await fetch(url, {
+    method: "PATCH",
+    body: formData,
+  });
+
+  return handleResponse<Student>(response);
+}
+
+/**
+ * Deletes a student by code
+ */
+export async function deleteStudent(
+  code: string
+): Promise<{ message: string }> {
+  const url = `${API_BASE_URL}/api/students/${code}`;
+  console.log("[API] DELETE", url);
+
+  const response = await fetch(url, {
+    method: "DELETE",
+  });
+
+  return handleResponse<{ message: string }>(response);
+}
+
+/**
+ * Adds a quiz result for a student
+ */
+export async function addQuizResult({
+  code,
+  data,
+}: {
+  code: string;
+  data: {
+    grade: string;
+    unitTitle: string;
+    lessonTitle: string;
+    score: number;
+    totalQuestions: number;
+  };
+}): Promise<any> {
+  const url = `${API_BASE_URL}/api/students/${code}/quiz-results`;
+  console.log("[API] POST", url);
+  console.log("[API] Body:", data);
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  return handleResponse<any>(response);
+}
+
+/**
+ * Adds a class result for a student
+ */
+export async function addClassResult({
+  code,
+  formData,
+}: {
+  code: string;
+  formData: FormData;
+}): Promise<any> {
+  const url = `${API_BASE_URL}/api/students/${code}/class-results`;
+  console.log("[API] POST", url);
+
+  const response = await fetch(url, {
+    method: "POST",
+    body: formData,
+  });
+
+  return handleResponse<any>(response);
+}
+
+/**
+ * Deletes a class result
+ */
+export async function deleteClassResult({
+  code,
+  resultId,
+}: {
+  code: string;
+  resultId: string;
+}): Promise<{ message: string }> {
+  const url = `${API_BASE_URL}/api/students/${code}/class-results/${resultId}`;
+  console.log("[API] DELETE", url);
+
+  const response = await fetch(url, {
+    method: "DELETE",
+  });
+
+  return handleResponse<{ message: string }>(response);
+}
+
+// ============================================================================
+// Utility Functions
+// ============================================================================
+
+/**
+ * Check if API is reachable
+ */
+export async function checkApiHealth(): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/health`, {
+      method: "GET",
+    });
+    return response.ok;
+  } catch (error) {
+    console.error("[API] Health check failed:", error);
+    return false;
+  }
+}
+
+/**
+ * Get API base URL (useful for debugging)
+ */
+export function getApiBaseUrl(): string {
+  return API_BASE_URL;
 }

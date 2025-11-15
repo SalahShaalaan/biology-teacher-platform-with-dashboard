@@ -1,10 +1,12 @@
 "use client";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,71 +33,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { UploadCloud, Loader2, X } from "lucide-react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
 
-// --- Types ---
-interface Student {
-  _id: string;
-  code: string;
-  name: string;
-}
-
-const resultSchema = z.object({
-  studentCode: z.string().min(1, "يجب اختيار الطالب."),
-  title: z.string().min(1, "عنوان النتيجة مطلوب."),
-  note: z.string().min(1, "الملاحظة مطلوبة."),
-  resultImage: z
-    .any()
-    .refine((files) => files?.length > 0, "يجب اختيار صورة واحدة على الأقل."),
-});
-
-type ResultFormData = z.infer<typeof resultSchema>;
-
-// --- API Functions ---
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-
-async function fetchStudents(): Promise<Student[]> {
-  const res = await fetch(`${API_URL}/api/students`);
-  if (!res.ok) throw new Error("فشل في جلب الطلاب");
-  const data = await res.json();
-  return data.data;
-}
-
-async function addClassResult(data: {
-  studentCode: string;
-  formData: FormData;
-}) {
-  const res = await fetch(
-    `${API_URL}/api/students/${data.studentCode}/class-results`,
-    {
-      method: "POST",
-      body: data.formData,
-    }
-  );
-
-  if (!res.ok) {
-    let errorMessage = "فشل في إضافة النتيجة";
-    try {
-      // Try to parse the error response as JSON
-      const errorData = await res.json();
-      errorMessage = errorData.message || errorMessage;
-    } catch (e) {
-      // If parsing fails, the response is not JSON. Use the raw text.
-      // This will show the actual server error (e.g., from multer)
-      const textError = await res.text();
-      errorMessage = textError || errorMessage;
-    }
-    throw new Error(errorMessage);
-  }
-
-  return res.json();
-}
+import { addClassResult, fetchStudents, Student } from "@/lib/api";
+import { classResultFormSchema, ClassResultFormData } from "@/lib/validators";
 
 // --- Main Component ---
 export default function ResultsPage() {
   const router = useRouter();
-
   const queryClient = useQueryClient();
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
@@ -108,13 +52,13 @@ export default function ResultsPage() {
     queryFn: fetchStudents,
   });
 
-  const form = useForm<ResultFormData>({
-    resolver: zodResolver(resultSchema),
+  const form = useForm<ClassResultFormData>({
+    resolver: zodResolver(classResultFormSchema),
     defaultValues: {
       studentCode: "",
       title: "",
       note: "",
-      resultImage: [],
+      resultImage: undefined,
     },
   });
 
@@ -126,13 +70,14 @@ export default function ResultsPage() {
       imagePreviews.forEach((url) => URL.revokeObjectURL(url));
       setImagePreviews([]);
       queryClient.invalidateQueries({ queryKey: ["students"] });
+      router.push("/results"); // Navigate back to the results list
     },
     onError: (error: Error) => {
       toast.error(error.message);
     },
   });
 
-  const onSubmit = (data: ResultFormData) => {
+  const onSubmit = (data: ClassResultFormData) => {
     const formData = new FormData();
     formData.append("title", data.title);
     formData.append("note", data.note);
@@ -142,7 +87,7 @@ export default function ResultsPage() {
       }
     }
 
-    mutation.mutate({ studentCode: data.studentCode, formData });
+    mutation.mutate({ code: data.studentCode, formData });
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,7 +95,9 @@ export default function ResultsPage() {
     if (files) {
       const currentFiles = form.getValues("resultImage") || [];
       const newFilesArray = [...currentFiles, ...Array.from(files)];
-      form.setValue("resultImage", newFilesArray, { shouldValidate: true });
+      form.setValue("resultImage", newFilesArray as any, {
+        shouldValidate: true,
+      });
 
       const newPreviews = Array.from(files).map((file) =>
         URL.createObjectURL(file)
@@ -166,10 +113,14 @@ export default function ResultsPage() {
     );
 
     const currentFiles = form.getValues("resultImage");
+    if (!currentFiles) return;
+
     const newFilesArray = currentFiles.filter(
       (_: any, index: number) => index !== indexToRemove
     );
-    form.setValue("resultImage", newFilesArray, { shouldValidate: true });
+    form.setValue("resultImage", newFilesArray as any, {
+      shouldValidate: true,
+    });
   };
 
   return (
