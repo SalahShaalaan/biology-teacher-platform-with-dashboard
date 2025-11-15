@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import Student from "../models/Sudent.modal";
+import Student from "../models/student.modal";
 import { put, del } from "@vercel/blob";
 
 // --- Vercel Blob Helper ---
@@ -50,6 +50,10 @@ const generateRandomCode = (length: number): string => {
 
 export const createStudent = async (req: Request, res: Response) => {
   try {
+    // طباعة البيانات المستلمة للتحقق
+    console.log("Request body:", req.body);
+    console.log("Request file:", req.file);
+
     let newCode: string;
     let existingStudent = true;
     while (existingStudent) {
@@ -61,16 +65,26 @@ export const createStudent = async (req: Request, res: Response) => {
     }
 
     const { name, age, gender, grade, phoneNumber } = req.body;
+
+    // التحقق من البيانات المطلوبة
+    if (!name || !age || !gender || !grade || !phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "جميع الحقول مطلوبة: الاسم، العمر، الجنس، المرحلة الدراسية، رقم الهاتف",
+      });
+    }
+
     let profileImageUrl: string | undefined;
 
     // Handle image upload to Vercel Blob
     if (req.file) {
       const blob = await put(req.file.originalname, req.file.buffer, {
         access: "public",
+        addRandomSuffix: true,
       });
       profileImageUrl = blob.url;
     } else {
-      // Use default images if no file is uploaded
       profileImageUrl =
         gender === "ذكر"
           ? "/images/students/male-default.png"
@@ -92,16 +106,28 @@ export const createStudent = async (req: Request, res: Response) => {
         responsiveness: "جيد",
         "homework-completion": "مواظب",
       },
+      exams: [], // إضافة صريحة
+      quizResults: [], // إضافة صريحة
+      classResults: [], // إضافة صريحة
     };
 
     const student = new Student(studentData);
     await student.save();
     res.status(201).json({ success: true, data: student });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating student:", error);
-    res
-      .status(400)
-      .json({ success: false, message: "Error creating student", error });
+    // طباعة تفاصيل الخطأ الكاملة
+    console.error("Error details:", {
+      message: error.message,
+      name: error.name,
+      errors: error.errors,
+    });
+
+    res.status(400).json({
+      success: false,
+      message: error.message || "حدث خطأ غير متوقع أثناء إنشاء الطالب.",
+      details: error.errors, // إرجاع تفاصيل أخطاء التحقق من Mongoose
+    });
   }
 };
 

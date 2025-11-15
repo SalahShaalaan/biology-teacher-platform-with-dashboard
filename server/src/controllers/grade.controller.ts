@@ -1,68 +1,57 @@
 import { Request, Response } from "express";
-import fs from "fs/promises";
-import path from "path";
-
-const gradesFilePath = path.join(__dirname, "..", "data", "grades.json");
-
-const readGrades = async (): Promise<string[]> => {
-  try {
-    const data = await fs.readFile(gradesFilePath, "utf-8");
-    return JSON.parse(data);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return ["الأول الثانوي", "الثاني الثانوي", "الثالث الثانوي"];
-    }
-    console.error("Error reading grades file:", error);
-    throw new Error("Could not read grades data.");
-  }
-};
-
-const writeGrades = async (grades: string[]): Promise<void> => {
-  try {
-    await fs.writeFile(
-      gradesFilePath,
-      JSON.stringify(grades, null, 2),
-      "utf-8"
-    );
-  } catch (error) {
-    console.error("Error writing grades file:", error);
-    throw new Error("Could not save grades data.");
-  }
-};
+import Grade from "../models/grade.model";
 
 export const getGrades = async (req: Request, res: Response) => {
   try {
-    const grades = await readGrades();
+    const gradesFromDb = await Grade.find().sort({ name: 1 });
+    const grades = gradesFromDb.map((g) => g.name);
     res.status(200).json({ success: true, data: grades });
   } catch (error) {
-    const err = error as Error;
-    res.status(500).json({ success: false, message: err.message });
+    console.error("Error fetching grades:", error);
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Error fetching grades from database.",
+      });
   }
 };
 
 export const addGrade = async (req: Request, res: Response) => {
   try {
     const { newGrade } = req.body;
-    if (!newGrade || typeof newGrade !== "string") {
+    if (!newGrade || typeof newGrade !== "string" || newGrade.trim() === "") {
       return res.status(400).json({
         success: false,
-        message: "New grade is required and must be a string.",
+        message: "New grade is required and must be a non-empty string.",
       });
     }
 
-    const grades = await readGrades();
-    if (grades.includes(newGrade)) {
+    const trimmedGrade = newGrade.trim();
+
+    const existingGrade = await Grade.findOne({ name: trimmedGrade });
+    if (existingGrade) {
       return res
         .status(409)
         .json({ success: false, message: "Grade already exists." });
     }
 
-    grades.push(newGrade);
-    await writeGrades(grades);
+    const grade = new Grade({ name: trimmedGrade });
+    await grade.save();
 
-    res.status(201).json({ success: true, data: grades });
-  } catch (error) {
-    const err = error as Error;
-    res.status(500).json({ success: false, message: err.message });
+    const allGradesFromDb = await Grade.find().sort({ name: 1 });
+    const allGrades = allGradesFromDb.map((g) => g.name);
+
+    res.status(201).json({ success: true, data: allGrades });
+  } catch (error: any) {
+    console.error("Error adding grade:", error);
+    if (error.code === 11000) {
+      return res
+        .status(409)
+        .json({ success: false, message: "Grade already exists." });
+    }
+    res
+      .status(500)
+      .json({ success: false, message: "Error adding new grade." });
   }
 };

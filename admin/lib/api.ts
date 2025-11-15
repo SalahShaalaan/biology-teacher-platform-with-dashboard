@@ -11,6 +11,7 @@ const API_BASE_URL =
 // ============================================================================
 // Types
 // ============================================================================
+
 export interface Blog {
   _id: string;
   name: string;
@@ -19,8 +20,8 @@ export interface Blog {
   unit: string;
   lesson: string;
   coverImage: string;
-  url?: string; // For PDF
-  videoUrl?: string; // For YouTube video
+  url?: string;
+  videoUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -153,7 +154,7 @@ export async function updateBlog({
   id: string;
   formData: FormData;
 }): Promise<Blog> {
-  const url = `${API_BASE_URL}/blogs/${id}`;
+  const url = `${API_BASE_URL}/api/blogs/${id}`;
   console.log("[API] PUT", url);
 
   const response = await fetch(url, {
@@ -168,7 +169,7 @@ export async function updateBlog({
  * Deletes a blog by ID
  */
 export async function deleteBlog(id: string): Promise<{ message: string }> {
-  const url = `${API_BASE_URL}/blogs/${id}`;
+  const url = `${API_BASE_URL}/api/blogs/${id}`;
   console.log("[API] DELETE", url);
 
   const response = await fetch(url, {
@@ -176,4 +177,55 @@ export async function deleteBlog(id: string): Promise<{ message: string }> {
   });
 
   return handleResponse<{ message: string }>(response);
+}
+
+// ============================================================================
+// Grade API Functions
+// ============================================================================
+
+/**
+ * Fetches all grades from the server
+ */
+export async function fetchGrades(): Promise<string[]> {
+  const response = await fetch(`${API_BASE_URL}/api/grades`);
+  return handleResponse<string[]>(response);
+}
+
+/**
+ * Adds a new grade to the database
+ */
+export async function addNewGrade(newGrade: string): Promise<any> {
+  const response = await fetch(`${API_BASE_URL}/api/grades`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ newGrade }),
+  });
+  return handleResponse<any>(response);
+}
+
+// ============================================================================
+// Student API Functions
+// ============================================================================
+
+/**
+ * Creates a new student with a profile image
+ */
+export async function createStudent(formData: FormData): Promise<Student> {
+  const response = await fetch(`${API_BASE_URL}/api/students`, {
+    method: "POST",
+    body: formData,
+  });
+  return handleResponse<Student>(response);
+}
+
+// You can add an interface for Student here if needed, similar to the Blog interface
+export interface Student {
+  _id: string;
+  code: string;
+  name: string;
+  age: number;
+  gender: string;
+  grade: string;
+  phoneNumber: string;
+  profile_image: string;
 }

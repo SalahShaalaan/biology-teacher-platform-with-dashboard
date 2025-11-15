@@ -29,7 +29,7 @@ import { Separator } from "@/components/ui/separator";
 import { UploadCloud, File as FileIcon, X, Loader2 } from "lucide-react";
 import { blogSchema, BlogFormData } from "@/lib/validators";
 import { useCreateBlog } from "@/hooks/use-blogs";
-import { uploadFileToBlob, createBlog, ApiError } from "@/lib/api";
+import { ApiError } from "@/lib/api";
 
 export function AddBlogForm() {
   const router = useRouter();

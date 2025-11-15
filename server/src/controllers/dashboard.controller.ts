@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import Student from "../models/Sudent.modal";
+import Student from "../models/student.modal";
 import Blog from "../models/blogs.modal";
 import Question from "../models/Question.model";
 

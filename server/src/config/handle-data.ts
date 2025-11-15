@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
-import Student from "../models/Sudent.modal";
+import Student from "../models/student.modal";
 import Blog from "../models/blogs.modal";
 import Question from "../models/Question.model";
 
