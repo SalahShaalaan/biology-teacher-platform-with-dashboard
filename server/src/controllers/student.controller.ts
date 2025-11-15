@@ -195,6 +195,53 @@ export const deleteStudent = async (req: Request, res: Response) => {
   }
 };
 
+// export const addClassResult = async (req: Request, res: Response) => {
+//   try {
+//     const student = await Student.findOne({ code: req.params.id });
+//     if (!student) {
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "Student not found" });
+//     }
+
+//     const { title, note } = req.body;
+//     const files = req.files as Express.Multer.File[];
+
+//     if (!files || files.length === 0) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Result images are required." });
+//     }
+//     if (!title || !note) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Title and note are required." });
+//     }
+
+//     // Upload all files to Vercel Blob in parallel
+//     const uploadPromises = files.map((file) =>
+//       put(file.originalname, file.buffer, { access: "public" })
+//     );
+//     const blobs = await Promise.all(uploadPromises);
+
+//     const newResult = {
+//       title,
+//       imageUrls: blobs.map((blob) => blob.url), // Use the URLs from Vercel Blob
+//       note,
+//       date: new Date(),
+//     };
+
+//     student.classResults = [...(student.classResults ?? []), newResult];
+//     await student.save();
+//     res.status(200).json({ success: true, data: student.classResults });
+//   } catch (error) {
+//     console.error("Error adding class result:", error);
+//     res
+//       .status(500)
+//       .json({ success: false, message: "Error adding class result" });
+//   }
+// };
+
 export const addClassResult = async (req: Request, res: Response) => {
   try {
     const student = await Student.findOne({ code: req.params.id });
@@ -220,7 +267,10 @@ export const addClassResult = async (req: Request, res: Response) => {
 
     // Upload all files to Vercel Blob in parallel
     const uploadPromises = files.map((file) =>
-      put(file.originalname, file.buffer, { access: "public" })
+      put(`class-results/${file.originalname}`, file.buffer, {
+        access: "public",
+        addRandomSuffix: true,
+      })
     );
     const blobs = await Promise.all(uploadPromises);
 
@@ -234,11 +284,14 @@ export const addClassResult = async (req: Request, res: Response) => {
     student.classResults = [...(student.classResults ?? []), newResult];
     await student.save();
     res.status(200).json({ success: true, data: student.classResults });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error adding class result:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Error adding class result" });
+    res.status(500).json({
+      success: false,
+      message: "An unexpected error occurred while adding the class result.",
+      error: error.message, // Provide the error message
+      details: error.errors, // Provide validation details if available
+    });
   }
 };
 
