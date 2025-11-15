@@ -164,7 +164,7 @@ export function BlogsList({ initialBlogs }: { initialBlogs: Blog[] }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {contentForSelectedUnit[lesson].map((blog) => (
                     <Link
-                      href={`/blogs/${blog.slug}`}
+                      href={`/blogs/${blog._id}`}
                       key={blog._id}
                       className="blog-card group"
                     >

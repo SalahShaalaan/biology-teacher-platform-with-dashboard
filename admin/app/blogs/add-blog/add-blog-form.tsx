@@ -2,17 +2,16 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -25,94 +24,26 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useState, useEffect } from "react";
-import Image from "next/image";
-import { UploadCloud, File as FileIcon, X, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { UploadCloud, File as FileIcon, X, Loader2 } from "lucide-react";
+import { blogSchema, BlogFormData } from "@/lib/validators";
+import { useCreateBlog } from "@/hooks/use-blogs";
+import { uploadFileToBlob, createBlog, ApiError } from "@/lib/api";
 
-// --- Custom Error Class for API Responses ---
-class ApiError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "ApiError";
-  }
-}
-
-// --- Zod Schema using Discriminated Union for clear validation ---
-const baseSchema = z.object({
-  name: z.string().min(1, "عنوان الشرح مطلوب."),
-  description: z.string().min(1, "وصف الشرح مطلوب."),
-  grade: z.string().min(1, "المرحلة الدراسية مطلوبة."),
-  unit: z.string().min(1, "الوحدة الدراسية مطلوبة."),
-  lesson: z.string().min(1, "الدرس مطلوب."),
-  coverImage: z
-    .any()
-    .refine((files) => files?.length === 1, "الصورة المصغرة مطلوبة."),
-});
-
-const videoSchema = baseSchema.extend({
-  type: z.literal("video"),
-  videoUrl: z
-    .string()
-    .nonempty("رابط الفيديو مطلوب.")
-    .refine(
-      (url) =>
-        /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/.test(url),
-      "يجب إدخال رابط فيديو صالح من YouTube."
-    ),
-  contentFile: z.any().optional(),
-});
-
-const pdfSchema = baseSchema.extend({
-  type: z.literal("pdf"),
-  contentFile: z.any().refine((files) => files?.length === 1, "ملف PDF مطلوب."),
-  videoUrl: z.string().optional(),
-});
-
-const blogSchema = z.discriminatedUnion("type", [videoSchema, pdfSchema]);
-
-type BlogFormData = z.infer<typeof blogSchema>;
-
-const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/blogs`;
-
-// --- Improved API Request Function ---
-const createBlog = async (formData: FormData) => {
-  const res = await fetch(API_URL, { method: "POST", body: formData });
-  if (!res.ok) {
-    try {
-      const errorData = await res.json();
-      throw new ApiError(
-        errorData.message || "حدث خطأ غير متوقع أثناء إنشاء الشرح."
-      );
-    } catch (e) {
-      if (e instanceof ApiError) throw e;
-      throw new Error(`خطأ في الخادم: ${res.status} ${res.statusText}`);
-    }
-  }
-  return res.json();
-};
-
-// --- Main Form Component ---
 export function AddBlogForm() {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const [coverImagePreview, setCoverImagePreview] = useState<string | null>(
     null
   );
   const [contentFileName, setContentFileName] = useState<string | null>(null);
 
+  const coverImageRef = useRef<HTMLInputElement>(null);
+  const contentFileRef = useRef<HTMLInputElement>(null);
+
   const form = useForm<BlogFormData>({
     resolver: zodResolver(blogSchema),
     defaultValues: {
-      type: "video", // Set a default type
       name: "",
       description: "",
       grade: "",
@@ -123,21 +54,9 @@ export function AddBlogForm() {
       contentFile: undefined,
     },
   });
-  const blogType = form.watch("type");
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: createBlog,
-    onSuccess: () => {
-      toast.success("تم إنشاء الشرح بنجاح!");
-      queryClient.invalidateQueries({ queryKey: ["blogs"] });
-      router.push("/blogs");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    },
-  });
+  const { mutate: createBlogMutation, isPending } = useCreateBlog();
 
-  // --- Effect to handle image preview URL cleanup ---
   useEffect(() => {
     return () => {
       if (coverImagePreview) {
@@ -149,25 +68,88 @@ export function AddBlogForm() {
   const onSubmit = (data: BlogFormData) => {
     const formData = new FormData();
 
-    // Append all the standard fields
+    // Append all text fields
     formData.append("name", data.name);
     formData.append("description", data.description);
     formData.append("grade", data.grade);
     formData.append("unit", data.unit);
     formData.append("lesson", data.lesson);
-    formData.append("type", data.type);
+
+    if (data.videoUrl) {
+      formData.append("videoUrl", data.videoUrl);
+    }
+
+    // Append the cover image file
     if (data.coverImage?.[0]) {
       formData.append("coverImage", data.coverImage[0]);
     }
 
-    // Conditionally append content-related fields
-    if (data.type === "pdf" && data.contentFile?.[0]) {
+    // Append the content file
+    if (data.contentFile?.[0]) {
       formData.append("contentFile", data.contentFile[0]);
-    } else if (data.type === "video" && data.videoUrl) {
-      formData.append("videoUrl", data.videoUrl);
     }
 
-    mutate(formData);
+    // Debug logging - helpful for troubleshooting
+    console.log("Form submission data:");
+    console.log("- Text fields:", {
+      name: data.name,
+      description: data.description,
+      grade: data.grade,
+      unit: data.unit,
+      lesson: data.lesson,
+      videoUrl: data.videoUrl || "none",
+    });
+    console.log("- Cover image:", data.coverImage?.[0]?.name || "none");
+    console.log("- Content file:", data.contentFile?.[0]?.name || "none");
+
+    // Log FormData contents (for debugging)
+    console.log("FormData entries:");
+    for (let [key, value] of formData.entries()) {
+      if (value instanceof File) {
+        console.log(`  ${key}: [File] ${value.name} (${value.size} bytes)`);
+      } else {
+        console.log(`  ${key}: ${value}`);
+      }
+    }
+
+    // Call the mutation with the FormData object
+    createBlogMutation(formData, {
+      onSuccess: () => {
+        toast.success("تم إنشاء الشرح بنجاح!");
+        router.push("/blogs");
+      },
+      onError: (error: ApiError) => {
+        // Enhanced error logging
+        console.error("Blog creation error:", {
+          message: error.message,
+          status: error.status,
+          details: error.details,
+        });
+
+        // Build a user-friendly error message
+        let errorMessage = error.message || "حدث خطأ غير متوقع.";
+
+        // If the server provided a list of missing fields, show them
+        if (error.details?.missingFields?.length > 0) {
+          const missingArabic = error.details.missingFields
+            .map((field: string) => {
+              const fieldMap: Record<string, string> = {
+                name: "عنوان الشرح",
+                description: "الوصف",
+                grade: "المرحلة الدراسية",
+                unit: "الوحدة",
+                lesson: "الدرس",
+                coverImage: "الصورة المصغرة",
+              };
+              return fieldMap[field] || field;
+            })
+            .join("، ");
+          errorMessage = `حقول مطلوبة ناقصة: ${missingArabic}`;
+        }
+
+        toast.error(errorMessage);
+      },
+    });
   };
 
   const resetCoverImage = () => {
@@ -176,19 +158,17 @@ export function AddBlogForm() {
       URL.revokeObjectURL(coverImagePreview);
     }
     setCoverImagePreview(null);
-    const input = document.getElementById(
-      "coverImage-input"
-    ) as HTMLInputElement;
-    if (input) input.value = "";
+    if (coverImageRef.current) {
+      coverImageRef.current.value = "";
+    }
   };
 
   const resetContentFile = () => {
     form.setValue("contentFile", undefined, { shouldValidate: true });
     setContentFileName(null);
-    const input = document.getElementById(
-      "contentFile-input"
-    ) as HTMLInputElement;
-    if (input) input.value = "";
+    if (contentFileRef.current) {
+      contentFileRef.current.value = "";
+    }
   };
 
   return (
@@ -331,6 +311,7 @@ export function AddBlogForm() {
                         </label>
                         <Input
                           id="coverImage-input"
+                          ref={coverImageRef}
                           type="file"
                           className="hidden"
                           accept="image/*"
@@ -373,110 +354,84 @@ export function AddBlogForm() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                 <FormField
                   control={form.control}
-                  name="type"
+                  name="videoUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>نوع المحتوى</FormLabel>
-                      <Select
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          form.setValue("contentFile", undefined);
-                          form.setValue("videoUrl", "");
-                          setContentFileName(null);
-                        }}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="اختر نوع المحتوى" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="video">فيديو (رابط)</SelectItem>
-                          <SelectItem value="pdf">ملف PDF</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormLabel>رابط الفيديو (YouTube)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="https://www.youtube.com/watch?v=..."
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        اختياري: أضف رابط فيديو من يوتيوب.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                {blogType === "video" && (
-                  <FormField
-                    control={form.control}
-                    name="videoUrl"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>رابط الفيديو (YouTube)</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="https://www.youtube.com/watch?v=..."
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-                {blogType === "pdf" && (
-                  <FormField
-                    control={form.control}
-                    name="contentFile"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>ملف PDF</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <label
-                              htmlFor="contentFile-input"
-                              className="relative flex items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted"
-                            >
-                              {contentFileName ? (
-                                <div className="flex items-center gap-2 text-foreground">
-                                  <FileIcon className="w-6 h-6 text-primary" />
-                                  <span className="font-medium">
-                                    {contentFileName}
-                                  </span>
-                                </div>
-                              ) : (
-                                <div className="flex flex-col items-center justify-center text-center">
-                                  <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
-                                  <p className="font-semibold text-primary">
-                                    ارفع ملف PDF
-                                  </p>
-                                </div>
-                              )}
-                            </label>
-                            <Input
-                              id="contentFile-input"
-                              type="file"
-                              className="hidden"
-                              accept=".pdf"
-                              onChange={(e) => {
-                                field.onChange(e.target.files);
-                                setContentFileName(
-                                  e.target.files?.[0]?.name || null
-                                );
-                              }}
-                            />
-                            {contentFileName && (
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="icon"
-                                onClick={resetContentFile}
-                                className="absolute top-2 left-2 h-7 w-7 rounded-full"
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
+                <FormField
+                  control={form.control}
+                  name="contentFile"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ملف PDF</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <label
+                            htmlFor="contentFile-input"
+                            className="relative flex items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted"
+                          >
+                            {contentFileName ? (
+                              <div className="flex items-center gap-2 text-foreground">
+                                <FileIcon className="w-6 h-6 text-primary" />
+                                <span className="font-medium">
+                                  {contentFileName}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col items-center justify-center text-center">
+                                <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
+                                <p className="font-semibold text-primary">
+                                  ارفع ملف PDF
+                                </p>
+                              </div>
                             )}
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
+                          </label>
+                          <Input
+                            id="contentFile-input"
+                            ref={contentFileRef}
+                            type="file"
+                            className="hidden"
+                            accept=".pdf"
+                            onChange={(e) => {
+                              field.onChange(e.target.files);
+                              setContentFileName(
+                                e.target.files?.[0]?.name || null
+                              );
+                            }}
+                          />
+                          {contentFileName && (
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              onClick={resetContentFile}
+                              className="absolute top-2 left-2 h-7 w-7 rounded-full"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        اختياري: ارفع ملف PDF كمحتوى للشرح.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             </CardContent>
           </Card>

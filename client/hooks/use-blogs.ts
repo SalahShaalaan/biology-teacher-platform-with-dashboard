@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 export interface Blog {
   _id: string;
   name: string;
-  slug: string;
   description: string;
   grade: string;
   unit: string;

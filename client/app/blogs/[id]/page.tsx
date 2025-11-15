@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 interface BlogPageProps {
-  params: { slug: string };
+  params: { id: string };
 }
 
 function getYoutubeVideoId(url: string): string | null {
@@ -16,7 +16,7 @@ function getYoutubeVideoId(url: string): string | null {
 export async function generateMetadata({
   params,
 }: BlogPageProps): Promise<Metadata> {
-  const blog = await getBlog(params.slug);
+  const blog = await getBlog(params.id);
   if (!blog) {
     return { title: "Blog Not Found" };
   }
@@ -27,7 +27,7 @@ export async function generateMetadata({
 }
 
 export default async function BlogPage({ params }: BlogPageProps) {
-  const blog = await getBlog(params.slug);
+  const blog = await getBlog(params.id);
 
   if (!blog) {
     notFound();

@@ -50,8 +50,26 @@ type Blog = {
   coverImage: string;
 };
 
+// --- Constants & Utility Functions ---
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+const normalizeImageUrl = (
+  imagePath: string | undefined | null
+): string | null => {
+  if (!imagePath) return null;
+
+  // If it's already a full URL (from Vercel Blob or external source), use it directly
+  if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+    return imagePath;
+  }
+
+  // Otherwise, it's a relative path (legacy/default images), prepend the API base URL
+  return `${API_BASE_URL}${
+    imagePath.startsWith("/") ? imagePath : `/${imagePath}`
+  }`;
+};
+
 // --- API Functions ---
-const API_BASE_URL = "http://localhost:5000";
 const fetchBlogs = async (): Promise<Blog[]> => {
   const res = await fetch(`${API_BASE_URL}/api/blogs`);
   if (!res.ok) throw new Error("فشل في جلب الشروحات");
@@ -170,83 +188,96 @@ export default function BlogsClient() {
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {blogs.map((blog) => (
-          <Card
-            key={blog._id}
-            className="flex flex-col rounded-xl overflow-hidden shadow-none border-none"
-            dir="rtl"
-          >
-            <div className="relative aspect-video ">
-              <Image
-                src={blog.coverImage || "https://picsum.photos/800/600"}
-                alt={blog.name}
-                fill
-                className="object-cover"
-              />
-              <div className="absolute top-3 left-3">
-                <Badge
-                  variant="secondary"
-                  className="flex items-center gap-1.5"
-                >
-                  {typeIcons[blog.type]}
-                  <span>{typeNames[blog.type]}</span>
-                </Badge>
-              </div>
-            </div>
-            <div className="p-5 text-right flex-grow flex flex-col border">
-              <div className="flex-grow">
-                <h3 className="text-xl font-bold mb-2">{blog.name}</h3>
-                <p className="text-muted-foreground text-sm line-clamp-3">
-                  {blog.description}
-                </p>
-              </div>
-              <div className="pt-4 border-t mt-4">
-                <div className="flex flex-wrap gap-2 justify-end">
-                  <Badge variant="outline">{blog.grade}</Badge>
-                  <Badge variant="outline">{blog.unit}</Badge>
-                  <Badge variant="outline">{blog.lesson}</Badge>
+        {blogs.map((blog, index) => {
+          const coverImageUrl =
+            normalizeImageUrl(blog.coverImage) ||
+            "https://picsum.photos/800/600";
+
+          // Prioritize loading for the first 3 images (above the fold)
+          const isPriority = index < 3;
+
+          return (
+            <Card
+              key={blog._id}
+              className="flex flex-col rounded-xl overflow-hidden shadow-none border-none"
+              dir="rtl"
+            >
+              <div className="relative aspect-video">
+                <Image
+                  src={coverImageUrl}
+                  alt={blog.name}
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  quality={85}
+                  priority={isPriority}
+                  className="object-cover"
+                  loading={isPriority ? undefined : "lazy"}
+                />
+                <div className="absolute top-3 left-3">
+                  <Badge
+                    variant="secondary"
+                    className="flex items-center gap-1.5"
+                  >
+                    {typeIcons[blog.type]}
+                    <span>{typeNames[blog.type]}</span>
+                  </Badge>
                 </div>
               </div>
-            </div>
-            <CardFooter className="p-3 bg-muted/50 border-t flex justify-end gap-2">
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/blogs/edit/${blog._id}`}>
-                  <Pencil className="ml-2 h-4 w-4" /> تعديل
-                </Link>
-              </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    disabled={deleteMutation.isPending}
-                    className="cursor-pointer"
-                  >
-                    <Trash2 className="ml-2 h-4 w-4" /> حذف
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader className="text-right">
-                    <AlertDialogTitle>هل أنت متأكد؟</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      هذا الإجراء سيقوم بحذف الشرح بشكل دائم. لا يمكن التراجع عن
-                      هذا الإجراء.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => deleteMutation.mutate(blog._id)}
-                      className="bg-red-500 hover:bg-red-600 cursor-pointer"
+              <div className="p-5 text-right flex-grow flex flex-col border">
+                <div className="flex-grow">
+                  <h3 className="text-xl font-bold mb-2">{blog.name}</h3>
+                  <p className="text-muted-foreground text-sm line-clamp-3">
+                    {blog.description}
+                  </p>
+                </div>
+                <div className="pt-4 border-t mt-4">
+                  <div className="flex flex-wrap gap-2 justify-end">
+                    <Badge variant="outline">{blog.grade}</Badge>
+                    <Badge variant="outline">{blog.unit}</Badge>
+                    <Badge variant="outline">{blog.lesson}</Badge>
+                  </div>
+                </div>
+              </div>
+              <CardFooter className="p-3 bg-muted/50 border-t flex justify-end gap-2">
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/blogs/edit/${blog._id}`}>
+                    <Pencil className="ml-2 h-4 w-4" /> تعديل
+                  </Link>
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      disabled={deleteMutation.isPending}
+                      className="cursor-pointer"
                     >
-                      نعم، قم بالحذف
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </CardFooter>
-          </Card>
-        ))}
+                      <Trash2 className="ml-2 h-4 w-4" /> حذف
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader className="text-right">
+                      <AlertDialogTitle>هل أنت متأكد؟</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        هذا الإجراء سيقوم بحذف الشرح بشكل دائم. لا يمكن التراجع
+                        عن هذا الإجراء.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => deleteMutation.mutate(blog._id)}
+                        className="bg-red-500 hover:bg-red-600 cursor-pointer"
+                      >
+                        نعم، قم بالحذف
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </CardFooter>
+            </Card>
+          );
+        })}
       </div>
     );
   };

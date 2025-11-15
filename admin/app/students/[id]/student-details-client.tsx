@@ -95,6 +95,20 @@ const performanceColorMap: { [key: string]: string } = {
   "يحتاج لتحسين": "text-yellow-500",
 };
 
+const normalizeImageUrl = (
+  imagePath: string | undefined | null
+): string | null => {
+  if (!imagePath) return null;
+
+  if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+    return imagePath;
+  }
+
+  return `${API_BASE_URL}${
+    imagePath.startsWith("/") ? imagePath : `/${imagePath}`
+  }`;
+};
+
 // --- API Functions ---
 const getStudent = async (studentId: string): Promise<Student> => {
   const res = await fetch(`${API_URL}/${studentId}`);
@@ -230,10 +244,11 @@ const InClassExamsSection = ({
       {classResults && classResults.length > 0 ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {classResults.map((result) => {
-            const imageUrl =
+            const imageUrl = normalizeImageUrl(
               result.imageUrls && result.imageUrls.length > 0
                 ? result.imageUrls[0]
-                : null;
+                : null
+            );
 
             return (
               <div
@@ -268,19 +283,22 @@ const InClassExamsSection = ({
                       <DialogTitle>{result.title}</DialogTitle>
                     </DialogHeader>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
-                      {result.imageUrls?.map((url, index) => (
-                        <div
-                          key={index}
-                          className="relative aspect-square w-full overflow-hidden rounded-md"
-                        >
-                          <Image
-                            src={url}
-                            alt={`${result.title} - ${index + 1}`}
-                            fill
-                            className="object-contain"
-                          />
-                        </div>
-                      ))}
+                      {result.imageUrls?.map((url, index) => {
+                        const normalizedUrl = normalizeImageUrl(url);
+                        return normalizedUrl ? (
+                          <div
+                            key={index}
+                            className="relative aspect-square w-full overflow-hidden rounded-md"
+                          >
+                            <Image
+                              src={normalizedUrl}
+                              alt={`${result.title} - ${index + 1}`}
+                              fill
+                              className="object-contain"
+                            />
+                          </div>
+                        ) : null;
+                      })}
                     </div>
                   </DialogContent>
                 </Dialog>
@@ -318,9 +336,7 @@ export default function StudentDetailsClient({
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(
-    initialStudent["profile_image"]
-      ? `${API_BASE_URL}${initialStudent["profile_image"]}`
-      : null
+    normalizeImageUrl(initialStudent["profile_image"])
   );
   const [activeTab, setActiveTab] = useState("details");
 
@@ -341,11 +357,7 @@ export default function StudentDetailsClient({
 
   useEffect(() => {
     form.reset(student);
-    setPreviewImageUrl(
-      student["profile_image"]
-        ? `${API_BASE_URL}${student["profile_image"]}`
-        : null
-    );
+    setPreviewImageUrl(normalizeImageUrl(student["profile_image"]));
   }, [student, form]);
 
   const detailsMutation = useMutation({ mutationFn: updateStudentDetails });
@@ -412,11 +424,7 @@ export default function StudentDetailsClient({
   const handleCancel = () => {
     form.reset(student);
     setSelectedImageFile(null);
-    setPreviewImageUrl(
-      student["profile_image"]
-        ? `${API_BASE_URL}${student["profile_image"]}`
-        : null
-    );
+    setPreviewImageUrl(normalizeImageUrl(student["profile_image"]));
     setIsEditMode(false);
   };
 

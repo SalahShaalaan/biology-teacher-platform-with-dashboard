@@ -1,6 +1,9 @@
 import { Blog } from "@/hooks/use-blogs";
 
-const API_URL = process.env.API_URL || "http://localhost:5000";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  process.env.API_URL ||
+  "http://localhost:5000";
 
 export async function getBlogs(): Promise<Blog[]> {
   try {
@@ -32,12 +35,17 @@ export async function getBlogs(): Promise<Blog[]> {
   }
 }
 
-export async function getBlog(slug: string): Promise<Blog | null> {
+export async function getBlog(id: string): Promise<Blog | null> {
   try {
-    const res = await fetch(`${API_URL}/api/blogs/${slug}`, {
+    const res = await fetch(`${API_URL}/api/blogs/${id}`, {
       next: { revalidate: 10 },
     });
     if (!res.ok) {
+      console.error(
+        `Failed to fetch blog ${id}:`,
+        res.status,
+        await res.text()
+      );
       return null;
     }
     const data = await res.json();
@@ -54,7 +62,7 @@ export async function getBlog(slug: string): Promise<Blog | null> {
 
     return blog || null;
   } catch (error) {
-    console.error(`Error fetching blog ${slug}:`, error);
+    console.error(`Error fetching blog ${id}:`, error);
     return null;
   }
 }

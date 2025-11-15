@@ -6,9 +6,10 @@ export interface IBlog extends Document {
   grade: string;
   unit: string;
   lesson: string;
-  type: "video" | "pdf" | "article";
+  // type: "video" | "pdf"; // Removed
   coverImage: string;
   url?: string;
+  videoUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -20,13 +21,10 @@ const BlogSchema: Schema = new Schema(
     grade: { type: String, required: true },
     unit: { type: String, required: true },
     lesson: { type: String, required: true },
-    type: {
-      type: String,
-      enum: ["video", "pdf", "article"],
-      required: true,
-    },
+    // "type" field completely removed from schema
     coverImage: { type: String, required: true },
-    url: { type: String },
+    url: { type: String, required: false }, // Specifically for the PDF URL
+    videoUrl: { type: String, required: false }, // Specifically for the Video URL
   },
   { timestamps: true }
 );
