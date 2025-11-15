@@ -3,6 +3,7 @@ import { Rubik } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import QueryProvider from "@/providers/query-provider";
+import { Toaster } from "@/components/ui/toaster";
 
 const mainFont = Rubik({
   variable: "--font-geist-sans",
@@ -26,6 +27,7 @@ export default function RootLayout({
         <QueryProvider>
           <Navbar />
           {children}
+          <Toaster />
         </QueryProvider>
       </body>
     </html>

@@ -39,6 +39,22 @@ export const AnimatedTestimonials = ({
     }
   }, [autoplay]);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActive((prev) => (prev + 1) % testimonials.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [testimonials]);
+
+  if (!testimonials || testimonials.length === 0) {
+    return (
+      <div className="flex h-48 items-center justify-center rounded-lg border bg-neutral-50 p-4 text-center text-neutral-500">
+        <p>لا توجد آراء لعرضها في الوقت الحالي.</p>
+      </div>
+    );
+  }
+
   const randomRotateY = () => {
     return Math.floor(Math.random() * 21) - 10;
   };
