@@ -131,6 +131,41 @@ export const createStudent = async (req: Request, res: Response) => {
   }
 };
 
+// export const updateStudentImage = async (req: Request, res: Response) => {
+//   try {
+//     if (!req.file) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "No image file provided" });
+//     }
+
+//     const studentToUpdate = await Student.findOne({ code: req.params.id });
+//     if (!studentToUpdate) {
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "Student not found" });
+//     }
+
+//     // Delete the old image from Vercel Blob, unless it's a default image
+//     await deleteBlob(studentToUpdate.profile_image);
+
+//     // Upload the new image
+//     const blob = await put(req.file.originalname, req.file.buffer, {
+//       access: "public",
+//     });
+
+//     // Update student with the new image URL
+//     studentToUpdate.profile_image = blob.url;
+//     await studentToUpdate.save();
+
+//     res.status(200).json({ success: true, data: studentToUpdate });
+//   } catch (error) {
+//     res
+//       .status(400)
+//       .json({ success: false, message: "Error updating student image", error });
+//   }
+// };
+
 export const updateStudentImage = async (req: Request, res: Response) => {
   try {
     if (!req.file) {
@@ -150,9 +185,14 @@ export const updateStudentImage = async (req: Request, res: Response) => {
     await deleteBlob(studentToUpdate.profile_image);
 
     // Upload the new image
-    const blob = await put(req.file.originalname, req.file.buffer, {
-      access: "public",
-    });
+    const blob = await put(
+      `profile-images/${req.file.originalname}`,
+      req.file.buffer,
+      {
+        access: "public",
+        addRandomSuffix: true,
+      }
+    );
 
     // Update student with the new image URL
     studentToUpdate.profile_image = blob.url;

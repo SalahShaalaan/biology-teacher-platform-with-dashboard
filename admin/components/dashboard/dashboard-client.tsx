@@ -31,7 +31,7 @@ interface DashboardClientProps {
   data: DashboardStats;
 }
 
-const chartColor = "#DBA32C";
+const chartColor = "#0047AB	";
 
 export default function DashboardClient({ data }: DashboardClientProps) {
   const [isClient, setIsClient] = useState(false);
