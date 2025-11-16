@@ -155,10 +155,7 @@ export default function StudentTable() {
             </Button>
           ) : (
             <>
-              <Button
-                asChild
-                className="bg-yellow-500 hover:bg-yellow-600 text-slate-800 h-10"
-              >
+              <Button asChild className="h-10">
                 <Link href="/students/add-student">إضافة طالب</Link>
               </Button>
               <DropdownMenu>

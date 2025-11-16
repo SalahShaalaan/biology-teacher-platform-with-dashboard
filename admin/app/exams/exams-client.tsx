@@ -352,7 +352,7 @@ export default function ExamsClient() {
           </div>
           <Button
             size="sm"
-            variant="outline"
+            variant="default"
             onClick={() => openModalWithData()}
           >
             <PlusCircle className="ml-2 h-4 w-4" /> إضافة

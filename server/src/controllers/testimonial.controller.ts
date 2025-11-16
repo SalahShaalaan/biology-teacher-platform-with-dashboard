@@ -1,6 +1,16 @@
 import { Request, Response } from "express";
 import Testimonial from "../models/testimonial.modal";
-import { put } from "@vercel/blob";
+import { put, del } from "@vercel/blob";
+
+const deleteBlob = async (url: string | undefined): Promise<void> => {
+  if (url && url.includes("vercel-storage.com")) {
+    try {
+      await del(url);
+    } catch (error) {
+      console.error(`[Blob] Failed to delete blob: ${url}`, error);
+    }
+  }
+};
 
 /**
  * Generates a clean, unique path for blob storage
@@ -74,6 +84,37 @@ export const addTestimonial = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: "Failed to create testimonial",
+      error: error.message || "Unknown error occurred",
+    });
+  }
+};
+
+export const deleteTestimonial = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const testimonial = await Testimonial.findById(id);
+
+    if (!testimonial) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Testimonial not found" });
+    }
+
+    // Delete the associated image from Vercel Blob storage
+    await deleteBlob(testimonial.imageUrl);
+
+    // Delete the testimonial from the database
+    await Testimonial.findByIdAndDelete(id);
+
+    res
+      .status(200)
+      .json({ success: true, message: "Testimonial deleted successfully" });
+  } catch (error: any) {
+    console.error("[Testimonials] Error deleting testimonial:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete testimonial",
       error: error.message || "Unknown error occurred",
     });
   }

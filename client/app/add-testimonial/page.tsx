@@ -86,10 +86,13 @@ export default function TestimonialPage() {
         formData.append("image", data.image[0]);
       }
 
-      const response = await fetch("http://localhost:5000/api/testimonials", {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/testimonials`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
