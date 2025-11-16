@@ -242,7 +242,7 @@ export default function QuestionsPage() {
           initial="hidden"
           animate="visible"
         >
-          <Card className="w-full max-w-sm text-right border border-gray-200 rounded-none">
+          <Card className="w-full max-w-sm text-right border border-gray-200 rounded-none shadow-none">
             <CardHeader>
               <CardTitle>أدخل الكود الخاص بك</CardTitle>
             </CardHeader>
@@ -258,7 +258,7 @@ export default function QuestionsPage() {
                 <Button
                   onClick={handleLogin}
                   disabled={isLoggingIn}
-                  className="w-full text-lg p-6 bg-green-600 rounded-none disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="w-full text-lg p-6 bg-[#295638] hover:bg-[#295638]/90 cursor-pointer rounded-none disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   {isLoggingIn ? "جاري الدخول..." : "دخول"}
                 </Button>

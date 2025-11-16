@@ -151,11 +151,8 @@ export default function ResultsPage() {
   if (!student) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
-        <Card className="w-full max-w-md text-right border-border">
+        <Card className="w-full max-w-md text-right border-border shadow-none">
           <CardHeader className="items-center text-center">
-            <div className="p-3 border rounded-full bg-background mb-3">
-              <BookOpen className="w-8 h-8 text-primary" />
-            </div>
             <CardTitle className="text-2xl">بوابة نتائج الطلاب</CardTitle>
             <CardDescription>
               أدخل كود الطالب الخاص بك لعرض نتائج الاختبارات.
@@ -178,7 +175,7 @@ export default function ResultsPage() {
               <Button
                 onClick={handleLogin}
                 disabled={isLoading}
-                className="w-full text-lg p-6"
+                className="w-full text-lg p-6 bg-[#295638] hover:bg-[#295638]/90 cursor-pointer"
               >
                 {isLoading ? (
                   "جاري التحقق..."

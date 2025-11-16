@@ -61,7 +61,7 @@ export default function Page() {
 
   return (
     <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-gray-200 min-h-screen flex flex-col items-center justify-center p-5">
-      <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 p-10 rounded-lg shadow-2xl text-center w-full max-w-md mb-5 animate-fadeIn">
+      <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 p-10 rounded-lg text-center w-full max-w-md mb-5 animate-fadeIn">
         <h1 className="text-4xl text-white mb-2 font-bold">بوابة الطالب</h1>
         <p className="text-gray-400 mb-6">أدخل كود الطالب لعرض معلوماته</p>
         <form onSubmit={handleSubmit} className="flex flex-col">
@@ -70,11 +70,11 @@ export default function Page() {
             value={studentCode}
             onChange={(e) => setStudentCode(e.target.value)}
             placeholder="أدخل كود الطالب"
-            className="bg-gray-900 text-gray-200 border border-gray-700 rounded-md p-3 mb-4 text-right focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+            className="bg-gray-900 text-gray-200 border border-gray-700 rounded-md p-3 mb-4 text-right focus:ring-2 focus:ring-[#295638] focus:border-[#295638] transition-all"
           />
           <button
             type="submit"
-            className="bg-blue-600 text-white border-none rounded-md p-3 text-base cursor-pointer transition-colors hover:bg-blue-700 disabled:bg-blue-400/50 disabled:cursor-not-allowed"
+            className="bg-[#295638] text-white border-none rounded-md p-3 text-base cursor-pointer transition-colors disabled:bg-[#29563]/50 disabled:cursor-not-allowed"
             disabled={loading}
           >
             {loading ? "جاري البحث..." : "عرض المعلومات"}

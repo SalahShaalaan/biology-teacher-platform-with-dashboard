@@ -83,14 +83,14 @@ export default function Navbar() {
                   <span className="font-medium text-lg">{item.label}</span>
                 </Link>
               ))}
-              <div className="pt-4 px-4">
+              <Link className="pt-4 px-4" href="/student-portal">
                 <Button
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg font-medium shadow-lg"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg font-medium"
                   onClick={() => setIsOpen(false)}
                 >
-                  تواصل معنا
+                  بوابة الطالب
                 </Button>
-              </div>
+              </Link>
             </div>
           </div>
         )}
