@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import biologyPatternBg from "@/public/pattern-1.png";
-import teacherAkram from "@/public/akram-img.png";
+import teacherAkram from "@/public/akram-1.jpeg";
 import helloSkeletonImg from "@/public/hello-skel.png";
 import Image from "next/image";
 
@@ -122,7 +122,7 @@ export default function Hero() {
                     أستاذ أكرم مسلم
                   </h3>
                   <p className="text-slate-600 dark:text-slate-300 mb-3">
-                    معلم علوم الاحياء
+                    معلم الاحياء
                   </p>
                 </div>
               </div>

@@ -98,7 +98,7 @@ export default function Footer() {
               {/* Image container */}
               <div className="relative h-72 w-72 md:h-96 md:w-96 rounded-full overflow-hidden border-4 border-gray-900 bg-gray-900">
                 <Image
-                  src="/teacher.png"
+                  src="/akram-2.jpeg"
                   alt="الأستاذ أكرم"
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -106,7 +106,7 @@ export default function Footer() {
               </div>
 
               {/* Floating badge */}
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-2 rounded-full">
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-cyan-600 px-6 py-2 rounded-full">
                 <p className="text-sm font-bold text-white whitespace-nowrap">
                   الأستاذ أكرم مسلم
                 </p>
