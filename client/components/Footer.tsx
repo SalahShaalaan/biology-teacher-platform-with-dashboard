@@ -49,10 +49,10 @@ export default function Footer() {
           <div className="text-center lg:text-right space-y-8">
             <div className="space-y-3">
               <div className="inline-block">
-                <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-l from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                <h2 className="text-4xl md:text-5xl font-bold bg-cyan-600 bg-clip-text text-transparent">
                   تواصل مع المعلم
                 </h2>
-                <div className="h-1 bg-gradient-to-l from-cyan-400 to-blue-400 rounded-full mt-2" />
+                <div className="h-1 bg-cyan-600 rounded-full mt-2" />
               </div>
               <p className="text-lg md:text-xl text-gray-400 max-w-md mx-auto lg:mx-0">
                 لديك سؤال أو استفسار؟ نحن هنا لمساعدتك في أي وقت
@@ -93,7 +93,7 @@ export default function Footer() {
           <div className="flex justify-center lg:justify-end">
             <div className="relative group">
               {/* Animated border */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 rounded-full opacity-75 group-hover:opacity-100 blur-sm transition-opacity duration-300 animate-pulse" />
+              <div className="absolute -inset-1 bg-cyan-600 rounded-full opacity-75 group-hover:opacity-100 blur-sm transition-opacity duration-300 animate-pulse" />
 
               {/* Image container */}
               <div className="relative h-72 w-72 md:h-96 md:w-96 rounded-full overflow-hidden border-4 border-gray-900 bg-gray-900">
