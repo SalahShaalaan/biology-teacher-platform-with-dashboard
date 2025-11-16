@@ -119,7 +119,17 @@ export default function Footer() {
         <div className="mt-16 pt-8 border-t border-white/10">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
             <p>© {new Date().getFullYear()} جميع الحقوق محفوظة</p>
-            <p className="text-gray-600">صُنع بـ ❤️ لطلابنا الأعزاء</p>
+            <p>
+              صنع ب❤️ بواسطة{" "}
+              <Link
+                href="https://www.facebook.com/salah.a.shalaan"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-cyan-400 hover:underline"
+              >
+                صـلاح شـعـلان
+              </Link>
+            </p>
           </div>
         </div>
       </div>
