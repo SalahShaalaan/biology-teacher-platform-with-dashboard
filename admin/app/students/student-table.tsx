@@ -150,45 +150,6 @@ export default function StudentTable({ initialStudents }: StudentTableProps) {
               <Button asChild className="h-10">
                 <Link href="/students/add-student">إضافة طالب</Link>
               </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="h-10">
-                    <Filter className="ml-2 h-4 w-4" /> عرض الأعمدة
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {table
-                    .getAllColumns()
-                    .filter((column) => column.getCanHide())
-                    .map((column) => {
-                      return (
-                        <DropdownMenuCheckboxItem
-                          key={column.id}
-                          className="capitalize"
-                          checked={column.getIsVisible()}
-                          onCheckedChange={(value) =>
-                            column.toggleVisibility(!!value)
-                          }
-                        >
-                          {column.id === "name"
-                            ? "الاسم"
-                            : column.id === "code"
-                            ? "الكود"
-                            : column.id === "grade"
-                            ? "الصف الدراسي"
-                            : column.id === "age"
-                            ? "العمر"
-                            : column.id === "monthlyPayment"
-                            ? "حالة الدفع"
-                            : column.id}
-                        </DropdownMenuCheckboxItem>
-                      );
-                    })}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Button variant="outline" className="h-10">
-                <Upload className="ml-2 h-4 w-4" /> تصدير
-              </Button>
             </>
           )}
         </div>
