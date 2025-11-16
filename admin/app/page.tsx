@@ -49,7 +49,7 @@ export default async function DashboardPage() {
   const dashboardData = await getDashboardData();
 
   return (
-    <div className="space-y-6 bg-[#fafafa] p-14">
+    <div className="space-y-6 bg-[#fafafa] p-6">
       <h1 className="text-3xl font-bold text-[var(--main-text-color)]">
         لوحة التحكم
       </h1>

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -45,7 +45,8 @@ export default function StudentTable({ initialStudents }: StudentTableProps) {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
   const [studentsToDelete, setStudentsToDelete] = React.useState<Student[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
@@ -121,15 +122,15 @@ export default function StudentTable({ initialStudents }: StudentTableProps) {
   const numSelected = table.getFilteredSelectedRowModel().rows.length;
 
   return (
-    <div className="w-full space-y-4 rounded-2xl border border-gray-200 bg-white p-6">
+    <div className="w-full space-y-4 rounded-2xl border border-gray-200 bg-white p-4 md:p-6">
       <ReusableTabs
         activeTab={activeTab}
         tabItems={tabItems}
         onTabChange={setActiveTab}
       />
 
-      <div className="flex items-center justify-between gap-4 pt-2">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col items-stretch gap-4 pt-2 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
           {numSelected > 0 ? (
             <Button
               variant="destructive"
@@ -199,11 +200,17 @@ export default function StudentTable({ initialStudents }: StudentTableProps) {
             onChange={(event) =>
               table.getColumn("name")?.setFilterValue(event.target.value)
             }
-            className="h-10 max-w-sm border-gray-200 pl-4 pr-10 shadow-none"
+            className="h-10 w-full max-w-sm border-gray-200 pl-4 pr-10 shadow-none"
           />
         </div>
       </div>
-      <DataTable table={table} columns={columns} onRowClick={handleRowClick} />
+      <div className="overflow-x-auto">
+        <DataTable
+          table={table}
+          columns={columns}
+          onRowClick={handleRowClick}
+        />
+      </div>
 
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>

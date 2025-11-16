@@ -10,7 +10,6 @@ import {
   AreaChart,
   Area,
 } from "recharts";
-import { Users, BookOpen, ClipboardCheck, PenSquare } from "lucide-react";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
@@ -69,7 +68,7 @@ export default function DashboardClient({ data }: DashboardClientProps) {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="إجمالي الطلاب"
           value={stats.totalStudents}
@@ -98,7 +97,7 @@ export default function DashboardClient({ data }: DashboardClientProps) {
 
       <Card className="shadow-none">
         <CardHeader>
-          <div className="flex items-start justify-between">
+          <div className="flex flex-col items-stretch justify-between gap-4 sm:flex-row sm:items-start">
             <div className="flex flex-col items-start">
               <div className="flex items-center gap-2">
                 <div
@@ -112,7 +111,7 @@ export default function DashboardClient({ data }: DashboardClientProps) {
               </div>
               <p className="text-xs text-muted-foreground">مقارنة بآخر شهر</p>
             </div>
-            <div className="flex flex-col items-end">
+            <div className="flex flex-col items-start sm:items-end">
               <p className="text-sm font-medium text-muted-foreground">
                 متوسط أداء آخر شهر
               </p>
