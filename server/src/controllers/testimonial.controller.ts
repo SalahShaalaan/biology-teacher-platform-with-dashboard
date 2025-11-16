@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import Testimonial from "../models/testimonial.modal";
 import { put, del } from "@vercel/blob";
 
-const DEFAULT_AVATAR_URL = "/user-placehoder.png";
+const DEFAULT_AVATAR_URL = "/user-placholder.png";
 
 const deleteBlob = async (url: string | undefined): Promise<void> => {
   if (url && url !== DEFAULT_AVATAR_URL && url.includes("vercel-storage.com")) {
