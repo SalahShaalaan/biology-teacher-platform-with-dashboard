@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Blog from "../models/blogs.modal";
 import mongoose from "mongoose";
 import { put, del } from "@vercel/blob";
+import slugify from "slugify";
 
 // ============================================================================
 // Helper Functions
@@ -29,8 +30,8 @@ const deleteBlob = async (url: string | undefined): Promise<void> => {
  * Prevents filename collisions and handles special characters
  */
 const generateBlobPath = (filename: string, folder: string): string => {
-  // Sanitize filename: remove special characters, keep only alphanumeric, dots, dashes, underscores
-  const sanitized = filename.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+  // Sanitize filename using slugify for better character handling
+  const sanitized = slugify(filename, { lower: true, strict: true });
 
   // Create unique prefix using timestamp and random number
   const uniquePrefix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
@@ -162,7 +163,10 @@ export const createBlog = async (req: Request, res: Response) => {
     }
 
     // Determine blog type based on provided content
-
+    let blogType: "video" | "pdf" = "video";
+    if (contentFile) {
+      blogType = "pdf";
+    }
     // Create and save the new blog to the database
     const blog = new Blog({
       name: req.body.name,
@@ -170,7 +174,7 @@ export const createBlog = async (req: Request, res: Response) => {
       grade: req.body.grade,
       unit: req.body.unit,
       lesson: req.body.lesson,
-      // type, // Removed
+      type: blogType,
       coverImage: coverImageUrl,
       url: contentUrl, // Will be undefined if no file was uploaded
       videoUrl: videoUrl, // Will be undefined if no URL was provided
@@ -212,7 +216,7 @@ export const updateBlog = async (req: Request, res: Response) => {
     }
 
     // Extract request data
-    const { name, description, grade, unit, lesson, videoUrl } = req.body;
+    const { name, description, grade, unit, lesson, videoUrl, type } = req.body;
     const files = req.files as {
       [fieldname: string]: Express.Multer.File[];
     };
@@ -225,6 +229,14 @@ export const updateBlog = async (req: Request, res: Response) => {
     if (grade !== undefined) blog.grade = grade;
     if (unit !== undefined) blog.unit = unit;
     if (lesson !== undefined) blog.lesson = lesson;
+
+    if (contentFile) {
+      blog.type = "pdf";
+    } else if (videoUrl !== undefined && !blog.url) {
+      blog.type = "video";
+    } else if (type) {
+      blog.type = type;
+    }
 
     // Handle cover image update
     if (coverImageFile) {

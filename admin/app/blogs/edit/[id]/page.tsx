@@ -11,6 +11,7 @@ interface Blog {
   type: "video" | "pdf";
   url: string;
   coverImage: string;
+  videoUrl?: string;
 }
 
 async function getBlog(id: string): Promise<Blog | null> {

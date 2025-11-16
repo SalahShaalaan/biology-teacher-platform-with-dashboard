@@ -1,9 +1,22 @@
-import { getBlogs } from "@/lib/data/blogs";
+import {
+  HydrationBoundary,
+  QueryClient,
+  dehydrate,
+} from "@tanstack/react-query";
 import { BlogsList } from "./blogs-list";
+import { getBlogs } from "@/lib/api";
 
 export default async function BlogsPage() {
-  const blogs = await getBlogs();
+  const queryClient = new QueryClient();
 
-  // The interactive list is now its own component
-  return <BlogsList initialBlogs={blogs} />;
+  await queryClient.prefetchQuery({
+    queryKey: ["blogs"],
+    queryFn: getBlogs,
+  });
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <BlogsList />
+    </HydrationBoundary>
+  );
 }

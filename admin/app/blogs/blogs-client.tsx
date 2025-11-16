@@ -3,14 +3,7 @@
 import Image from "next/image";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -36,56 +29,21 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Blog } from "@/types";
+import { getBlogs, deleteBlog } from "@/lib/api";
 
-// --- Types ---
-type Blog = {
-  _id: string;
-  name: string;
-  description: string;
-  grade: string;
-  unit: string;
-  lesson: string;
-  type: "video" | "pdf";
-  url: string;
-  coverImage: string;
-};
-
-// --- Constants & Utility Functions ---
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 const normalizeImageUrl = (
   imagePath: string | undefined | null
 ): string | null => {
   if (!imagePath) return null;
-
-  // If it's already a full URL (from Vercel Blob or external source), use it directly
   if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
     return imagePath;
   }
-
-  // Otherwise, it's a relative path (legacy/default images), prepend the API base URL
   return `${API_BASE_URL}${
     imagePath.startsWith("/") ? imagePath : `/${imagePath}`
   }`;
-};
-
-// --- API Functions ---
-const fetchBlogs = async (): Promise<Blog[]> => {
-  const res = await fetch(`${API_BASE_URL}/api/blogs`);
-  if (!res.ok) throw new Error("فشل في جلب الشروحات");
-  const data = await res.json();
-  return data.data || [];
-};
-
-const deleteBlog = async (id: string) => {
-  const res = await fetch(`${API_BASE_URL}/api/blogs/${id}`, {
-    method: "DELETE",
-  });
-  if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.message || "فشل في حذف الشرح");
-  }
-  return res.json();
 };
 
 const typeIcons = {
@@ -97,7 +55,6 @@ const typeNames = {
   pdf: "ملف PDF",
 };
 
-// --- Main Page Component ---
 export default function BlogsClient() {
   const queryClient = useQueryClient();
 
@@ -107,7 +64,7 @@ export default function BlogsClient() {
     error,
   } = useQuery<Blog[]>({
     queryKey: ["blogs"],
-    queryFn: fetchBlogs,
+    queryFn: getBlogs,
   });
 
   const deleteMutation = useMutation({
@@ -192,8 +149,6 @@ export default function BlogsClient() {
           const coverImageUrl =
             normalizeImageUrl(blog.coverImage) ||
             "https://picsum.photos/800/600";
-
-          // Prioritize loading for the first 3 images (above the fold)
           const isPriority = index < 3;
 
           return (

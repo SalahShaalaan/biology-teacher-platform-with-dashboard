@@ -1,9 +1,22 @@
+import {
+  HydrationBoundary,
+  QueryClient,
+  dehydrate,
+} from "@tanstack/react-query";
 import BlogsClient from "./blogs-client";
+import { getBlogs } from "@/lib/api";
 
-export default function BlogsPage() {
+export default async function BlogsPage() {
+  const queryClient = new QueryClient();
+
+  await queryClient.prefetchQuery({
+    queryKey: ["blogs"],
+    queryFn: getBlogs,
+  });
+
   return (
-    <div className="p-1">
+    <HydrationBoundary state={dehydrate(queryClient)}>
       <BlogsClient />
-    </div>
+    </HydrationBoundary>
   );
 }

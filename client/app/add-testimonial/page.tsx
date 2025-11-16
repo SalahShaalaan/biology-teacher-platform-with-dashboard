@@ -20,7 +20,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   IconUser,
   IconUsers,
@@ -28,6 +28,7 @@ import {
   IconCheck,
   IconMessage2,
 } from "@tabler/icons-react";
+import { addTestimonial } from "@/lib/api";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = [
@@ -76,56 +77,40 @@ export default function TestimonialPage() {
 
   const fileRef = form.register("image");
 
-  const handleSubmit = async (data: TestimonialFormValues) => {
-    try {
-      const formData = new FormData();
-      formData.append("name", data.name);
-      formData.append("quote", data.quote);
-      formData.append("designation", data.designation);
-      if (data.image && data.image.length > 0) {
-        formData.append("image", data.image[0]);
-      }
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/testimonials`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        toast({
-          variant: "error",
-          title: "حدث خطأ",
-          description: errorData.message || "حدث خطأ أثناء إرسال رأيك",
-        });
-        return;
-      }
-
-      await queryClient.invalidateQueries({ queryKey: ["testimonials"] });
-
+  const { mutate, isPending } = useMutation({
+    mutationFn: addTestimonial,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["testimonials"] });
       toast({
         variant: "success",
         title: "تم الإرسال بنجاح! ❤️",
         description: "شكرًا لك على مشاركة رأيك معنا",
       });
-
       form.reset();
       setPreview(null);
-
       setTimeout(() => {
         router.push("/#testimonials");
       }, 2500);
-    } catch (error) {
+    },
+    onError: (error) => {
       toast({
         variant: "error",
         title: "حدث خطأ",
         description:
           error instanceof Error ? error.message : "حدث خطأ غير متوقع",
       });
+    },
+  });
+
+  const handleSubmit = (data: TestimonialFormValues) => {
+    const formData = new FormData();
+    formData.append("name", data.name);
+    formData.append("quote", data.quote);
+    formData.append("designation", data.designation);
+    if (data.image && data.image.length > 0) {
+      formData.append("image", data.image[0]);
     }
+    mutate(formData);
   };
 
   return (
@@ -360,9 +345,9 @@ export default function TestimonialPage() {
                   <Button
                     type="submit"
                     className="w-full h-12 text-base font-medium bg-gray-900 hover:bg-gray-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={form.formState.isSubmitting}
+                    disabled={isPending}
                   >
-                    {form.formState.isSubmitting ? (
+                    {isPending ? (
                       <span className="flex items-center gap-2">
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         جاري الإرسال...
@@ -372,7 +357,7 @@ export default function TestimonialPage() {
                     )}
                   </Button>
 
-                  {form.formState.isSubmitting && (
+                  {isPending && (
                     <p className="text-center text-sm text-gray-500 mt-3 animate-pulse">
                       الرجاء الانتظار، جاري معالجة طلبك...
                     </p>
@@ -381,11 +366,6 @@ export default function TestimonialPage() {
               </form>
             </Form>
           </div>
-
-          {/* Footer Note */}
-          <p className="text-center text-sm text-gray-500 mt-6">
-            سيتم مراجعة رأيك قبل نشره على المنصة
-          </p>
         </div>
       </div>
     </main>

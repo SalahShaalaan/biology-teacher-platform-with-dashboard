@@ -1,4 +1,4 @@
-import { Student } from "@/types";
+import { Student, Blog } from "@/types";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
@@ -6,20 +6,6 @@ const API_BASE_URL =
 // ============================================================================
 // Types
 // ============================================================================
-
-export interface Blog {
-  _id: string;
-  name: string;
-  description: string;
-  grade: string;
-  unit: string;
-  lesson: string;
-  coverImage: string;
-  url?: string;
-  videoUrl?: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
 interface ApiResponse<T> {
   success: boolean;

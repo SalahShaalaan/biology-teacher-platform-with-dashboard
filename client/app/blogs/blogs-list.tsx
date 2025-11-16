@@ -1,22 +1,32 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { Blog } from "../../hooks/use-blogs";
+import { useQuery } from "@tanstack/react-query";
 import { FileText, Video, ArrowRight } from "lucide-react";
 import { useEffect, useRef, useState, useMemo } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { Blog } from "@/types";
+import { getBlogs } from "@/lib/api";
 
 gsap.registerPlugin(ScrollTrigger);
 
-export function BlogsList({ initialBlogs }: { initialBlogs: Blog[] }) {
+export function BlogsList() {
   const containerRef = useRef<HTMLDivElement>(null);
-
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
 
+  const {
+    data: blogs = [],
+    isLoading,
+    isError,
+  } = useQuery<Blog[]>({
+    queryKey: ["blogs"],
+    queryFn: getBlogs,
+  });
+
   const groupedByGrade = useMemo(() => {
-    return initialBlogs.reduce((acc, blog) => {
+    return blogs.reduce((acc, blog) => {
       const { grade } = blog;
       if (!acc[grade]) {
         acc[grade] = [];
@@ -24,7 +34,7 @@ export function BlogsList({ initialBlogs }: { initialBlogs: Blog[] }) {
       acc[grade].push(blog);
       return acc;
     }, {} as Record<string, Blog[]>);
-  }, [initialBlogs]);
+  }, [blogs]);
 
   const grades = useMemo(() => Object.keys(groupedByGrade), [groupedByGrade]);
 
@@ -100,7 +110,23 @@ export function BlogsList({ initialBlogs }: { initialBlogs: Blog[] }) {
     setSelectedUnit(newUnits.length > 0 ? newUnits[0] : null);
   };
 
-  if (initialBlogs.length === 0) {
+  if (isLoading) {
+    return (
+      <div className="text-center py-20 text-gray-500">
+        <p>جاري تحميل الشروحات...</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="text-center py-20 text-red-500">
+        <p>حدث خطأ أثناء تحميل الشروحات. يرجى المحاولة مرة أخرى.</p>
+      </div>
+    );
+  }
+
+  if (blogs.length === 0) {
     return (
       <div className="text-center py-20 text-gray-500">
         <p>لا يوجد محتوى متاح حاليًا.</p>

@@ -51,3 +51,27 @@ export interface StudentProgress {
     averageScore: number;
   }[];
 }
+
+export interface Testimonial {
+  _id: string;
+  name: string;
+  quote: string;
+  designation: "student" | "parent";
+  imageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Blog {
+  _id: string;
+  name: string;
+  description: string;
+  grade: string;
+  unit: string;
+  lesson: string;
+  type: "video" | "pdf";
+  url: string;
+  coverImage: string;
+  videoUrl?: string;
+  createdAt: string;
+}

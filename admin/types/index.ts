@@ -49,3 +49,16 @@ export type Student = {
   }[];
   classResults: ClassResult[];
 };
+
+export interface Blog {
+  _id: string;
+  name: string;
+  description: string;
+  grade: string;
+  unit: string;
+  lesson: string;
+  type: "video" | "pdf";
+  url: string;
+  coverImage: string;
+  videoUrl?: string;
+}

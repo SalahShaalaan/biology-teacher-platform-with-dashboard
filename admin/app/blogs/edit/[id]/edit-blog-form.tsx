@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -27,9 +28,10 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { UploadCloud, File as FileIcon, Loader2, X, Edit2 } from "lucide-react";
-import { type Blog, ApiError } from "@/lib/api";
-import { useUpdateBlog } from "@/hooks/use-blogs";
+import { Loader2, X, Edit2, File as FileIcon, ImageIcon } from "lucide-react";
+import { type Blog } from "@/types";
+
+import { ApiError, updateBlog } from "@/lib/api";
 
 // --- Zod Schema for Edit Form ---
 const editBlogSchema = z.object({
@@ -38,7 +40,7 @@ const editBlogSchema = z.object({
   grade: z.string().min(1, "المرحلة الدراسية مطلوبة."),
   unit: z.string().min(1, "الوحدة الدراسية مطلوبة."),
   lesson: z.string().min(1, "الدرس مطلوب."),
-  coverImage: z.any().optional(), // Optional on edit
+  coverImage: z.any().optional(),
   videoUrl: z
     .string()
     .refine(
@@ -48,31 +50,27 @@ const editBlogSchema = z.object({
       "يجب إدخال رابط فيديو صالح من YouTube."
     )
     .optional(),
-  contentFile: z.any().optional(), // Optional on edit
+  contentFile: z.any().optional(),
 });
 type BlogFormData = z.infer<typeof editBlogSchema>;
-
-// --- Helper Function ---
-const getImageUrl = (imagePath?: string): string => {
-  const fallbackUrl = "https://picsum.photos/1280/720";
-  if (!imagePath) return fallbackUrl;
-  if (imagePath.startsWith("http") || imagePath.startsWith("blob:")) {
-    return imagePath;
-  }
-  return imagePath; // Assuming it's a full URL from the server
-};
 
 // --- Main Form Component ---
 export function EditBlogForm({ initialData }: { initialData: Blog }) {
   const router = useRouter();
-  const { mutate: updateBlogMutation, isPending } = useUpdateBlog();
+  const queryClient = useQueryClient();
 
   const coverImageRef = useRef<HTMLInputElement>(null);
   const contentFileRef = useRef<HTMLInputElement>(null);
 
-  const [coverImagePreview, setCoverImagePreview] = useState<string>(() =>
-    getImageUrl(initialData.coverImage)
+  // Store the original cover image URL
+  const originalCoverImageUrl = initialData.coverImage || "";
+
+  // Initialize preview with original URL
+  const [coverImagePreview, setCoverImagePreview] = useState<string>(
+    originalCoverImageUrl
   );
+  const [imageLoadError, setImageLoadError] = useState(false);
+
   const [contentFileName, setContentFileName] = useState<string | null>(() =>
     initialData.url ? initialData.url.split("/").pop() || null : null
   );
@@ -91,8 +89,26 @@ export function EditBlogForm({ initialData }: { initialData: Blog }) {
     },
   });
 
+  const { mutate: updateBlogMutation, isPending } = useMutation({
+    mutationFn: updateBlog,
+    onSuccess: () => {
+      toast.success("تم تحديث الشرح بنجاح!");
+      queryClient.invalidateQueries({ queryKey: ["blogs"] });
+      router.push("/blogs");
+    },
+    onError: (error: ApiError) => {
+      console.error("Blog update error:", error);
+      let errorMessage = error.message || "فشل في تحديث الشرح.";
+      if (error.details?.missingFields?.length > 0) {
+        errorMessage = `حقول مطلوبة ناقصة: ${error.details.missingFields.join(
+          ", "
+        )}`;
+      }
+      toast.error(errorMessage);
+    },
+  });
+
   useEffect(() => {
-    // Clean up blob URLs to prevent memory leaks
     return () => {
       if (coverImagePreview.startsWith("blob:")) {
         URL.revokeObjectURL(coverImagePreview);
@@ -102,20 +118,15 @@ export function EditBlogForm({ initialData }: { initialData: Blog }) {
 
   const onSubmit = (data: BlogFormData) => {
     const formData = new FormData();
-
-    // Append all text fields
     formData.append("name", data.name);
     formData.append("description", data.description);
     formData.append("grade", data.grade);
     formData.append("unit", data.unit);
     formData.append("lesson", data.lesson);
 
-    // Append videoUrl, allowing it to be an empty string to clear it
     if (data.videoUrl !== undefined) {
       formData.append("videoUrl", data.videoUrl);
     }
-
-    // Append new files only if they've been selected
     if (data.coverImage?.[0]) {
       formData.append("coverImage", data.coverImage[0]);
     }
@@ -123,25 +134,7 @@ export function EditBlogForm({ initialData }: { initialData: Blog }) {
       formData.append("contentFile", data.contentFile[0]);
     }
 
-    updateBlogMutation(
-      { id: initialData._id, formData },
-      {
-        onSuccess: () => {
-          toast.success("تم تحديث الشرح بنجاح!");
-          router.push("/blogs");
-        },
-        onError: (error: ApiError) => {
-          console.error("Blog update error:", error);
-          let errorMessage = error.message || "فشل في تحديث الشرح.";
-          if (error.details?.missingFields?.length > 0) {
-            errorMessage = `حقول مطلوبة ناقصة: ${error.details.missingFields.join(
-              ", "
-            )}`;
-          }
-          toast.error(errorMessage);
-        },
-      }
-    );
+    updateBlogMutation({ id: initialData._id, formData });
   };
 
   const isNewCoverImage = coverImagePreview.startsWith("blob:");
@@ -259,25 +252,51 @@ export function EditBlogForm({ initialData }: { initialData: Blog }) {
                       <div className="relative max-w-2xl">
                         <label
                           htmlFor="coverImage-input"
-                          className="relative group aspect-video w-full rounded-lg overflow-hidden border-2 border-dashed cursor-pointer"
+                          className="relative group aspect-video w-full rounded-lg overflow-hidden border-2 border-dashed cursor-pointer bg-muted block"
                         >
-                          <Image
-                            src={coverImagePreview}
-                            alt="Cover image"
-                            fill
-                            className="object-cover"
-                          />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="secondary"
-                              className="gap-2 pointer-events-none"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                              تغيير الصورة
-                            </Button>
-                          </div>
+                          {coverImagePreview && !imageLoadError ? (
+                            <>
+                              <Image
+                                src={coverImagePreview}
+                                alt="Cover image preview"
+                                fill
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                className="object-cover"
+                                priority={false}
+                                unoptimized={
+                                  !coverImagePreview.startsWith("blob:")
+                                }
+                                onError={() => {
+                                  console.error(
+                                    "Image load error:",
+                                    coverImagePreview
+                                  );
+                                  setImageLoadError(true);
+                                }}
+                                onLoad={() => setImageLoadError(false)}
+                              />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="secondary"
+                                  className="gap-2 pointer-events-none"
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                  تغيير الصورة
+                                </Button>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center flex-col gap-2">
+                              <ImageIcon className="w-12 h-12 text-muted-foreground" />
+                              <p className="text-sm text-muted-foreground">
+                                {imageLoadError
+                                  ? "فشل تحميل الصورة - انقر لتحميل صورة جديدة"
+                                  : "انقر لتحميل صورة"}
+                              </p>
+                            </div>
+                          )}
                         </label>
                         <Input
                           id="coverImage-input"
@@ -293,6 +312,7 @@ export function EditBlogForm({ initialData }: { initialData: Blog }) {
                                 URL.revokeObjectURL(coverImagePreview);
                               }
                               setCoverImagePreview(URL.createObjectURL(file));
+                              setImageLoadError(false);
                             }
                           }}
                         />
@@ -309,9 +329,8 @@ export function EditBlogForm({ initialData }: { initialData: Blog }) {
                               if (coverImagePreview.startsWith("blob:")) {
                                 URL.revokeObjectURL(coverImagePreview);
                               }
-                              setCoverImagePreview(
-                                getImageUrl(initialData.coverImage)
-                              );
+                              setCoverImagePreview(originalCoverImageUrl);
+                              setImageLoadError(false);
                               if (coverImageRef.current)
                                 coverImageRef.current.value = "";
                             }}
