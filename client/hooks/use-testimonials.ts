@@ -18,7 +18,7 @@ interface ApiResponse {
 
 async function fetchTestimonials(): Promise<TestimonialFromApi[]> {
   const { data } = await axios.get<ApiResponse>(
-    "http://localhost:5000/api/testimonials"
+    `${process.env.NEXT_PUBLIC_API_URL}/api/testimonials`
   );
   if (data.success) {
     return data.data;

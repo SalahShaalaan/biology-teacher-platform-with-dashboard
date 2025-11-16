@@ -11,7 +11,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { topNavItems, NavItem } from "./nav-items";
 
@@ -28,6 +27,10 @@ const NavMenuItem = ({
       <SidebarMenuButton
         asChild
         isActive={isActive}
+        tooltip={{
+          children: item.label,
+          side: "left",
+        }}
         className="text-gray-600 data-[active=true]:bg-white data-[active=true]:text-gray-900 data-[active=true]:font-semibold data-[active=true]:shadow-sm justify-end pr-4 text-right group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:[&>span]:hidden group-data-[collapsible=icon]:[&>svg]:size-5 group-data-[collapsible=icon]:[&>svg]:mx-auto"
       >
         <Link href={item.href} className="flex w-full items-center gap-3">
@@ -44,7 +47,7 @@ export function MainSidebar() {
 
   return (
     <>
-      <SidebarHeader className="flex items-center justify-center p-4">
+      <SidebarHeader className="flex items-center justify-center p-4 group-data-[collapsible=icon]:hidden ">
         <h1>أكرم مسلم</h1>
       </SidebarHeader>
 
@@ -58,8 +61,6 @@ export function MainSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        <SidebarSeparator className="mx-auto bg-gray-200" />
       </SidebarContent>
     </>
   );

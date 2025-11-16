@@ -50,7 +50,9 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6 bg-[#fafafa] p-14">
-      <h1 className="text-3xl font-bold">لوحة التحكم</h1>
+      <h1 className="text-3xl font-bold text-[var(--main-text-color)]">
+        لوحة التحكم
+      </h1>
       <Suspense fallback={<DashboardLoading />}>
         <DashboardClient data={dashboardData} />
       </Suspense>

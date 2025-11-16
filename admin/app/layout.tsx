@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Cairo } from "next/font/google";
 import "./globals.css";
 import MainLayout from "@/components/layout/main-layout";
-import QueryProvider from "../providers/query-provider";
+import { Providers } from "@/providers/query-provider";
 import { Toaster } from "react-hot-toast";
 
 const mainfont = Cairo({
@@ -23,12 +23,12 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl">
       <body className={`${mainfont.className} antialiased`}>
-        <QueryProvider>
+        <Providers>
           <MainLayout>
             {children}
             <Toaster position="bottom-center" />
           </MainLayout>
-        </QueryProvider>
+        </Providers>
       </body>
     </html>
   );

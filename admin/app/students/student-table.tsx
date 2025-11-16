@@ -1,7 +1,7 @@
 "use client";
+import { useEffect, useState, useMemo } from "react";
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import {
   ColumnFiltersState,
   SortingState,
@@ -33,54 +33,45 @@ import ReusableTabs, { TabItem } from "@/components/ui/reusable-tabs";
 import { Student } from "@/types";
 import { DataTable } from "@/components/ui/data-table";
 import { getColumns } from "./columns";
+import { deleteStudent } from "@/lib/api";
 
-const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/students`;
+interface StudentTableProps {
+  initialStudents: Student[];
+}
 
-const fetchStudents = async (): Promise<Student[]> => {
-  const res = await fetch(API_URL);
-  if (!res.ok) {
-    throw new Error("Failed to fetch students");
-  }
-  const data = await res.json();
-  return data.data || [];
-};
-
-export default function StudentTable() {
+export default function StudentTable({ initialStudents }: StudentTableProps) {
   const router = useRouter();
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
   const [studentsToDelete, setStudentsToDelete] = React.useState<Student[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState("الكل");
+  const [students, setStudents] = React.useState<Student[]>(initialStudents);
 
-  const { data: students = [], refetch } = useQuery<Student[]>({
-    queryKey: ["students"],
-    queryFn: fetchStudents,
-  });
+  useEffect(() => {
+    setStudents(initialStudents);
+  }, [initialStudents]);
 
   const handleDelete = async () => {
     if (studentsToDelete.length === 0) return;
 
     await Promise.all(
-      studentsToDelete.map((student) =>
-        fetch(`${API_URL}/${student.code}`, { method: "DELETE" })
-      )
+      studentsToDelete.map((student) => deleteStudent(student.code))
     );
 
-    await refetch();
     setIsDeleteDialogOpen(false);
     setStudentsToDelete([]);
     table.resetRowSelection();
+    router.refresh();
   };
 
-  const columns = React.useMemo(() => getColumns(), []);
+  const columns = useMemo(() => getColumns(), []);
 
-  const table = useReactTable({
+  const table = useReactTable<Student>({
     data: students,
     columns,
     onSortingChange: setSorting,
@@ -99,18 +90,18 @@ export default function StudentTable() {
     },
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     table
       .getColumn("grade")
       ?.setFilterValue(activeTab === "الكل" ? "" : activeTab);
   }, [activeTab, table]);
 
-  const uniqueGrades = React.useMemo(
+  const uniqueGrades = useMemo(
     () => ["الكل", ...Array.from(new Set(students.map((s) => s.grade)))],
     [students]
   );
 
-  const tabItems: TabItem[] = React.useMemo(
+  const tabItems: TabItem[] = useMemo(
     () =>
       uniqueGrades.map((grade) => ({
         key: grade,
@@ -130,7 +121,7 @@ export default function StudentTable() {
   const numSelected = table.getFilteredSelectedRowModel().rows.length;
 
   return (
-    <div className="w-full bg-white border border-gray-200 rounded-2xl p-6 space-y-4">
+    <div className="w-full space-y-4 rounded-2xl border border-gray-200 bg-white p-6">
       <ReusableTabs
         activeTab={activeTab}
         tabItems={tabItems}
@@ -201,14 +192,14 @@ export default function StudentTable() {
           )}
         </div>
         <div className="relative">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <Input
             placeholder="ابحث بالاسم..."
             value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
               table.getColumn("name")?.setFilterValue(event.target.value)
             }
-            className="max-w-sm pl-4 pr-10 h-10 border-gray-200 shadow-none"
+            className="h-10 max-w-sm border-gray-200 pl-4 pr-10 shadow-none"
           />
         </div>
       </div>
@@ -222,7 +213,7 @@ export default function StudentTable() {
           <p>
             هل أنت متأكد أنك تريد حذف بيانات ({studentsToDelete.length}) طالب؟
           </p>
-          <div className="flex justify-end gap-2 mt-4">
+          <div className="mt-4 flex justify-end gap-2">
             <Button
               variant="outline"
               onClick={() => setIsDeleteDialogOpen(false)}

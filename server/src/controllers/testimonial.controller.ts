@@ -2,8 +2,10 @@ import { Request, Response } from "express";
 import Testimonial from "../models/testimonial.modal";
 import { put, del } from "@vercel/blob";
 
+const DEFAULT_AVATAR_URL = "/user-placehoder.png";
+
 const deleteBlob = async (url: string | undefined): Promise<void> => {
-  if (url && url.includes("vercel-storage.com")) {
+  if (url && url !== DEFAULT_AVATAR_URL && url.includes("vercel-storage.com")) {
     try {
       await del(url);
     } catch (error) {
@@ -59,14 +61,15 @@ export const addTestimonial = async (req: Request, res: Response) => {
         message: "Designation must be either 'student' or 'parent'.",
       });
     }
-
-    let imageUrl: string | undefined;
+    let imageUrl: string;
     if (imageFile) {
       const imagePath = generateBlobPath(imageFile.originalname);
       const { url } = await put(imagePath, imageFile.buffer, {
         access: "public",
       });
       imageUrl = url;
+    } else {
+      imageUrl = DEFAULT_AVATAR_URL;
     }
 
     // Create and save the new testimonial to the database
