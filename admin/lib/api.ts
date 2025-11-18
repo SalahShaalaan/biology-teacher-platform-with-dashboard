@@ -604,6 +604,7 @@
 // export { UploadProgressCallback };
 
 import { Student, Blog } from "@/types";
+import { generateUniqueFilename, uploadToBlob } from "./blob-upload";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
@@ -716,99 +717,217 @@ export async function getBlogById(id: string): Promise<Blog> {
 /**
  * Creates a new blog with file uploads and progress tracking
  */
+// export async function createBlog(
+//   formData: FormData,
+//   onProgress?: UploadProgressCallback
+// ): Promise<Blog> {
+//   const url = `${API_BASE_URL}/api/blogs`;
+//   console.log("[API] POST", url);
+//   console.log("[API] FormData contents:");
+
+//   for (const [key, value] of formData.entries()) {
+//     if (value instanceof File) {
+//       console.log(
+//         `  ${key}: [File] ${value.name} (${value.size} bytes, ${value.type})`
+//       );
+//     } else {
+//       console.log(`  ${key}:`, value);
+//     }
+//   }
+
+//   return new Promise<Blog>((resolve, reject) => {
+//     const xhr = new XMLHttpRequest();
+
+//     // Track upload progress
+//     if (onProgress) {
+//       xhr.upload.addEventListener("progress", (event) => {
+//         if (event.lengthComputable) {
+//           const percentage = Math.round((event.loaded / event.total) * 100);
+//           onProgress({
+//             loaded: event.loaded,
+//             total: event.total,
+//             percentage,
+//           });
+//         }
+//       });
+//     }
+
+//     // Handle completion
+//     xhr.addEventListener("load", () => {
+//       if (xhr.status >= 200 && xhr.status < 300) {
+//         try {
+//           const response = JSON.parse(xhr.responseText);
+//           if (response.success) {
+//             resolve(response.data);
+//           } else {
+//             reject(
+//               new ApiError(
+//                 response.message || "Upload failed",
+//                 xhr.status,
+//                 response
+//               )
+//             );
+//           }
+//         } catch (e) {
+//           reject(
+//             new ApiError("Failed to parse server response", xhr.status, {
+//               error: e,
+//             })
+//           );
+//         }
+//       } else {
+//         try {
+//           const error = JSON.parse(xhr.responseText);
+//           reject(
+//             new ApiError(
+//               error.message || `Upload failed with status ${xhr.status}`,
+//               xhr.status,
+//               error
+//             )
+//           );
+//         } catch (e) {
+//           reject(
+//             new ApiError(
+//               `Upload failed with status ${xhr.status}`,
+//               xhr.status,
+//               {}
+//             )
+//           );
+//         }
+//       }
+//     });
+
+//     // Handle errors
+//     xhr.addEventListener("error", () => {
+//       reject(new ApiError("Network error occurred during upload", 0, {}));
+//     });
+
+//     xhr.addEventListener("abort", () => {
+//       reject(new ApiError("Upload was cancelled", 0, {}));
+//     });
+
+//     // Open and send request
+//     xhr.open("POST", url, true);
+//     xhr.send(formData);
+//   });
+// }
+
 export async function createBlog(
   formData: FormData,
   onProgress?: UploadProgressCallback
 ): Promise<Blog> {
-  const url = `${API_BASE_URL}/api/blogs`;
-  console.log("[API] POST", url);
-  console.log("[API] FormData contents:");
+  try {
+    // Extract files from FormData
+    const coverImageFile = formData.get("coverImage") as File | null;
+    const contentFile = formData.get("contentFile") as File | null;
+    const videoFile = formData.get("videoFile") as File | null;
 
-  for (const [key, value] of formData.entries()) {
-    if (value instanceof File) {
-      console.log(
-        `  ${key}: [File] ${value.name} (${value.size} bytes, ${value.type})`
+    let coverImageUrl: string | undefined;
+    let contentUrl: string | undefined;
+    let uploadedVideoUrl: string | undefined;
+
+    // Upload cover image (always required, usually small)
+    if (coverImageFile) {
+      console.log("[API] Uploading cover image...");
+      const filename = generateUniqueFilename(coverImageFile.name, "covers");
+      const result = await uploadToBlob(
+        coverImageFile,
+        filename,
+        (progress) => {
+          if (onProgress) {
+            // Cover image is usually quick, allocate 10% of progress
+            onProgress({
+              loaded: progress.loaded,
+              total: progress.total,
+              percentage: Math.round(progress.percentage * 0.1),
+            });
+          }
+        }
       );
-    } else {
-      console.log(`  ${key}:`, value);
+      coverImageUrl = result.url;
     }
-  }
 
-  return new Promise<Blog>((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-
-    // Track upload progress
-    if (onProgress) {
-      xhr.upload.addEventListener("progress", (event) => {
-        if (event.lengthComputable) {
-          const percentage = Math.round((event.loaded / event.total) * 100);
+    // Upload PDF if provided
+    if (contentFile) {
+      console.log("[API] Uploading PDF...");
+      const filename = generateUniqueFilename(contentFile.name, "pdfs");
+      const result = await uploadToBlob(contentFile, filename, (progress) => {
+        if (onProgress) {
+          // PDF gets 30% of progress bar
           onProgress({
-            loaded: event.loaded,
-            total: event.total,
-            percentage,
+            loaded: progress.loaded,
+            total: progress.total,
+            percentage: 10 + Math.round(progress.percentage * 0.3),
           });
         }
       });
+      contentUrl = result.url;
     }
 
-    // Handle completion
-    xhr.addEventListener("load", () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          const response = JSON.parse(xhr.responseText);
-          if (response.success) {
-            resolve(response.data);
-          } else {
-            reject(
-              new ApiError(
-                response.message || "Upload failed",
-                xhr.status,
-                response
-              )
-            );
-          }
-        } catch (e) {
-          reject(
-            new ApiError("Failed to parse server response", xhr.status, {
-              error: e,
-            })
-          );
+    // Upload video if provided (this is the large file)
+    if (videoFile) {
+      console.log("[API] Uploading video...");
+      const filename = generateUniqueFilename(videoFile.name, "videos");
+      const result = await uploadToBlob(videoFile, filename, (progress) => {
+        if (onProgress) {
+          // Video gets 80% of progress bar
+          const baseProgress = contentFile ? 40 : 10;
+          onProgress({
+            loaded: progress.loaded,
+            total: progress.total,
+            percentage: baseProgress + Math.round(progress.percentage * 0.8),
+          });
         }
-      } else {
-        try {
-          const error = JSON.parse(xhr.responseText);
-          reject(
-            new ApiError(
-              error.message || `Upload failed with status ${xhr.status}`,
-              xhr.status,
-              error
-            )
-          );
-        } catch (e) {
-          reject(
-            new ApiError(
-              `Upload failed with status ${xhr.status}`,
-              xhr.status,
-              {}
-            )
-          );
-        }
-      }
+      });
+      uploadedVideoUrl = result.url;
+    }
+
+    // Now create the blog entry in the database via API
+    const blogData = {
+      name: formData.get("name") as string,
+      description: formData.get("description") as string,
+      grade: formData.get("grade") as string,
+      unit: formData.get("unit") as string,
+      lesson: formData.get("lesson") as string,
+      coverImage: coverImageUrl,
+      url: contentUrl,
+      videoUrl:
+        uploadedVideoUrl || (formData.get("videoUrl") as string) || undefined,
+    };
+
+    console.log("[API] Creating blog entry...");
+    const response = await fetch(`${API_BASE_URL}/api/blogs`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(blogData),
     });
 
-    // Handle errors
-    xhr.addEventListener("error", () => {
-      reject(new ApiError("Network error occurred during upload", 0, {}));
-    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new ApiError(
+        error.message || "Failed to create blog",
+        response.status,
+        error
+      );
+    }
 
-    xhr.addEventListener("abort", () => {
-      reject(new ApiError("Upload was cancelled", 0, {}));
-    });
+    const result = await response.json();
 
-    // Open and send request
-    xhr.open("POST", url, true);
-    xhr.send(formData);
-  });
+    if (onProgress) {
+      onProgress({ loaded: 100, total: 100, percentage: 100 });
+    }
+
+    return result.data;
+  } catch (error: any) {
+    console.error("[API] Error creating blog:", error);
+    throw new ApiError(
+      error.message || "Failed to create blog",
+      error.status || 500,
+      error.details || {}
+    );
+  }
 }
 
 /**
