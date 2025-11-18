@@ -182,6 +182,8 @@ const corsOptions = {
   maxAge: 86400, // 24 hours
 };
 
+app.options("*", cors(corsOptions));
+
 // Middleware
 app.use(cors(corsOptions));
 
