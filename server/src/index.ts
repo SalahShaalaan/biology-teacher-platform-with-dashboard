@@ -25,6 +25,8 @@
 //   "http://localhost:3001",
 //   "https://mr-akram-musallam-dashboard.vercel.app",
 //   "https://mr-akram-musallam-platform.vercel.app",
+//   // Add your production server URL (in case of redirects or self-requests)
+//   "https://akram-musallam-platform-server.vercel.app",
 // ];
 
 // const corsOptions = {
@@ -32,6 +34,7 @@
 //     origin: string | undefined,
 //     callback: (err: Error | null, allow?: boolean) => void
 //   ) => {
+//     // Allow requests with no origin (like mobile apps, Postman, or server-to-server)
 //     if (!origin) return callback(null, true);
 
 //     if (allowedOrigins.indexOf(origin) !== -1) {
@@ -44,12 +47,18 @@
 //   credentials: true,
 //   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
 //   allowedHeaders: ["Content-Type", "Authorization"],
+//   // Important for file uploads
+//   maxAge: 86400, // 24 hours
 // };
+
+// app.options("*", cors(corsOptions));
 
 // // Middleware
 // app.use(cors(corsOptions));
-// app.use(express.json({ limit: "50mb" }));
-// app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+// // Important: Increase limits for video uploads
+// app.use(express.json({ limit: "600mb" }));
+// app.use(express.urlencoded({ limit: "600mb", extended: true }));
 
 // // Static files
 // app.use(express.static(path.join(__dirname, "..", "public")));
@@ -57,6 +66,7 @@
 // // Request logging middleware (for debugging)
 // app.use((req, res, next) => {
 //   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+//   console.log(`  Origin: ${req.headers.origin || "no origin"}`);
 //   if (req.method === "POST" || req.method === "PUT") {
 //     console.log("  Body keys:", Object.keys(req.body));
 //     if (req.files) {
@@ -77,13 +87,22 @@
 //     if (err.type === "entity.too.large") {
 //       res.status(413).json({
 //         success: false,
-//         message: "File too large. Maximum size is 20MB per file.",
+//         message: "File too large. Maximum size is 600MB per file.",
 //       });
 //     } else {
 //       next(err);
 //     }
 //   }
 // );
+
+// // Health check endpoint (for monitoring)
+// app.get("/api/health", (req, res) => {
+//   res.status(200).json({
+//     success: true,
+//     message: "Server is healthy",
+//     timestamp: new Date().toISOString(),
+//   });
+// });
 
 // // Routes
 // app.use("/api/upload", blobRoutes);
@@ -124,6 +143,8 @@
 //   }
 // });
 // console.log("========================\n");
+
+// console.log("Allowed CORS Origins:", allowedOrigins);
 
 // app.listen(PORT, () => {
 //   console.log(`Server is running on port ${PORT}`);
@@ -166,9 +187,7 @@ const corsOptions = {
     callback: (err: Error | null, allow?: boolean) => void
   ) => {
     // Allow requests with no origin (like mobile apps, Postman, or server-to-server)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
       console.warn(`CORS blocked origin: ${origin}`);
@@ -177,11 +196,12 @@ const corsOptions = {
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization", "x-filename"], // Add x-filename here
   // Important for file uploads
   maxAge: 86400, // 24 hours
 };
 
+// Handle preflight requests for all routes
 app.options("*", cors(corsOptions));
 
 // Middleware
