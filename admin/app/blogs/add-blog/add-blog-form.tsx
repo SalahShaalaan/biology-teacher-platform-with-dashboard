@@ -39,7 +39,7 @@ import {
 } from "lucide-react";
 import { blogSchema, BlogFormData } from "@/lib/validators";
 import {
-  createBlog,
+  createBlogWithUploads,
   formatBytes,
   formatTime,
   calculateEstimatedTime,
@@ -129,6 +129,125 @@ export function AddBlogForm() {
     }
   }, [contentType, form]);
 
+  // const onSubmit = async (data: BlogFormData) => {
+  //   try {
+  //     const formData = new FormData();
+
+  //     formData.append("name", data.name);
+  //     formData.append("description", data.description);
+  //     formData.append("grade", data.grade);
+  //     formData.append("unit", data.unit);
+  //     formData.append("lesson", data.lesson);
+
+  //     // Calculate total file size
+  //     let totalSize = 0;
+  //     if (data.coverImage?.[0]) {
+  //       formData.append("coverImage", data.coverImage[0]);
+  //       totalSize += data.coverImage[0].size;
+  //     }
+
+  //     // Append content based on selected type
+  //     if (contentType === "video-url" && data.videoUrl) {
+  //       formData.append("videoUrl", data.videoUrl);
+  //     } else if (contentType === "video-file" && data.videoFile?.[0]) {
+  //       formData.append("videoFile", data.videoFile[0]);
+  //       totalSize += data.videoFile[0].size;
+  //     } else if (contentType === "pdf" && data.contentFile?.[0]) {
+  //       formData.append("contentFile", data.contentFile[0]);
+  //       totalSize += data.contentFile[0].size;
+  //     }
+
+  //     const estimatedTime = calculateEstimatedTime(totalSize);
+
+  //     // Set initial upload state
+  //     setUploadState({
+  //       isUploading: true,
+  //       progress: 0,
+  //       uploadedBytes: 0,
+  //       totalBytes: totalSize,
+  //       estimatedTime,
+  //       phase: "preparing",
+  //     });
+
+  //     // Small delay for preparing phase
+  //     await new Promise((resolve) => setTimeout(resolve, 300));
+
+  //     setUploadState((prev) => ({ ...prev, phase: "uploading", progress: 5 }));
+
+  //     // Upload with progress tracking
+  //     await createBlog(formData, ({ loaded, total, percentage }) => {
+  //       const remainingBytes = total - loaded;
+  //       const remainingTime = Math.ceil(remainingBytes / (1024 * 1024)); // Assume 1MB/s
+
+  //       setUploadState({
+  //         isUploading: true,
+  //         progress: Math.min(percentage * 0.9, 90), // Reserve 10% for processing
+  //         uploadedBytes: loaded,
+  //         totalBytes: total,
+  //         estimatedTime: Math.max(remainingTime, 1),
+  //         phase: "uploading",
+  //       });
+  //     });
+
+  //     // Processing phase
+  //     setUploadState((prev) => ({
+  //       ...prev,
+  //       phase: "processing",
+  //       progress: 95,
+  //       estimatedTime: 1,
+  //     }));
+
+  //     await new Promise((resolve) => setTimeout(resolve, 500));
+
+  //     // Complete
+  //     setUploadState({
+  //       isUploading: false,
+  //       progress: 100,
+  //       uploadedBytes: totalSize,
+  //       totalBytes: totalSize,
+  //       estimatedTime: 0,
+  //       phase: "complete",
+  //     });
+
+  //     toast.success("تم إنشاء الشرح بنجاح!");
+  //     queryClient.invalidateQueries({ queryKey: ["blogs"] });
+
+  //     // Redirect after a short delay
+  //     setTimeout(() => {
+  //       router.push("/blogs");
+  //     }, 800);
+  //   } catch (error: any) {
+  //     console.error("Blog creation error:", error);
+
+  //     setUploadState({
+  //       isUploading: false,
+  //       progress: 0,
+  //       uploadedBytes: 0,
+  //       totalBytes: 0,
+  //       estimatedTime: 0,
+  //       phase: "error",
+  //       error: error.message || "حدث خطأ أثناء الرفع",
+  //     });
+
+  //     let errorMessage = error.message || "حدث خطأ غير متوقع.";
+  //     if (error.details?.missingFields?.length > 0) {
+  //       const fieldMap: Record<string, string> = {
+  //         name: "عنوان الشرح",
+  //         description: "الوصف",
+  //         grade: "المرحلة الدراسية",
+  //         unit: "الوحدة",
+  //         lesson: "الدرس",
+  //         coverImage: "الصورة المصغرة",
+  //       };
+  //       const missingArabic = error.details.missingFields
+  //         .map((field: string) => fieldMap[field] || field)
+  //         .join("، ");
+  //       errorMessage = `حقول مطلوبة ناقصة: ${missingArabic}`;
+  //     }
+  //     toast.error(errorMessage);
+  //   }
+  // };
+
   const onSubmit = async (data: BlogFormData) => {
     try {
       const formData = new FormData();
@@ -139,17 +258,13 @@ export function AddBlogForm() {
       formData.append("unit", data.unit);
       formData.append("lesson", data.lesson);
 
-      // Calculate total file size
       let totalSize = 0;
       if (data.coverImage?.[0]) {
         formData.append("coverImage", data.coverImage[0]);
         totalSize += data.coverImage[0].size;
       }
 
-      // Append content based on selected type
-      if (contentType === "video-url" && data.videoUrl) {
-        formData.append("videoUrl", data.videoUrl);
-      } else if (contentType === "video-file" && data.videoFile?.[0]) {
+      if (contentType === "video-file" && data.videoFile?.[0]) {
         formData.append("videoFile", data.videoFile[0]);
         totalSize += data.videoFile[0].size;
       } else if (contentType === "pdf" && data.contentFile?.[0]) {
@@ -159,7 +274,6 @@ export function AddBlogForm() {
 
       const estimatedTime = calculateEstimatedTime(totalSize);
 
-      // Set initial upload state
       setUploadState({
         isUploading: true,
         progress: 0,
@@ -169,37 +283,30 @@ export function AddBlogForm() {
         phase: "preparing",
       });
 
-      // Small delay for preparing phase
       await new Promise((resolve) => setTimeout(resolve, 300));
 
       setUploadState((prev) => ({ ...prev, phase: "uploading", progress: 5 }));
 
-      // Upload with progress tracking
-      await createBlog(formData, ({ loaded, total, percentage }) => {
-        const remainingBytes = total - loaded;
-        const remainingTime = Math.ceil(remainingBytes / (1024 * 1024)); // Assume 1MB/s
-
+      // Call the new upload orchestrator function
+      await createBlogWithUploads(formData, ({ loaded, total, percentage }) => {
         setUploadState({
           isUploading: true,
-          progress: Math.min(percentage * 0.9, 90), // Reserve 10% for processing
+          progress: Math.min(percentage, 95), // Reserve 5% for final processing
           uploadedBytes: loaded,
           totalBytes: total,
-          estimatedTime: Math.max(remainingTime, 1),
+          estimatedTime: calculateEstimatedTime(total - loaded),
           phase: "uploading",
         });
       });
 
-      // Processing phase
       setUploadState((prev) => ({
         ...prev,
         phase: "processing",
-        progress: 95,
-        estimatedTime: 1,
+        progress: 98,
       }));
 
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      // Complete
       setUploadState({
         isUploading: false,
         progress: 100,
@@ -212,7 +319,6 @@ export function AddBlogForm() {
       toast.success("تم إنشاء الشرح بنجاح!");
       queryClient.invalidateQueries({ queryKey: ["blogs"] });
 
-      // Redirect after a short delay
       setTimeout(() => {
         router.push("/blogs");
       }, 800);
@@ -229,22 +335,7 @@ export function AddBlogForm() {
         error: error.message || "حدث خطأ أثناء الرفع",
       });
 
-      let errorMessage = error.message || "حدث خطأ غير متوقع.";
-      if (error.details?.missingFields?.length > 0) {
-        const fieldMap: Record<string, string> = {
-          name: "عنوان الشرح",
-          description: "الوصف",
-          grade: "المرحلة الدراسية",
-          unit: "الوحدة",
-          lesson: "الدرس",
-          coverImage: "الصورة المصغرة",
-        };
-        const missingArabic = error.details.missingFields
-          .map((field: string) => fieldMap[field] || field)
-          .join("، ");
-        errorMessage = `حقول مطلوبة ناقصة: ${missingArabic}`;
-      }
-      toast.error(errorMessage);
+      toast.error(error.message || "حدث خطأ غير متوقع.");
     }
   };
 
