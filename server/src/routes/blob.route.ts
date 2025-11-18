@@ -57,10 +57,10 @@ import { Router } from "express";
 
 const router = Router();
 
-// This endpoint is now a POST request that receives the desired pathname
-// and returns a presigned URL for the client to upload to.
+// This endpoint receives the desired pathname and contentType from the client
+// and returns a presigned URL for the client to upload the file to.
 router.post("/", async (req, res) => {
-  const { pathname } = req.body;
+  const { pathname, contentType } = req.body;
 
   if (!pathname || typeof pathname !== "string") {
     return res.status(400).json({
@@ -69,11 +69,20 @@ router.post("/", async (req, res) => {
     });
   }
 
+  // The Vercel Blob API requires the content type to generate a presigned URL
+  if (!contentType || typeof contentType !== "string") {
+    return res.status(400).json({
+      success: false,
+      message: "A 'contentType' body field is required",
+    });
+  }
+
   try {
     // The `put` function can generate a presigned URL when the body is `null`.
     const blob = await put(pathname, null as any, {
       access: "public",
       addRandomSuffix: false, // We use a unique filename on the client
+      contentType, // Pass the content type to Vercel
     });
 
     return res.status(200).json(blob);
