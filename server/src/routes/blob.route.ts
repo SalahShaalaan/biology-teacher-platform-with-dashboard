@@ -59,7 +59,7 @@ const router = Router();
 
 // This endpoint is now a POST request that receives the desired pathname
 // and returns a presigned URL for the client to upload to.
-router.post("/upload", async (req, res) => {
+router.post("/", async (req, res) => {
   const { pathname } = req.body;
 
   if (!pathname || typeof pathname !== "string") {
