@@ -6,8 +6,6 @@
 //   Clock,
 //   GraduationCap,
 //   BookOpen,
-//   Share2,
-//   Bookmark,
 //   ChevronRight,
 //   PlayCircle,
 //   Calendar,
@@ -211,6 +209,12 @@
 //                 )}
 //               </article>
 //             </div>
+
+//             {pdfUrl && (
+//               <div className="mt-8">
+//                 <PdfViewer url={pdfUrl} />
+//               </div>
+//             )}
 //           </main>
 
 //           {/* Sidebar */}
@@ -231,7 +235,7 @@
 //                 </div>
 
 //                 <div className="p-6 space-y-4">
-//                   <div className="flex items-center justify-between py-3 border-b border-gray-100">
+//                   <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-slate-800">
 //                     <span className="text-sm text-gray-600 dark:text-gray-400">
 //                       الصف الدراسي
 //                     </span>
@@ -240,7 +244,7 @@
 //                     </span>
 //                   </div>
 
-//                   <div className="flex items-center justify-between py-3 border-b border-gray-100">
+//                   <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-slate-800">
 //                     <span className="text-sm text-gray-600 dark:text-gray-400">
 //                       الوحدة
 //                     </span>
@@ -249,7 +253,7 @@
 //                     </span>
 //                   </div>
 
-//                   <div className="flex items-center justify-between py-3 border-b border-gray-100">
+//                   <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-slate-800">
 //                     <span className="text-sm text-gray-600 dark:text-gray-400">
 //                       الدرس
 //                     </span>
@@ -272,8 +276,25 @@
 //                 </div>
 //               </div>
 
-//               {/* PDF Viewer */}
-//               {pdfUrl && <PdfViewer url={pdfUrl} />}
+//               {/* Quick Access Note */}
+//               {pdfUrl && (
+//                 <div className="bg-gradient-to-br from-[#295638]/10 to-[#1f4229]/10 dark:from-[#295638]/20 dark:to-[#1f4229]/20 rounded-2xl p-6 border-2 border-[#295638]/20 dark:border-[#295638]/30">
+//                   <div className="flex items-start gap-3">
+//                     <div className="bg-[#295638] rounded-lg p-2 mt-1">
+//                       <BookOpen className="w-5 h-5 text-white" />
+//                     </div>
+//                     <div>
+//                       <h4 className="font-bold text-gray-900 dark:text-gray-100 mb-2">
+//                         مرفقات الدرس
+//                       </h4>
+//                       <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+//                         يمكنك الاطلاع على ملف PDF التفاعلي أسفل المحتوى مباشرة
+//                         للحصول على المزيد من التفاصيل والشروحات.
+//                       </p>
+//                     </div>
+//                   </div>
+//                 </div>
+//               )}
 //             </div>
 //           </aside>
 //         </div>
@@ -305,12 +326,26 @@ interface BlogPageProps {
 }
 
 // --- Helper Functions ---
+
+/**
+ * Extract YouTube video ID from URL
+ */
 function getYoutubeVideoId(url: string): string | null {
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
   const match = url.match(regExp);
   return match && match[2].length === 11 ? match[2] : null;
 }
 
+/**
+ * Check if URL is a YouTube URL
+ */
+function isYouTubeUrl(url: string): boolean {
+  return url.includes("youtube.com") || url.includes("youtu.be");
+}
+
+/**
+ * Normalize image URL to handle both local and external paths
+ */
 const normalizeImageUrl = (imagePath: string | undefined | null): string => {
   const fallback = "https://picsum.photos/1200/675";
   if (!imagePath) return fallback;
@@ -355,9 +390,23 @@ export default async function BlogPage({ params }: BlogPageProps) {
     notFound();
   }
 
-  const videoId = blog.videoUrl ? getYoutubeVideoId(blog.videoUrl) : null;
+  // Determine video type and source
+  const hasVideo = !!blog.videoUrl;
+  const isYoutubeVideo = hasVideo && isYouTubeUrl(blog.videoUrl!);
+  const videoId = isYoutubeVideo ? getYoutubeVideoId(blog.videoUrl!) : null;
+  const uploadedVideoUrl = hasVideo && !isYoutubeVideo ? blog.videoUrl : null;
+
   const pdfUrl = blog.url;
   const coverImageUrl = normalizeImageUrl(blog.coverImage);
+
+  // Log for debugging
+  console.log("[BlogPage] Video info:", {
+    hasVideo,
+    isYoutubeVideo,
+    videoId,
+    uploadedVideoUrl,
+    originalVideoUrl: blog.videoUrl,
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
@@ -440,7 +489,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
           {/* Main Content Area */}
           <main className="lg:col-span-8">
             {/* Content Card */}
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 overflow-hidden shadow-xl">
               {/* Action Bar */}
               <div className="border-b border-gray-100 dark:border-slate-800 p-4 sm:p-6">
                 <div className="flex items-center justify-between">
@@ -472,7 +521,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
                 </div>
 
                 {/* Video Section */}
-                {videoId && (
+                {hasVideo && (
                   <div className="my-12">
                     <div className="relative group">
                       {/* Video Label */}
@@ -481,15 +530,50 @@ export default async function BlogPage({ params }: BlogPageProps) {
                         <span>شرح الدرس بالفيديو</span>
                       </div>
 
-                      <div className="relative rounded-2xl overflow-hidden border-4 border-gray-200 dark:border-slate-700 aspect-video">
-                        <iframe
-                          className="w-full h-full"
-                          src={`https://www.youtube.com/embed/${videoId}`}
-                          title="YouTube video player"
-                          frameBorder="0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                        />
+                      <div className="relative rounded-2xl overflow-hidden border-4 border-gray-200 dark:border-slate-700 aspect-video shadow-2xl">
+                        {/* YouTube Video */}
+                        {isYoutubeVideo && videoId ? (
+                          <iframe
+                            className="w-full h-full"
+                            src={`https://www.youtube.com/embed/${videoId}`}
+                            title="YouTube video player"
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowFullScreen
+                          />
+                        ) : null}
+
+                        {/* Uploaded Video */}
+                        {uploadedVideoUrl && !isYoutubeVideo ? (
+                          <video
+                            src={uploadedVideoUrl}
+                            controls
+                            controlsList="nodownload"
+                            className="w-full h-full object-contain bg-black"
+                            preload="metadata"
+                          >
+                            <source src={uploadedVideoUrl} type="video/mp4" />
+                            <source src={uploadedVideoUrl} type="video/webm" />
+                            <source
+                              src={uploadedVideoUrl}
+                              type="video/quicktime"
+                            />
+                            متصفحك لا يدعم تشغيل الفيديو. يرجى تحديث المتصفح أو
+                            استخدام متصفح آخر.
+                          </video>
+                        ) : null}
+
+                        {/* Loading State */}
+                        {!videoId && !uploadedVideoUrl && hasVideo && (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-slate-800">
+                            <div className="text-center">
+                              <PlayCircle className="w-16 h-16 mx-auto mb-4 text-gray-400 animate-pulse" />
+                              <p className="text-gray-600 dark:text-gray-400">
+                                جاري تحميل الفيديو...
+                              </p>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -497,6 +581,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
               </article>
             </div>
 
+            {/* PDF Viewer */}
             {pdfUrl && (
               <div className="mt-8">
                 <PdfViewer url={pdfUrl} />
@@ -509,7 +594,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
             {/* Sticky Container */}
             <div className="lg:sticky lg:top-6 space-y-6">
               {/* Lesson Info Card */}
-              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 overflow-hidden">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 overflow-hidden shadow-xl">
                 <div className="bg-gradient-to-br from-[#295638] to-[#1f4229] p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
@@ -564,19 +649,26 @@ export default async function BlogPage({ params }: BlogPageProps) {
               </div>
 
               {/* Quick Access Note */}
-              {pdfUrl && (
+              {(pdfUrl || hasVideo) && (
                 <div className="bg-gradient-to-br from-[#295638]/10 to-[#1f4229]/10 dark:from-[#295638]/20 dark:to-[#1f4229]/20 rounded-2xl p-6 border-2 border-[#295638]/20 dark:border-[#295638]/30">
                   <div className="flex items-start gap-3">
                     <div className="bg-[#295638] rounded-lg p-2 mt-1">
-                      <BookOpen className="w-5 h-5 text-white" />
+                      {hasVideo ? (
+                        <PlayCircle className="w-5 h-5 text-white" />
+                      ) : (
+                        <BookOpen className="w-5 h-5 text-white" />
+                      )}
                     </div>
                     <div>
                       <h4 className="font-bold text-gray-900 dark:text-gray-100 mb-2">
                         مرفقات الدرس
                       </h4>
                       <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                        يمكنك الاطلاع على ملف PDF التفاعلي أسفل المحتوى مباشرة
-                        للحصول على المزيد من التفاصيل والشروحات.
+                        {hasVideo && pdfUrl
+                          ? "يمكنك مشاهدة الفيديو والاطلاع على ملف PDF التفاعلي للحصول على شرح كامل."
+                          : hasVideo
+                          ? "يمكنك مشاهدة شرح الدرس بالفيديو أعلاه."
+                          : "يمكنك الاطلاع على ملف PDF التفاعلي أسفل المحتوى."}
                       </p>
                     </div>
                   </div>

@@ -3,21 +3,24 @@ import { Request } from "express";
 
 // File size limits (in bytes)
 const FILE_SIZE_LIMITS = {
-  IMAGE: 20 * 1024 * 1024, // 20MB (increased from 10MB)
-  PDF: 20 * 1024 * 1024, // 20MB
-  MAX: 20 * 1024 * 1024, // 20MB (overall max)
+  IMAGE: 20 * 1024 * 1024, // 20MB
+  PDF: 50 * 1024 * 1024, // 50MB
+  VIDEO: 500 * 1024 * 1024, // 500MB
+  MAX: 500 * 1024 * 1024, // 500MB (overall max for video support)
 } as const;
 
 // Allowed MIME types
 const ALLOWED_MIME_TYPES = {
   IMAGES: ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"],
   PDF: ["application/pdf"],
+  VIDEOS: ["video/mp4", "video/webm", "video/quicktime"], // Added video support
 } as const;
 
 // Combine all allowed types
 const ALL_ALLOWED_TYPES = [
   ...ALLOWED_MIME_TYPES.IMAGES,
   ...ALLOWED_MIME_TYPES.PDF,
+  ...ALLOWED_MIME_TYPES.VIDEOS, // Added video types
 ] as const;
 
 /**
@@ -37,7 +40,7 @@ const fileFilter = (
   } else {
     callback(
       new Error(
-        `Invalid file type: ${file.mimetype}. Only images (JPEG, PNG, WebP, GIF) and PDF files are allowed.`
+        `Invalid file type: ${file.mimetype}. Only images (JPEG, PNG, WebP, GIF), videos (MP4, WebM, MOV), and PDF files are allowed.`
       )
     );
   }
@@ -67,7 +70,7 @@ export const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: FILE_SIZE_LIMITS.MAX,
+    fileSize: FILE_SIZE_LIMITS.MAX, // 500MB to support video files
     files: 10, // Maximum number of files
     fields: 20, // Maximum number of non-file fields
   },

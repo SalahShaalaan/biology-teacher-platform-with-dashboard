@@ -9,9 +9,9 @@ export interface IBlog extends Document {
   type: "video" | "pdf";
   coverImage: string;
   url?: string;
-  videoUrl?: string;
   createdAt: Date;
   updatedAt: Date;
+  videoUrl: string;
 }
 
 const BlogSchema: Schema = new Schema(
@@ -23,8 +23,8 @@ const BlogSchema: Schema = new Schema(
     lesson: { type: String, required: true },
     type: { type: String, enum: ["video", "pdf"], required: true },
     coverImage: { type: String, required: true },
-    url: { type: String, required: false }, // Specifically for the PDF URL
-    videoUrl: { type: String, required: false }, // Specifically for the Video URL
+    url: { type: String, required: false },
+    videoUrl: { type: String, required: false },
   },
   { timestamps: true }
 );

@@ -1,486 +1,3 @@
-// import * as z from "zod";
-
-// export const blogSchema = z.object({
-//   name: z.string().min(1, "عنوان الشرح مطلوب."),
-//   description: z.string().min(1, "وصف الشرح مطلوب."),
-//   grade: z.string().min(1, "المرحلة الدراسية مطلوبة."),
-//   unit: z.string().min(1, "الوحدة الدراسية مطلوبة."),
-//   lesson: z.string().min(1, "الدرس مطلوب."),
-//   coverImage: z
-//     .any()
-//     .refine((files) => files?.length === 1, "الصورة المصغرة مطلوبة."),
-//   videoUrl: z
-//     .string()
-//     .refine(
-//       (url) =>
-//         !url ||
-//         /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/.test(url),
-//       "يجب إدخال رابط فيديو صالح من YouTube."
-//     )
-//     .optional(),
-//   contentFile: z.any().optional(),
-// });
-
-// export type BlogFormData = z.infer<typeof blogSchema>;
-
-// const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-// const ACCEPTED_IMAGE_TYPES = [
-//   "image/jpeg",
-//   "image/jpg",
-//   "image/png",
-//   "image/webp",
-// ];
-
-// export const studentSchema = z.object({
-//   name: z.string().min(1, { message: "الاسم مطلوب" }),
-//   age: z.preprocess(
-//     (val) => (String(val).trim() === "" ? undefined : Number(val)),
-//     z
-//       .number({
-//         required_error: "العمر مطلوب",
-//         invalid_type_error: "يجب أن يكون العمر رقمًا",
-//       })
-//       .positive({ message: "يجب أن يكون العمر رقمًا موجبًا" })
-//   ),
-//   gender: z.enum(["ذكر", "أنثى"], {
-//     required_error: "الجنس مطلوب",
-//     invalid_type_error: "الرجاء اختيار الجنس",
-//   }),
-//   grade: z
-//     .string({
-//       required_error: "المرحلة الدراسية مطلوبة",
-//       invalid_type_error: "الرجاء اختيار المرحلة الدراسية",
-//     })
-//     .min(1, {
-//       message: "الرجاء اختيار المرحلة الدراسية",
-//     }),
-//   phoneNumber: z.string().min(1, { message: "رقم الهاتف مطلوب" }),
-//   profile_image: z
-//     .any()
-
-//     .refine(
-//       (files) => !files || files.length === 0 || files[0].size <= MAX_FILE_SIZE,
-//       `يجب أن يكون حجم الصورة 5 ميجابايت أو أقل.`
-//     )
-//     .refine(
-//       (files) =>
-//         !files ||
-//         files.length === 0 ||
-//         ACCEPTED_IMAGE_TYPES.includes(files[0]?.type),
-//       "الصيغ المدعومة هي: .jpg, .jpeg, .png, .webp"
-//     )
-//     .optional(),
-// });
-
-// export type StudentFormValues = z.infer<typeof studentSchema>;
-
-// import * as z from "zod";
-
-// // ============================================
-// // Constants & Helpers
-// // ============================================
-
-// const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-// const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB for images
-// const ACCEPTED_IMAGE_TYPES = [
-//   "image/jpeg",
-//   "image/jpg",
-//   "image/png",
-//   "image/webp",
-// ] as const;
-
-// const ACCEPTED_DOCUMENT_TYPES = [
-//   "application/pdf",
-//   "application/msword",
-//   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-// ] as const;
-
-// // YouTube URL regex pattern
-// const YOUTUBE_URL_PATTERN =
-//   /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/;
-
-// // ============================================
-// // Custom Error Messages
-// // ============================================
-
-// const ERROR_MESSAGES = {
-//   required: {
-//     name: "الاسم مطلوب",
-//     description: "الوصف مطلوب",
-//     title: "العنوان مطلوب",
-//     grade: "المرحلة الدراسية مطلوبة",
-//     unit: "الوحدة الدراسية مطلوبة",
-//     lesson: "الدرس مطلوب",
-//     age: "العمر مطلوب",
-//     gender: "الجنس مطلوب",
-//     phoneNumber: "رقم الهاتف مطلوب",
-//     coverImage: "الصورة المصغرة مطلوبة",
-//   },
-//   invalid: {
-//     age: "يجب أن يكون العمر رقمًا صحيحًا",
-//     agePositive: "يجب أن يكون العمر أكبر من صفر",
-//     ageRange: "يجب أن يكون العمر بين 1 و 100",
-//     gender: "الرجاء اختيار الجنس الصحيح",
-//     phoneNumber: "رقم الهاتف غير صحيح",
-//     youtubeUrl: "يجب إدخال رابط فيديو صالح من YouTube",
-//     imageType: "الصيغ المدعومة هي: .jpg, .jpeg, .png, .webp",
-//     imageSize: "يجب أن يكون حجم الصورة 5 ميجابايت أو أقل",
-//     documentType: "الصيغ المدعومة هي: .pdf, .doc, .docx",
-//     documentSize: "يجب أن يكون حجم الملف 5 ميجابايت أو أقل",
-//   },
-// } as const;
-
-// // ============================================
-// // Reusable Schema Validators
-// // ============================================
-
-// // File validation helper
-// const createFileValidator = (
-//   acceptedTypes: readonly string[],
-//   maxSize: number,
-//   errorMessages: { type: string; size: string }
-// ) => {
-//   return z
-//     .any()
-//     .refine(
-//       (files) => !files || files.length === 0 || files[0]?.size <= maxSize,
-//       errorMessages.size
-//     )
-//     .refine(
-//       (files) =>
-//         !files || files.length === 0 || acceptedTypes.includes(files[0]?.type),
-//       errorMessages.type
-//     );
-// };
-
-// // Optional file validator
-// const optionalImageValidator = createFileValidator(
-//   ACCEPTED_IMAGE_TYPES,
-//   MAX_IMAGE_SIZE,
-//   {
-//     type: ERROR_MESSAGES.invalid.imageType,
-//     size: ERROR_MESSAGES.invalid.imageSize,
-//   }
-// ).optional();
-
-// // Required file validator
-// const requiredImageValidator = z
-//   .any()
-//   .refine((files) => files?.length === 1, ERROR_MESSAGES.required.coverImage)
-//   .refine(
-//     (files) => files?.[0]?.size <= MAX_IMAGE_SIZE,
-//     ERROR_MESSAGES.invalid.imageSize
-//   )
-//   .refine(
-//     (files) => ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
-//     ERROR_MESSAGES.invalid.imageType
-//   );
-
-// // YouTube URL validator
-// const youtubeUrlValidator = z
-//   .string()
-//   .trim()
-//   .refine(
-//     (url) => !url || YOUTUBE_URL_PATTERN.test(url),
-//     ERROR_MESSAGES.invalid.youtubeUrl
-//   )
-//   .optional()
-//   .or(z.literal(""));
-
-// // Phone number validator (you can customize the pattern)
-// const phoneNumberValidator = z
-//   .string()
-//   .min(1, ERROR_MESSAGES.required.phoneNumber)
-//   .trim()
-//   .regex(/^[\d\s\-\+\(\)]+$/, ERROR_MESSAGES.invalid.phoneNumber);
-
-// // Age validator with preprocessing
-// const ageValidator = z.preprocess(
-//   (val) => {
-//     // Convert to number, handling empty strings
-//     if (val === "" || val === null || val === undefined) {
-//       return undefined;
-//     }
-//     const num = Number(val);
-//     return isNaN(num) ? undefined : num;
-//   },
-//   z
-//     .number({
-//       required_error: ERROR_MESSAGES.required.age,
-//       invalid_type_error: ERROR_MESSAGES.invalid.age,
-//     })
-//     .positive(ERROR_MESSAGES.invalid.agePositive)
-//     .min(1, ERROR_MESSAGES.invalid.ageRange)
-//     .max(100, ERROR_MESSAGES.invalid.ageRange)
-// );
-
-// // ============================================
-// // Blog/Content Schema
-// // ============================================
-
-// export const blogSchema = z.object({
-//   name: z
-//     .string({
-//       required_error: ERROR_MESSAGES.required.title,
-//       invalid_type_error: ERROR_MESSAGES.required.title,
-//     })
-//     .min(1, ERROR_MESSAGES.required.title)
-//     .trim(),
-
-//   description: z
-//     .string({
-//       required_error: ERROR_MESSAGES.required.description,
-//       invalid_type_error: ERROR_MESSAGES.required.description,
-//     })
-//     .min(1, ERROR_MESSAGES.required.description)
-//     .trim(),
-
-//   grade: z
-//     .string({
-//       required_error: ERROR_MESSAGES.required.grade,
-//       invalid_type_error: ERROR_MESSAGES.required.grade,
-//     })
-//     .min(1, ERROR_MESSAGES.required.grade)
-//     .trim(),
-
-//   unit: z
-//     .string({
-//       required_error: ERROR_MESSAGES.required.unit,
-//       invalid_type_error: ERROR_MESSAGES.required.unit,
-//     })
-//     .min(1, ERROR_MESSAGES.required.unit)
-//     .trim(),
-
-//   lesson: z
-//     .string({
-//       required_error: ERROR_MESSAGES.required.lesson,
-//       invalid_type_error: ERROR_MESSAGES.required.lesson,
-//     })
-//     .min(1, ERROR_MESSAGES.required.lesson)
-//     .trim(),
-
-//   coverImage: requiredImageValidator,
-
-//   videoUrl: youtubeUrlValidator,
-
-//   contentFile: createFileValidator(ACCEPTED_DOCUMENT_TYPES, MAX_FILE_SIZE, {
-//     type: ERROR_MESSAGES.invalid.documentType,
-//     size: ERROR_MESSAGES.invalid.documentSize,
-//   }).optional(),
-// });
-
-// export type BlogFormData = z.infer<typeof blogSchema>;
-
-// // ============================================
-// // Student Schema
-// // ============================================
-
-// export const studentSchema = z.object({
-//   name: z
-//     .string({
-//       required_error: ERROR_MESSAGES.required.name,
-//       invalid_type_error: ERROR_MESSAGES.required.name,
-//     })
-//     .min(1, ERROR_MESSAGES.required.name)
-//     .trim()
-//     .max(100, "الاسم طويل جدًا"),
-
-//   age: ageValidator,
-
-//   gender: z.enum(["ذكر", "أنثى"], {
-//     errorMap: () => ({ message: ERROR_MESSAGES.required.gender }),
-//   }),
-
-//   grade: z
-//     .string({
-//       required_error: ERROR_MESSAGES.required.grade,
-//       invalid_type_error: ERROR_MESSAGES.required.grade,
-//     })
-//     .min(1, ERROR_MESSAGES.required.grade)
-//     .trim(),
-
-//   phoneNumber: phoneNumberValidator,
-
-//   profile_image: optionalImageValidator,
-// });
-
-// export type StudentFormValues = z.infer<typeof studentSchema>;
-
-// // ============================================
-// // Additional Validation Schemas
-// // ============================================
-
-// // Student Update Schema (all fields optional except id)
-// export const studentUpdateSchema = studentSchema.partial().extend({
-//   code: z.string().min(1, "كود الطالب مطلوب"),
-// });
-
-// export type StudentUpdateFormValues = z.infer<typeof studentUpdateSchema>;
-
-// // Grade Schema
-// export const gradeSchema = z.object({
-//   name: z
-//     .string()
-//     .min(1, "اسم المرحلة الدراسية مطلوب")
-//     .trim()
-//     .max(50, "اسم المرحلة طويل جدًا"),
-// });
-
-// export type GradeFormValues = z.infer<typeof gradeSchema>;
-
-// // Unit Schema
-// export const unitSchema = z.object({
-//   name: z
-//     .string()
-//     .min(1, "اسم الوحدة مطلوب")
-//     .trim()
-//     .max(100, "اسم الوحدة طويل جدًا"),
-//   grade: z.string().min(1, "المرحلة الدراسية مطلوبة"),
-// });
-
-// export type UnitFormValues = z.infer<typeof unitSchema>;
-
-// // Lesson Schema
-// export const lessonSchema = z.object({
-//   name: z
-//     .string()
-//     .min(1, "اسم الدرس مطلوب")
-//     .trim()
-//     .max(100, "اسم الدرس طويل جدًا"),
-//   unit: z.string().min(1, "الوحدة مطلوبة"),
-//   grade: z.string().min(1, "المرحلة الدراسية مطلوبة"),
-// });
-
-// export type LessonFormValues = z.infer<typeof lessonSchema>;
-
-// // Performance Evaluation Schema
-// export const performanceSchema = z.object({
-//   "monthly-evaluation": z.enum(["ممتاز", "جيد جدًا", "جيد", "مقبول", "ضعيف"], {
-//     errorMap: () => ({ message: "التقييم الشهري مطلوب" }),
-//   }),
-//   "teacher-evaluation": z.enum(["ممتاز", "جيد جدًا", "جيد", "مقبول", "ضعيف"], {
-//     errorMap: () => ({ message: "تقييم المعلم مطلوب" }),
-//   }),
-//   absences: z
-//     .number()
-//     .min(0, "عدد الغيابات لا يمكن أن يكون سالبًا")
-//     .int("عدد الغيابات يجب أن يكون رقمًا صحيحًا"),
-//   responsiveness: z.enum(["ممتاز", "جيد جدًا", "جيد", "مقبول", "ضعيف"], {
-//     errorMap: () => ({ message: "التفاعل مطلوب" }),
-//   }),
-//   "homework-completion": z.enum(["مواظب", "غير مواظب", "يحتاج لتحسين"], {
-//     errorMap: () => ({ message: "الالتزام بالواجبات مطلوب" }),
-//   }),
-// });
-
-// export type PerformanceFormValues = z.infer<typeof performanceSchema>;
-
-// // Quiz Result Schema
-// export const quizResultSchema = z.object({
-//   grade: z.string().min(1, "المرحلة الدراسية مطلوبة"),
-//   unitTitle: z.string().min(1, "عنوان الوحدة مطلوب"),
-//   lessonTitle: z.string().min(1, "عنوان الدرس مطلوب"),
-//   score: z.number().min(0, "الدرجة لا يمكن أن تكون سالبة"),
-//   totalQuestions: z.number().min(1, "إجمالي الأسئلة يجب أن يكون على الأقل 1"),
-// });
-
-// export type QuizResultFormValues = z.infer<typeof quizResultSchema>;
-
-// // Class Result Schema
-// export const classResultSchema = z.object({
-//   title: z.string().min(1, "عنوان النتيجة مطلوب").trim(),
-//   note: z.string().min(1, "الملاحظة مطلوبة").trim(),
-//   imageUrls: z
-//     .array(z.string().url("رابط الصورة غير صحيح"))
-//     .min(1, "صورة واحدة على الأقل مطلوبة"),
-// });
-
-// export type ClassResultFormValues = z.infer<typeof classResultSchema>;
-
-// // Exam Schema
-// export const examSchema = z.object({
-//   "exam-name": z.string().min(1, "اسم الاختبار مطلوب").trim(),
-//   subject: z.string().min(1, "المادة مطلوبة").trim(),
-//   score: z.number().min(0, "الدرجة لا يمكن أن تكون سالبة"),
-//   "total-score": z.number().min(1, "إجمالي الدرجات يجب أن يكون على الأقل 1"),
-//   feedback: z.string().trim().optional(),
-//   date: z.date({
-//     required_error: "تاريخ الاختبار مطلوب",
-//   }),
-// });
-
-// export type ExamFormValues = z.infer<typeof examSchema>;
-
-// // ============================================
-// // Utility Functions
-// // ============================================
-
-// /**
-//  * Validate if a file is an accepted image type
-//  */
-// export const isValidImageType = (file: File): boolean => {
-//   return ACCEPTED_IMAGE_TYPES.includes(file.type as any);
-// };
-
-// /**
-//  * Validate if file size is within limit
-//  */
-// export const isValidFileSize = (
-//   file: File,
-//   maxSize: number = MAX_FILE_SIZE
-// ): boolean => {
-//   return file.size <= maxSize;
-// };
-
-// /**
-//  * Format file size for display
-//  */
-// export const formatFileSize = (bytes: number): string => {
-//   if (bytes === 0) return "0 Bytes";
-//   const k = 1024;
-//   const sizes = ["Bytes", "KB", "MB", "GB"];
-//   const i = Math.floor(Math.log(bytes) / Math.log(k));
-//   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
-// };
-
-// /**
-//  * Extract YouTube video ID from URL
-//  */
-// export const extractYouTubeVideoId = (url: string): string | null => {
-//   const regex =
-//     /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-//   const match = url.match(regex);
-//   return match ? match[1] : null;
-// };
-
-// // ============================================
-// // Type Guards
-// // ============================================
-
-// export const isStudentFormValues = (
-//   data: unknown
-// ): data is StudentFormValues => {
-//   return studentSchema.safeParse(data).success;
-// };
-
-// export const isBlogFormData = (data: unknown): data is BlogFormData => {
-//   return blogSchema.safeParse(data).success;
-// };
-
-// // ============================================
-// // Export Constants
-// // ============================================
-
-// export const VALIDATION_CONSTANTS = {
-//   MAX_FILE_SIZE,
-//   MAX_IMAGE_SIZE,
-//   ACCEPTED_IMAGE_TYPES,
-//   ACCEPTED_DOCUMENT_TYPES,
-//   MIN_AGE: 1,
-//   MAX_AGE: 100,
-//   MAX_NAME_LENGTH: 100,
-// } as const;
-
 import * as z from "zod";
 
 // ============================================
@@ -489,6 +6,9 @@ import * as z from "zod";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB for images
+const MAX_PDF_SIZE = 50 * 1024 * 1024; // 50MB for PDFs
+const MAX_VIDEO_SIZE = 500 * 1024 * 1024; // 500MB for videos
+
 const ACCEPTED_IMAGE_TYPES = [
   "image/jpeg",
   "image/jpg",
@@ -502,6 +22,12 @@ const ACCEPTED_DOCUMENT_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ] as const;
 
+const ACCEPTED_VIDEO_TYPES = [
+  "video/mp4",
+  "video/webm",
+  "video/quicktime", // .mov files
+] as const;
+
 // YouTube URL regex pattern
 const YOUTUBE_URL_PATTERN =
   /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/;
@@ -509,15 +35,17 @@ const YOUTUBE_URL_PATTERN =
 export const VALIDATION_CONSTANTS = {
   MAX_FILE_SIZE,
   MAX_IMAGE_SIZE,
+  MAX_PDF_SIZE,
+  MAX_VIDEO_SIZE,
   ACCEPTED_IMAGE_TYPES,
   ACCEPTED_DOCUMENT_TYPES,
+  ACCEPTED_VIDEO_TYPES,
   MIN_AGE: 1,
   MAX_AGE: 100,
   MAX_NAME_LENGTH: 100,
 } as const;
 
 // ============================================
-
 // Custom Error Messages
 // ============================================
 
@@ -533,6 +61,7 @@ const ERROR_MESSAGES = {
     gender: "الجنس مطلوب",
     phoneNumber: "رقم الهاتف مطلوب",
     coverImage: "الصورة المصغرة مطلوبة",
+    content: "يجب توفير رابط فيديو أو ملف فيديو أو ملف PDF",
   },
   invalid: {
     age: "يجب أن يكون العمر رقمًا صحيحًا",
@@ -544,7 +73,9 @@ const ERROR_MESSAGES = {
     imageType: "الصيغ المدعومة هي: .jpg, .jpeg, .png, .webp",
     imageSize: "يجب أن يكون حجم الصورة 5 ميجابايت أو أقل",
     documentType: "الصيغ المدعومة هي: .pdf, .doc, .docx",
-    documentSize: "يجب أن يكون حجم الملف 5 ميجابايت أو أقل",
+    documentSize: "يجب أن يكون حجم الملف 50 ميجابايت أو أقل",
+    videoType: "الصيغ المدعومة هي: .mp4, .webm, .mov",
+    videoSize: "يجب أن يكون حجم الفيديو 500 ميجابايت أو أقل",
   },
 } as const;
 
@@ -632,26 +163,45 @@ const ageValidator = z
 // Blog/Content Schema
 // ============================================
 
-export const blogSchema = z.object({
-  name: z.string().trim().min(1, ERROR_MESSAGES.required.title),
+export const blogSchema = z
+  .object({
+    name: z.string().trim().min(1, ERROR_MESSAGES.required.title),
 
-  description: z.string().trim().min(1, ERROR_MESSAGES.required.description),
+    description: z.string().trim().min(1, ERROR_MESSAGES.required.description),
 
-  grade: z.string().trim().min(1, ERROR_MESSAGES.required.grade),
+    grade: z.string().trim().min(1, ERROR_MESSAGES.required.grade),
 
-  unit: z.string().trim().min(1, ERROR_MESSAGES.required.unit),
+    unit: z.string().trim().min(1, ERROR_MESSAGES.required.unit),
 
-  lesson: z.string().trim().min(1, ERROR_MESSAGES.required.lesson),
+    lesson: z.string().trim().min(1, ERROR_MESSAGES.required.lesson),
 
-  coverImage: requiredImageValidator,
+    coverImage: requiredImageValidator,
 
-  videoUrl: youtubeUrlValidator,
+    videoUrl: youtubeUrlValidator,
 
-  contentFile: createFileValidator(ACCEPTED_DOCUMENT_TYPES, MAX_FILE_SIZE, {
-    type: ERROR_MESSAGES.invalid.documentType,
-    size: ERROR_MESSAGES.invalid.documentSize,
-  }).optional(),
-});
+    contentFile: createFileValidator(ACCEPTED_DOCUMENT_TYPES, MAX_PDF_SIZE, {
+      type: ERROR_MESSAGES.invalid.documentType,
+      size: ERROR_MESSAGES.invalid.documentSize,
+    }).optional(),
+
+    videoFile: createFileValidator(ACCEPTED_VIDEO_TYPES, MAX_VIDEO_SIZE, {
+      type: ERROR_MESSAGES.invalid.videoType,
+      size: ERROR_MESSAGES.invalid.videoSize,
+    }).optional(),
+  })
+  .refine(
+    (data) => {
+      // At least one content type must be provided
+      const hasVideoUrl = data.videoUrl && data.videoUrl.length > 0;
+      const hasVideoFile = data.videoFile && data.videoFile.length > 0;
+      const hasContentFile = data.contentFile && data.contentFile.length > 0;
+      return hasVideoUrl || hasVideoFile || hasContentFile;
+    },
+    {
+      message: ERROR_MESSAGES.required.content,
+      path: ["videoUrl"], // Show error on videoUrl field
+    }
+  );
 
 export type BlogFormData = z.infer<typeof blogSchema>;
 
@@ -839,6 +389,13 @@ export type ClassResultFormData = z.infer<typeof classResultFormSchema>;
  */
 export const isValidImageType = (file: File): boolean => {
   return ACCEPTED_IMAGE_TYPES.includes(file.type as any);
+};
+
+/**
+ * Validate if a file is an accepted video type
+ */
+export const isValidVideoType = (file: File): boolean => {
+  return ACCEPTED_VIDEO_TYPES.includes(file.type as any);
 };
 
 /**

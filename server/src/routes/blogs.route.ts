@@ -16,6 +16,7 @@ router.post(
   upload.fields([
     { name: "coverImage", maxCount: 1 },
     { name: "contentFile", maxCount: 1 },
+    { name: "videoFile", maxCount: 1 }, // Added video file support
   ]),
   createBlog
 );
@@ -25,6 +26,7 @@ router.put(
   upload.fields([
     { name: "coverImage", maxCount: 1 },
     { name: "contentFile", maxCount: 1 },
+    { name: "videoFile", maxCount: 1 }, // Added video file support
   ]),
   updateBlog
 );
