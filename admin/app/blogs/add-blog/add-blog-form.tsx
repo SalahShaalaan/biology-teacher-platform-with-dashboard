@@ -47,6 +47,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useFieldArray } from "react-hook-form";
 
 interface UploadState {
   isUploading: boolean;
@@ -100,7 +101,13 @@ export function AddBlogForm() {
       coverImage: undefined,
       contentFile: undefined,
       videoFile: undefined,
+      learningOutcomes: [{ value: "" }],
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "learningOutcomes",
   });
 
   useEffect(() => {
@@ -133,6 +140,13 @@ export function AddBlogForm() {
       formData.append("grade", data.grade);
       formData.append("unit", data.unit);
       formData.append("lesson", data.lesson);
+
+      if (data.learningOutcomes) {
+        formData.append(
+          "learningOutcomes",
+          JSON.stringify(data.learningOutcomes.map((item) => item.value))
+        );
+      }
 
       let totalSize = 0;
       if (data.coverImage?.[0]) {
@@ -262,11 +276,11 @@ export function AddBlogForm() {
   const getPhaseIcon = () => {
     switch (uploadState.phase) {
       case "complete":
-        return <CheckCircle2 className="w-5 h-5 text-green-600" />;
+        return <CheckCircle2 className="w-6 h-6 text-green-600" />;
       case "error":
-        return <AlertCircle className="w-5 h-5 text-destructive" />;
+        return <AlertCircle className="w-6 h-6 text-destructive" />;
       default:
-        return <Loader2 className="w-5 h-5 animate-spin text-primary" />;
+        return <Loader2 className="w-6 h-6 animate-spin text-primary" />;
     }
   };
 
@@ -274,7 +288,7 @@ export function AddBlogForm() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <fieldset disabled={uploadState.isUploading} className="space-y-8">
-          <Card>
+          <Card className="shadow-none">
             <CardHeader>
               <CardTitle>تفاصيل الشرح والتصنيف</CardTitle>
               <CardDescription>
@@ -312,6 +326,52 @@ export function AddBlogForm() {
                   </FormItem>
                 )}
               />
+
+              <div className="space-y-2">
+                <FormLabel>
+                  بعد الانتهاء من متابعة الشرح ستكون قد تعرفت علي:
+                </FormLabel>
+                <FormDescription>
+                  أضف نقاطًا توضح ما سيتعلمه الطالب من هذا المحتوى.
+                </FormDescription>
+                <div className="space-y-4 pt-2">
+                  {fields.map((field, index) => (
+                    <div key={field.id} className="flex items-center gap-2">
+                      <FormField
+                        control={form.control}
+                        name={`learningOutcomes.${index}.value`}
+                        render={({ field }) => (
+                          <FormItem className="flex-grow">
+                            <FormControl>
+                              <Input
+                                {...field}
+                                placeholder={`نقطة ${index + 1}`}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => remove(index)}
+                        disabled={fields.length <= 1}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => append({ value: "" })}
+                  >
+                    إضافة نقطة أخري
+                  </Button>
+                </div>
+              </div>
 
               <Separator />
 
@@ -359,7 +419,7 @@ export function AddBlogForm() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="shadow-none">
             <CardHeader>
               <CardTitle>محتوى الشرح</CardTitle>
               <CardDescription>
@@ -381,7 +441,7 @@ export function AddBlogForm() {
                       <div className="relative mt-2 max-w-2xl">
                         <label
                           htmlFor="coverImage-input"
-                          className="relative flex flex-col items-center justify-center aspect-video w-full rounded-lg cursor-pointer bg-muted/50 hover:bg-muted overflow-hidden border-2 border-muted hover:border-primary/20 transition-colors"
+                          className="relative flex flex-col items-center justify-center aspect-video w-full rounded-lg cursor-pointer  hover:bg-muted overflow-hidden border transition-colors"
                         >
                           {coverImagePreview ? (
                             <Image
@@ -453,7 +513,7 @@ export function AddBlogForm() {
                   }
                   className="w-full"
                 >
-                  <TabsList className="grid w-full grid-cols-2">
+                  <TabsList>
                     <TabsTrigger value="video-file">ملف فيديو</TabsTrigger>
                     <TabsTrigger value="pdf">ملف PDF</TabsTrigger>
                   </TabsList>
@@ -469,7 +529,7 @@ export function AddBlogForm() {
                             <div className="relative">
                               <label
                                 htmlFor="videoFile-input"
-                                className="relative flex items-center justify-center w-full h-40 border-2 border-muted hover:border-primary/20 rounded-lg cursor-pointer bg-muted/50 hover:bg-muted transition-colors"
+                                className="relative flex items-center justify-center w-full h-40 border rounded-lg cursor-pointer hover:bg-muted transition-colors"
                               >
                                 {videoFileName ? (
                                   <div className="flex items-center gap-3 text-foreground">
@@ -552,7 +612,7 @@ export function AddBlogForm() {
                             <div className="relative">
                               <label
                                 htmlFor="contentFile-input"
-                                className="relative flex items-center justify-center w-full h-40 border-2 border-muted hover:border-primary/20 rounded-lg cursor-pointer bg-muted/50 hover:bg-muted transition-colors"
+                                className="relative flex items-center justify-center w-full h-40 border rounded-lg cursor-pointer bg-muted/50 hover:bg-muted transition-colors"
                               >
                                 {contentFileName ? (
                                   <div className="flex items-center gap-3 text-foreground">
@@ -628,7 +688,7 @@ export function AddBlogForm() {
           </Card>
 
           {/* Upload Progress & Actions */}
-          <div className="space-y-6 rounded-lg border bg-card text-card-foreground p-6">
+          <div className="space-y-6 rounded-lg border text-card-foreground p-6">
             <h3 className="text-lg font-semibold">حالة الرفع والنشر</h3>
 
             {/* Upload Progress Indicator */}
@@ -639,43 +699,44 @@ export function AddBlogForm() {
                     ? "border-green-500 bg-green-50"
                     : uploadState.phase === "error"
                     ? "border-destructive bg-destructive/5"
-                    : "border-primary/50 bg-primary/5"
+                    : "border "
                 }`}
               >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {getPhaseIcon()}
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 pt-1">{getPhaseIcon()}</div>
+                  <div className="flex-grow w-full">
+                    <div className="flex items-center justify-between">
                       <span className="font-semibold text-base">
                         {getPhaseLabel()}
                       </span>
+                      <span
+                        className={`text-lg font-bold ${
+                          uploadState.phase === "complete"
+                            ? "text-green-600"
+                            : uploadState.phase === "error"
+                            ? "text-destructive"
+                            : "text-primary"
+                        }`}
+                      >
+                        {uploadState.progress}%
+                      </span>
                     </div>
-                    <span
-                      className={`text-xl font-bold ${
-                        uploadState.phase === "complete"
-                          ? "text-green-600"
-                          : uploadState.phase === "error"
-                          ? "text-destructive"
-                          : "text-primary"
-                      }`}
-                    >
-                      {uploadState.progress}%
-                    </span>
-                  </div>
 
-                  {uploadState.phase !== "error" && (
-                    <Progress value={uploadState.progress} className="h-2" />
-                  )}
+                    {uploadState.phase !== "error" && (
+                      <Progress
+                        value={uploadState.progress}
+                        className="h-1 mt-2"
+                      />
+                    )}
 
-                  {uploadState.phase === "uploading" && (
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <div className="flex items-center gap-4">
+                    {uploadState.phase === "uploading" && (
+                      <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
                         <span>
                           {formatBytes(uploadState.uploadedBytes)} /{" "}
                           {formatBytes(uploadState.totalBytes)}
                         </span>
                         {uploadState.estimatedTime > 0 && (
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1.5">
                             <Clock className="w-4 h-4" />
                             <span>
                               المتبقي: {formatTime(uploadState.estimatedTime)}
@@ -683,25 +744,27 @@ export function AddBlogForm() {
                           </div>
                         )}
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {uploadState.phase === "uploading" && (
-                    <Alert className="bg-transparent border-0 p-0">
-                      <AlertDescription>
-                        يرجى عدم إغلاق هذه النافذة أثناء الرفع. الملفات الكبيرة
-                        قد تستغرق بضع دقائق.
-                      </AlertDescription>
-                    </Alert>
-                  )}
+                    {uploadState.phase === "uploading" && (
+                      <p className="text-xs text-muted-foreground mt-3">
+                        يرجى عدم إغلاق هذه النافذة أثناء الرفع.
+                        <br />
+                        <span className="text-blue-950">
+                          {" "}
+                          سرعة الرفع تعتمد علي سرعة الانترنت لديك.
+                        </span>
+                      </p>
+                    )}
 
-                  {uploadState.phase === "error" && uploadState.error && (
-                    <Alert variant="destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>حدث خطأ</AlertTitle>
-                      <AlertDescription>{uploadState.error}</AlertDescription>
-                    </Alert>
-                  )}
+                    {uploadState.phase === "error" && uploadState.error && (
+                      <Alert variant="destructive" className="mt-4">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>حدث خطأ</AlertTitle>
+                        <AlertDescription>{uploadState.error}</AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

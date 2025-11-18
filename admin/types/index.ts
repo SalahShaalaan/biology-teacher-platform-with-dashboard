@@ -61,4 +61,5 @@ export interface Blog {
   url: string;
   coverImage: string;
   videoUrl?: string;
+  learningOutcomes?: string[];
 }

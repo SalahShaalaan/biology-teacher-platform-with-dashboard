@@ -12,6 +12,7 @@ export interface IBlog extends Document {
   createdAt: Date;
   updatedAt: Date;
   videoUrl: string;
+  learningOutcomes?: string[];
 }
 
 const BlogSchema: Schema = new Schema(
@@ -25,6 +26,7 @@ const BlogSchema: Schema = new Schema(
     coverImage: { type: String, required: true },
     url: { type: String, required: false },
     videoUrl: { type: String, required: false },
+    learningOutcomes: { type: [String], default: [] },
   },
   { timestamps: true }
 );

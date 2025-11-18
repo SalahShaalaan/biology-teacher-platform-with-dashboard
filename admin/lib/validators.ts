@@ -188,7 +188,15 @@ export const blogSchema = z
       type: ERROR_MESSAGES.invalid.videoType,
       size: ERROR_MESSAGES.invalid.videoSize,
     }).optional(),
+    learningOutcomes: z
+      .array(
+        z.object({
+          value: z.string().min(1, "الهدف التعليمي لا يمكن أن يكون فارغًا."),
+        })
+      )
+      .optional(),
   })
+
   .refine(
     (data) => {
       // At least one content type must be provided
