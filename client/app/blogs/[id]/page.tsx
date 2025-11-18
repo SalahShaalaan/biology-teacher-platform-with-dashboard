@@ -317,6 +317,7 @@ import {
   ChevronRight,
   PlayCircle,
   Calendar,
+  Target,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import PdfViewer from "@/components/widgets/pdf-viewer";
@@ -647,6 +648,29 @@ export default async function BlogPage({ params }: BlogPageProps) {
                   </div>
                 </div>
               </div>
+
+              {blog.learningOutcomes && blog.learningOutcomes.length > 0 && (
+                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 overflow-hidden shadow-xl">
+                  <div className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="bg-blue-100 dark:bg-blue-900/50 rounded-xl p-3">
+                        <Target className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                        ماذا ستتعلم في هذا الدرس؟
+                      </h3>
+                    </div>
+                    <ul className="space-y-3 pt-2 text-gray-700 dark:text-gray-300">
+                      {blog.learningOutcomes.map((outcome, index) => (
+                        <li key={index} className="flex items-start gap-3">
+                          <span className="mt-2 flex-shrink-0 w-2 h-2 rounded-full bg-emerald-500"></span>
+                          <span>{outcome}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
 
               {/* Quick Access Note */}
               {(pdfUrl || hasVideo) && (

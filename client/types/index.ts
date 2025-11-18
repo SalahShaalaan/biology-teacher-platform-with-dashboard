@@ -74,4 +74,5 @@ export interface Blog {
   coverImage: string;
   videoUrl?: string;
   createdAt: string;
+  learningOutcomes?: string[];
 }
