@@ -1,8 +1,7 @@
 // import { Student, Blog } from "@/types";
 // import { generateUniqueFilename, uploadToBlob } from "./blob-upload";
 
-// const API_BASE_URL =
-//   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 // // ============================================================================
 // // Types
@@ -307,12 +306,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
       errorData
     );
   }
-
-  // Handle cases where the response is OK but there's no content
-  if (response.status === 204) {
-    return {} as T;
-  }
-
+  if (response.status === 204) return {} as T;
   const responseData: ApiResponse<T> = await response.json();
   return responseData.data;
 }
@@ -321,9 +315,6 @@ async function handleResponse<T>(response: Response): Promise<T> {
 // Blog API Functions
 // ============================================================================
 
-/**
- * Fetches all blogs from the server.
- */
 export async function getBlogs(): Promise<Blog[]> {
   const response = await fetch(`${API_BASE_URL}/api/blogs`, {
     cache: "no-store",
@@ -331,17 +322,11 @@ export async function getBlogs(): Promise<Blog[]> {
   return handleResponse<Blog[]>(response);
 }
 
-/**
- * Fetches a single blog by ID.
- */
 export async function getBlogById(id: string): Promise<Blog> {
   const response = await fetch(`${API_BASE_URL}/api/blogs/${id}`);
   return handleResponse<Blog>(response);
 }
 
-/**
- * [INTERNAL] Sends the final JSON payload to create a blog entry.
- */
 async function createBlog(payload: BlogPayload): Promise<Blog> {
   const response = await fetch(`${API_BASE_URL}/api/blogs`, {
     method: "POST",
@@ -351,9 +336,6 @@ async function createBlog(payload: BlogPayload): Promise<Blog> {
   return handleResponse<Blog>(response);
 }
 
-/**
- * Orchestrates the creation of a blog: uploads files, then creates the entry.
- */
 export async function createBlogWithUploads(
   formData: FormData,
   onProgress?: UploadProgressCallback
@@ -362,11 +344,8 @@ export async function createBlogWithUploads(
   const contentFile = formData.get("contentFile") as File | null;
   const videoFile = formData.get("videoFile") as File | null;
 
-  if (!coverImageFile) {
-    throw new ApiError("Cover image is required.", 400);
-  }
+  if (!coverImageFile) throw new ApiError("Cover image is required.", 400);
 
-  // --- Step 1: Upload files and collect URLs ---
   console.log("[API] Uploading cover image...");
   const coverImageFilename = generateUniqueFilename(
     coverImageFile.name,
@@ -375,45 +354,31 @@ export async function createBlogWithUploads(
   const coverImageResult = await uploadToBlob(
     coverImageFile,
     coverImageFilename,
-    (progress) =>
-      onProgress?.({ ...progress, percentage: progress.percentage * 0.2 }) // 20% of total
+    (p) => onProgress?.({ ...p, percentage: p.percentage * 0.2 })
   );
 
   let contentUrl: string | undefined;
   if (contentFile) {
     console.log("[API] Uploading PDF...");
-    const contentFilename = generateUniqueFilename(contentFile.name, "pdfs");
-    const contentResult = await uploadToBlob(
-      contentFile,
-      contentFilename,
-      (progress) =>
-        onProgress?.({
-          ...progress,
-          percentage: 20 + progress.percentage * 0.7,
-        }) // 70% of total
+    const filename = generateUniqueFilename(contentFile.name, "pdfs");
+    const result = await uploadToBlob(contentFile, filename, (p) =>
+      onProgress?.({ ...p, percentage: 20 + p.percentage * 0.7 })
     );
-    contentUrl = contentResult.url;
+    contentUrl = result.url;
   }
 
   let uploadedVideoUrl: string | undefined;
   if (videoFile) {
     console.log("[API] Uploading video...");
-    const videoFilename = generateUniqueFilename(videoFile.name, "videos");
-    const videoResult = await uploadToBlob(
-      videoFile,
-      videoFilename,
-      (progress) =>
-        onProgress?.({
-          ...progress,
-          percentage: 20 + progress.percentage * 0.7,
-        }) // 70% of total
+    const filename = generateUniqueFilename(videoFile.name, "videos");
+    const result = await uploadToBlob(videoFile, filename, (p) =>
+      onProgress?.({ ...p, percentage: 20 + p.percentage * 0.7 })
     );
-    uploadedVideoUrl = videoResult.url;
+    uploadedVideoUrl = result.url;
   }
 
   onProgress?.({ loaded: 95, total: 100, percentage: 95 });
 
-  // --- Step 2: Create the blog entry with the new URLs ---
   const payload: BlogPayload = {
     name: formData.get("name") as string,
     description: formData.get("description") as string,
@@ -431,9 +396,18 @@ export async function createBlogWithUploads(
   return result;
 }
 
-/**
- * Deletes a blog by ID.
- */
+export async function updateBlog(
+  id: string,
+  payload: Partial<BlogPayload>
+): Promise<Blog> {
+  const response = await fetch(`${API_BASE_URL}/api/blogs/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return handleResponse<Blog>(response);
+}
+
 export async function deleteBlog(id: string): Promise<{ message: string }> {
   const response = await fetch(`${API_BASE_URL}/api/blogs/${id}`, {
     method: "DELETE",
@@ -442,12 +416,74 @@ export async function deleteBlog(id: string): Promise<{ message: string }> {
 }
 
 // ============================================================================
+// Grade API Functions
+// ============================================================================
+
+export async function fetchGrades(): Promise<string[]> {
+  const response = await fetch(`${API_BASE_URL}/api/grades`, {
+    cache: "no-store",
+  });
+  return handleResponse<string[]>(response);
+}
+
+export async function addNewGrade(newGrade: string): Promise<any> {
+  const response = await fetch(`${API_BASE_URL}/api/grades`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ newGrade }),
+  });
+  return handleResponse<any>(response);
+}
+
+// ============================================================================
+// Student API Functions
+// ============================================================================
+
+export async function fetchStudents(): Promise<Student[]> {
+  const response = await fetch(`${API_BASE_URL}/api/students`, {
+    cache: "no-store",
+  });
+  return handleResponse<Student[]>(response);
+}
+
+export async function createStudent(formData: FormData): Promise<Student> {
+  const response = await fetch(`${API_BASE_URL}/api/students`, {
+    method: "POST",
+    body: formData,
+  });
+  return handleResponse<Student>(response);
+}
+
+export async function deleteStudent(
+  code: string
+): Promise<{ message: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/students/${code}`, {
+    method: "DELETE",
+  });
+  return handleResponse<{ message: string }>(response);
+}
+
+export async function addClassResult({
+  code,
+  formData,
+}: {
+  code: string;
+  formData: FormData;
+}): Promise<any> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/students/${code}/class-results`,
+    {
+      method: "POST",
+      body: formData,
+    }
+  );
+  return handleResponse<any>(response);
+}
+
+// ============================================================================
 // Utility Functions
 // ============================================================================
 
-/**
- * Calculate estimated upload time in seconds.
- */
 export const calculateEstimatedTime = (
   fileSize: number,
   uploadSpeedMBps = 1
@@ -456,9 +492,6 @@ export const calculateEstimatedTime = (
   return Math.ceil(fileSizeMB / uploadSpeedMBps);
 };
 
-/**
- * Format bytes to a human-readable string in Arabic.
- */
 export const formatBytes = (bytes: number, decimals = 2): string => {
   if (bytes === 0) return "0 بايت";
   const k = 1024;
@@ -468,9 +501,6 @@ export const formatBytes = (bytes: number, decimals = 2): string => {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 };
 
-/**
- * Format seconds to a human-readable time string in Arabic.
- */
 export const formatTime = (seconds: number): string => {
   if (seconds < 60) return `${seconds} ثانية`;
   const minutes = Math.floor(seconds / 60);
