@@ -186,18 +186,24 @@ const corsOptions = {
     origin: string | undefined,
     callback: (err: Error | null, allow?: boolean) => void
   ) => {
-    // Allow requests with no origin (like mobile apps, Postman, or server-to-server)
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+    // Allow requests with no origin (like mobile apps, Postman, local HTML files)
+    if (!origin) {
+      console.log("✅ Allowing request with no origin (local file or tool)");
+      return callback(null, true);
+    }
+
+    // Allow requests from allowed origins
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      console.log(`✅ Allowing request from: ${origin}`);
       callback(null, true);
     } else {
-      console.warn(`CORS blocked origin: ${origin}`);
+      console.warn(`❌ CORS blocked origin: ${origin}`);
       callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "x-filename"], // Add x-filename here
-  // Important for file uploads
+  allowedHeaders: ["Content-Type", "Authorization", "x-filename"],
   maxAge: 86400, // 24 hours
 };
 

@@ -4,20 +4,57 @@ import { Router } from "express";
 const router = Router();
 
 /**
+ * GET endpoint for testing - shows that the upload route is working
+ */
+router.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "Upload endpoint is working! Use POST to upload files.",
+    methods: ["POST"],
+    usage: {
+      method: "POST",
+      url: "/api/upload",
+      contentType: "application/json",
+      body: {
+        pathname: "folder/filename.ext",
+        type: "upload",
+        payload: {
+          contentType: "image/jpeg",
+        },
+      },
+    },
+    example: `
+      fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pathname: 'test/sample.jpg',
+          type: 'upload',
+          payload: { contentType: 'image/jpeg' }
+        })
+      })
+    `,
+  });
+});
+
+/**
  * This endpoint handles the Vercel Blob upload flow.
  * The @vercel/blob/client upload() function calls this endpoint
  * to get permission and a presigned URL for uploading.
  */
 router.post("/", async (req, res) => {
   try {
+    console.log("[Blob] Received upload request");
+    console.log("[Blob] Request body:", JSON.stringify(req.body, null, 2));
+
     const body = req.body as HandleUploadBody;
 
     const jsonResponse = await handleUpload({
       body,
       request: req,
-      onBeforeGenerateToken: async (pathname) => {
-        // You can add validation here if needed
+      onBeforeGenerateToken: async (pathname, clientPayload) => {
         console.log(`[Blob] Generating token for: ${pathname}`);
+        console.log(`[Blob] Client payload:`, clientPayload);
 
         // Return metadata that will be available after upload
         return {
@@ -35,14 +72,15 @@ router.post("/", async (req, res) => {
         };
       },
       onUploadCompleted: async ({ blob, tokenPayload }) => {
-        // This runs after the upload is complete
         console.log(`[Blob] Upload completed: ${blob.url}`);
       },
     });
 
+    console.log("[Blob] Successfully generated response");
     return res.status(200).json(jsonResponse);
   } catch (error: any) {
     console.error("[Blob] Error handling upload:", error);
+    console.error("[Blob] Error stack:", error.stack);
     return res.status(500).json({
       success: false,
       message: "Error handling upload.",
