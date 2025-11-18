@@ -246,6 +246,27 @@ app.use(
   }
 );
 
+app.get("/api/debug-env", (req, res) => {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (token && token.startsWith("vercel_blob_rw_")) {
+    res.status(200).json({
+      success: true,
+      message: "BLOB_READ_WRITE_TOKEN is set and looks valid.",
+    });
+  } else if (token) {
+    res.status(500).json({
+      success: false,
+      message:
+        "BLOB_READ_WRITE_TOKEN is set, but it does not look like a valid token.",
+    });
+  } else {
+    res.status(500).json({
+      success: false,
+      message: "BLOB_READ_WRITE_TOKEN is NOT set or is not accessible.",
+    });
+  }
+});
+
 // Health check endpoint (for monitoring)
 app.get("/api/health", (req, res) => {
   res.status(200).json({
