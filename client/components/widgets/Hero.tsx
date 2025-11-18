@@ -3,6 +3,7 @@ import biologyPatternBg from "@/public/pattern-1.png";
 import teacherAkram from "@/public/akram-1.jpeg";
 import helloSkeletonImg from "@/public/hello-skel.png";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Hero() {
   return (
@@ -85,19 +86,23 @@ export default function Hero() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-6 justify-center lg:justify-start mb-16">
-              <Button
-                size="lg"
-                className="text-lg px-10 py-4 h-auto bg-[#295638] hover:bg-emerald-700 text-white transition-all duration-300 hover:scale-105"
-              >
-                ابدأ رحلتك التعليمية
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="text-lg px-10 py-4 h-auto border-emerald-600 text-[#295638] hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all duration-300 hover:scale-105"
-              >
-                تصفح المناهج
-              </Button>
+              <Link href="/blogs">
+                <Button
+                  size="lg"
+                  className="text-lg cursor-pointer px-10 py-4 h-auto bg-[#295638] hover:bg-emerald-700 text-white transition-all duration-300 hover:scale-105"
+                >
+                  ابدأ رحلتك التعليمية
+                </Button>
+              </Link>
+              <Link href="/blogs">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="text-lg cursor-pointer px-10 py-4 h-auto border-emerald-600 text-[#295638] hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all duration-300 hover:scale-105"
+                >
+                  تصفح المناهج
+                </Button>
+              </Link>
             </div>
           </div>
 
