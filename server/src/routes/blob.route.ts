@@ -1,96 +1,51 @@
-// import { Router } from "express";
-// import { put } from "@vercel/blob";
-
-// const router = Router();
-
-// /**
-//  * This endpoint receives file streams from the client and pipes them directly
-//  * to Vercel Blob Storage, bypassing the serverless function payload limit.
-//  *
-//  * The client sends the file as the request body and passes metadata in headers.
-//  */
-// router.put("/upload", async (req, res) => {
-//   const filename = req.headers["x-filename"];
-
-//   if (!filename || typeof filename !== "string") {
-//     return res.status(400).json({
-//       success: false,
-//       message: "x-filename header is required",
-//     });
-//   }
-
-//   try {
-//     console.log(`[Blob] Streaming upload for: ${filename}`);
-//     console.log(`[Blob] Content-Type: ${req.headers["content-type"]}`);
-
-//     // The request body (req) is a stream of the file's contents.
-//     // The `put` function streams this directly to blob storage.
-//     const blob = await put(filename, req, {
-//       access: "public",
-//       // The `Content-Type` header is passed through from the client's request.
-//       contentType: req.headers["content-type"] || "application/octet-stream",
-//     });
-
-//     console.log(`[Blob] Upload successful: ${blob.url}`);
-
-//     return res.status(200).json({
-//       success: true,
-//       url: blob.url,
-//       pathname: blob.pathname,
-//       contentType: blob.contentType,
-//       contentDisposition: blob.contentDisposition,
-//     });
-//   } catch (error: any) {
-//     console.error("[Blob] Error streaming upload:", error);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Error uploading file.",
-//       error: error.message,
-//     });
-//   }
-// });
-
-// export default router;
-
-import { put } from "@vercel/blob";
+import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { Router } from "express";
 
 const router = Router();
 
-// This endpoint receives the desired pathname and contentType from the client
-// and returns a presigned URL for the client to upload the file to.
+/**
+ * This endpoint handles the Vercel Blob upload flow.
+ * The @vercel/blob/client upload() function calls this endpoint
+ * to get permission and a presigned URL for uploading.
+ */
 router.post("/", async (req, res) => {
-  const { pathname, contentType } = req.body;
-
-  if (!pathname || typeof pathname !== "string") {
-    return res.status(400).json({
-      success: false,
-      message: "A 'pathname' body field is required",
-    });
-  }
-
-  // The Vercel Blob API requires the content type to generate a presigned URL
-  if (!contentType || typeof contentType !== "string") {
-    return res.status(400).json({
-      success: false,
-      message: "A 'contentType' body field is required",
-    });
-  }
-
   try {
-    // The `put` function can generate a presigned URL when the body is `null`.
-    const blob = await put(pathname, null as any, {
-      access: "public",
-      addRandomSuffix: false, // We use a unique filename on the client
-      contentType, // Pass the content type to Vercel
+    const body = req.body as HandleUploadBody;
+
+    const jsonResponse = await handleUpload({
+      body,
+      request: req,
+      onBeforeGenerateToken: async (pathname) => {
+        // You can add validation here if needed
+        console.log(`[Blob] Generating token for: ${pathname}`);
+
+        // Return metadata that will be available after upload
+        return {
+          allowedContentTypes: [
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+            "image/gif",
+            "video/mp4",
+            "video/webm",
+            "video/quicktime",
+            "application/pdf",
+          ],
+          maximumSizeInBytes: 500 * 1024 * 1024, // 500MB
+        };
+      },
+      onUploadCompleted: async ({ blob, tokenPayload }) => {
+        // This runs after the upload is complete
+        console.log(`[Blob] Upload completed: ${blob.url}`);
+      },
     });
 
-    return res.status(200).json(blob);
+    return res.status(200).json(jsonResponse);
   } catch (error: any) {
-    console.error("[Blob] Error generating presigned URL:", error);
+    console.error("[Blob] Error handling upload:", error);
     return res.status(500).json({
       success: false,
-      message: "Error generating upload URL.",
+      message: "Error handling upload.",
       error: error.message,
     });
   }
