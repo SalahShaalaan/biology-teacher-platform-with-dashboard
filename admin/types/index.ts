@@ -63,3 +63,35 @@ export interface Blog {
   videoUrl?: string;
   learningOutcomes?: string[];
 }
+
+export interface IOrder {
+  _id: string;
+  name: string;
+  phone: string;
+  grade: string;
+  age: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IBestOfMonth {
+  _id: string;
+  name: string;
+  grade: string;
+  imageUrl: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Question {
+  _id: string;
+  grade: string;
+  unitTitle: string;
+  lessonTitle: string;
+  questionText: string;
+  image?: string;
+  externalLink?: string;
+  options: string[];
+  correctAnswer: number;
+}

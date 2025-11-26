@@ -1,5 +1,7 @@
-import { Student, Blog } from "@/types";
+import { Student, Blog, IOrder, IBestOfMonth } from "@/types";
 import { generateUniqueFilename, uploadToBlob } from "./blob-upload";
+
+export type { Student, Blog };
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -152,7 +154,7 @@ export async function createBlogWithUploads(
     lesson: formData.get("lesson") as string,
     coverImage: coverImageResult.url,
     url: contentUrl,
-    videoUrl: uploadedVideoUrl,
+    videoUrl: uploadedVideoUrl || (formData.get("videoUrl") as string),
     learningOutcomes,
   };
 
@@ -253,6 +255,9 @@ export async function updateBlogWithUploads({
     });
     payload.videoUrl = result.url;
     payload.url = ""; // Clear PDF URL if video is uploaded
+  } else if (formData.has("videoUrl")) {
+      payload.videoUrl = formData.get("videoUrl") as string;
+      if (payload.videoUrl) payload.url = ""; // Clear PDF URL if video URL is provided
   }
 
   onProgress?.({ loaded: 95, total: 100, percentage: 95 });
@@ -332,6 +337,150 @@ export async function addClassResult({
   );
   return handleResponse<any>(response);
 }
+
+export async function getAllOrders(): Promise<IOrder[]> {
+  const response = await fetch(`${API_BASE_URL}/api/orders`, {
+    cache: "no-store",
+  });
+  return handleResponse<IOrder[]>(response);
+}
+
+export async function deleteOrder(id: string): Promise<{ message: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/orders/${id}`, {
+    method: "DELETE",
+  });
+  return handleResponse<{ message: string }>(response);
+}
+
+export async function getAllBestOfMonth(): Promise<IBestOfMonth[]> {
+  const response = await fetch(`${API_BASE_URL}/api/best-of-month`, {
+    cache: "no-store",
+  });
+  return handleResponse<IBestOfMonth[]>(response);
+}
+
+export async function createBestOfMonthWithUpload(
+  formData: FormData
+): Promise<IBestOfMonth> {
+  const imageFile = formData.get("image") as File | null;
+  if (!imageFile) {
+    throw new Error("Image is required.");
+  }
+
+  // 1. Upload image to blob storage
+  const imageName = generateUniqueFilename(imageFile.name, "best-of-month");
+  const uploadResult = await uploadToBlob(imageFile, imageName);
+
+  // 2. Prepare data for the database
+  const payload = {
+    name: formData.get("name") as string,
+    grade: formData.get("grade") as string,
+    description: formData.get("description") as string,
+    imageUrl: uploadResult.url, // Use the URL from the upload
+  };
+
+  // 3. Send data to the server
+  const response = await fetch(`${API_BASE_URL}/api/best-of-month`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  return handleResponse<IBestOfMonth>(response);
+}
+
+export async function updateBestOfMonthWithUpload({
+  id,
+  formData,
+}: {
+  id: string;
+  formData: FormData;
+}): Promise<IBestOfMonth> {
+  const imageFile = formData.get("image") as File | null;
+
+  const payload: Partial<
+    Omit<IBestOfMonth, "_id" | "createdAt" | "updatedAt">
+  > = {
+    name: formData.get("name") as string,
+    grade: formData.get("grade") as string,
+    description: formData.get("description") as string,
+  };
+
+  if (imageFile) {
+    const imageName = generateUniqueFilename(imageFile.name, "best-of-month");
+    const uploadResult = await uploadToBlob(imageFile, imageName);
+    payload.imageUrl = uploadResult.url;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/best-of-month/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  return handleResponse<IBestOfMonth>(response);
+}
+
+export async function deleteBestOfMonth(
+  id: string
+): Promise<{ message: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/best-of-month/${id}`, {
+    method: "DELETE",
+  });
+  return handleResponse<{ message: string }>(response);
+}
+
+// ============================================================================
+// Question API Functions
+// ============================================================================
+
+import { QuestionFormData } from "./validators";
+
+export const getQuestionById = async (id: string) => {
+  const res = await fetch(`${API_BASE_URL}/api/questions/${id}`);
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.message || "Failed to fetch question");
+  }
+  return res.json();
+};
+
+export const addQuestion = async (data: QuestionFormData) => {
+  const res = await fetch(`${API_BASE_URL}/api/questions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.message || "Failed to add question");
+  }
+  return res.json();
+};
+
+export const updateQuestion = async (id: string, data: QuestionFormData) => {
+  const res = await fetch(`${API_BASE_URL}/api/questions/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.message || "Failed to update question");
+  }
+  return res.json();
+};
+
+export const deleteQuestion = async (id: string) => {
+  const res = await fetch(`${API_BASE_URL}/api/questions/${id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.message || "Failed to delete question");
+  }
+  return res.json();
+};
 
 // ============================================================================
 // Utility Functions

@@ -32,6 +32,8 @@ const ACCEPTED_VIDEO_TYPES = [
 const YOUTUBE_URL_PATTERN =
   /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/;
 
+const EGYPTIAN_PHONE_NUMBER_PATTERN = /^01[0-2,5]\d{8}$/;
+
 export const VALIDATION_CONSTANTS = {
   MAX_FILE_SIZE,
   MAX_IMAGE_SIZE,
@@ -139,9 +141,11 @@ const youtubeUrlValidator = z
 // Phone number validator (you can customize the pattern)
 const phoneNumberValidator = z
   .string()
-  .min(1, ERROR_MESSAGES.required.phoneNumber)
   .trim()
-  .regex(/^[\d\s\-\+\(\)]+$/, ERROR_MESSAGES.invalid.phoneNumber);
+  .refine((val) => !val || EGYPTIAN_PHONE_NUMBER_PATTERN.test(val), {
+    message: ERROR_MESSAGES.invalid.phoneNumber,
+  })
+  .optional();
 
 // Age validator with preprocessing
 const ageValidator = z
@@ -223,8 +227,6 @@ export const studentSchema = z.object({
     .trim()
     .min(1, ERROR_MESSAGES.required.name)
     .max(100, "الاسم طويل جدًا"),
-
-  age: ageValidator,
 
   gender: z
     .string()
@@ -450,6 +452,28 @@ export const isStudentFormValues = (
 export const isBlogFormData = (data: unknown): data is BlogFormData => {
   return blogSchema.safeParse(data).success;
 };
+
+export const questionSchema = z.object({
+  grade: z.string().min(1, "المرحلة الدراسية مطلوبة"),
+  unitTitle: z.string().min(1, "اسم الوحدة مطلوب"),
+  lessonTitle: z.string().min(1, "اسم الدرس مطلوب"),
+  questionText: z.string().min(1, "نص السؤال مطلوب"),
+  image: optionalImageValidator,
+  externalLink: z.string().url("الرابط غير صحيح").optional().or(z.literal("")),
+  options: z
+    .array(
+      z.object({
+        text: z.string().min(1, "خيار الإجابة لا يمكن أن يكون فارغًا"),
+      })
+    )
+    .min(2, "يجب أن يكون هناك خياران على الأقل"),
+  correctAnswer: z
+    .string()
+    .optional()
+    .refine((val) => val !== undefined, "الرجاء تحديد الإجابة الصحيحة."),
+});
+
+export type QuestionFormData = z.infer<typeof questionSchema>;
 
 // ============================================
 // Export Constants
