@@ -31,6 +31,55 @@ const normalizeImageUrl = (imagePath: string | undefined | null): string => {
   return `${baseUrl}${imagePath.startsWith("/") ? "" : "/"}${imagePath}`;
 };
 
+const VideoPlayer = ({ url, title }: { url: string; title: string }) => {
+  // Check if it's a YouTube URL
+  const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/;
+  const isYoutube = youtubeRegex.test(url);
+
+  const containerClasses =
+    "relative rounded-3xl overflow-hidden border border-gray-200 dark:border-slate-700 aspect-video";
+
+  if (isYoutube) {
+    // Extract Video ID from various YouTube URL formats
+    const match = url.match(
+      /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/
+    );
+    const videoId = match ? match[1] : null;
+
+    if (videoId) {
+      return (
+        <div className={containerClasses}>
+          <iframe
+            src={`https://www.youtube.com/embed/${videoId}`}
+            title={title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            className="h-full w-full border-0"
+          />
+        </div>
+      );
+    }
+  }
+
+  // Fallback for direct video links
+  return (
+    <div className={containerClasses}>
+      <video
+        src={url}
+        controls
+        controlsList="nodownload"
+        className="h-full w-full bg-black object-contain"
+        preload="metadata"
+      >
+        <source src={url} type="video/mp4" />
+        <source src={url} type="video/webm" />
+        <source src={url} type="video/quicktime" />
+        متصفحك لا يدعم تشغيل الفيديو.
+      </video>
+    </div>
+  );
+};
+
 // --- Metadata Generation ---
 export async function generateMetadata({
   params,
@@ -207,6 +256,20 @@ export default async function BlogPage({ params }: BlogPageProps) {
                           استخدام متصفح آخر.
                         </video>
                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {videoUrl && (
+                  <div className="my-12">
+                    <div className="relative group">
+                      {/* Video Label */}
+                      <div className="absolute -top-12 right-0 z-10 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        <PlayCircle size={20} className="text-[#295638]" />
+                        <span>شرح الدرس بالفيديو</span>
+                      </div>
+
+                      <VideoPlayer url={videoUrl} title={blog.name} />
                     </div>
                   </div>
                 )}

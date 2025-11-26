@@ -8,7 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
-export default function EditQuestionPage() {
+import { Suspense } from "react";
+
+function EditQuestionContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const id = searchParams.get("id");
@@ -54,5 +56,13 @@ export default function EditQuestionPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function EditQuestionPage() {
+  return (
+    <Suspense fallback={<div className="text-white p-8">Loading...</div>}>
+      <EditQuestionContent />
+    </Suspense>
   );
 }

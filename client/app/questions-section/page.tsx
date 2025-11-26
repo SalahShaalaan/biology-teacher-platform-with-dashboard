@@ -45,6 +45,7 @@ interface IQuestion {
   questionText: string;
   options: string[];
   correctAnswer: number;
+  image?: string;
 }
 
 interface Unit {
@@ -525,6 +526,18 @@ export default function QuestionsPage() {
                   <h2 className="text-2xl mb-6 text-right font-semibold">
                     {currentQuestionIndex + 1}. {currentQuestion.questionText}
                   </h2>
+
+                  {currentQuestion.image && (
+                    <div className="relative mb-6 h-64 w-full overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                      <Image
+                        src={currentQuestion.image}
+                        alt="Question Image"
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                  )}
+
                   <RadioGroup
                     dir="rtl"
                     value={String(selectedAnswer)}
