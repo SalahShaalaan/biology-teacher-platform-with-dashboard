@@ -83,7 +83,7 @@ export const getBlogById = async (id: string): Promise<Blog | null> => {
 export async function getAllBestOfMonth(): Promise<IBestOfMonth[]> {
   try {
     // Fetch data and revalidate every hour to keep it fresh
-    const response = await fetch(`${API_BASE_URL}/best-of-month`, {
+    const response = await fetch(`${API_BASE_URL}/api/best-of-month`, {
       cache: "no-store",
     });
     return handleResponse<IBestOfMonth[]>(response);
