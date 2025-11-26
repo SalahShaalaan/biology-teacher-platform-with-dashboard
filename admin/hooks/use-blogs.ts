@@ -2,8 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getBlogs,
   getBlogById,
-  createBlog,
-  updateBlog,
+  createBlogWithUploads as createBlog,
+  updateBlogWithUploads as updateBlog,
   deleteBlog,
   type Blog,
   type ApiError,
@@ -56,7 +56,7 @@ export function useCreateBlog() {
   const queryClient = useQueryClient();
 
   return useMutation<Blog, ApiError, FormData>({
-    mutationFn: createBlog,
+    mutationFn: (formData) => createBlog(formData),
     onSuccess: () => {
       // When a new blog is created, invalidate the whole list to refetch
       queryClient.invalidateQueries({ queryKey: blogKeys.lists() });
