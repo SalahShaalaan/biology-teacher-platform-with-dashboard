@@ -4,11 +4,8 @@ import { Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSearchParams } from "next/navigation";
-import {
-  AddQuestionForm,
-  questionSchema,
-  type QuestionFormData,
-} from "./add-question-form";
+import { AddQuestionForm } from "./add-question-form";
+import { questionSchema, type QuestionFormData } from "@/lib/validators";
 import { CurriculumPicker } from "./curriculum-picker";
 
 function AddExamPage() {
@@ -21,7 +18,7 @@ function AddExamPage() {
       unitTitle: searchParams.get("unitTitle") || "",
       lessonTitle: searchParams.get("lessonTitle") || "",
       questionText: "",
-      options: ["", ""],
+      options: [{ text: "" }, { text: "" }],
     },
   });
 

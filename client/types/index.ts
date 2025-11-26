@@ -76,3 +76,13 @@ export interface Blog {
   createdAt: string;
   learningOutcomes?: string[];
 }
+
+export interface IBestOfMonth {
+  _id: string;
+  name: string;
+  grade: string;
+  imageUrl: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+}

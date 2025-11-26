@@ -64,14 +64,13 @@ export const createStudent = async (req: Request, res: Response) => {
       }
     }
 
-    const { name, age, gender, grade, phoneNumber } = req.body;
+    const { name, gender, grade, phoneNumber } = req.body;
 
     // التحقق من البيانات المطلوبة
-    if (!name || !age || !gender || !grade || !phoneNumber) {
+    if (!name || !gender || !grade) {
       return res.status(400).json({
         success: false,
-        message:
-          "جميع الحقول مطلوبة: الاسم، العمر، الجنس، المرحلة الدراسية، رقم الهاتف",
+        message: "الاسم، الجنس، والمرحلة الدراسية هي حقول مطلوبة.",
       });
     }
 
@@ -94,10 +93,9 @@ export const createStudent = async (req: Request, res: Response) => {
     const studentData = {
       code: newCode!,
       name,
-      age: parseInt(age, 10),
       gender,
       grade,
-      phoneNumber,
+      phoneNumber: phoneNumber || undefined,
       profile_image: profileImageUrl,
       performance: {
         "monthly-evaluation": "جيد",

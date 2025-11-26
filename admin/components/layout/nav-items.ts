@@ -20,4 +20,6 @@ export const topNavItems: NavItem[] = [
   { label: "الشروحات", href: "/blogs", icon: blogs },
   { label: "نتائج الامتحانات", href: "/results", icon: results },
   { label: "الآراء", href: "/testimonials", icon: people },
+  { label: "الطلبات", href: "/orders", icon: people },
+  { label: "اوائل الشهر", href: "/best-of-month", icon: people },
 ];

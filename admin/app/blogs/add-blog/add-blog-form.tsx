@@ -36,6 +36,7 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
+  Link,
 } from "lucide-react";
 import { blogSchema, BlogFormData } from "@/lib/validators";
 import {
@@ -73,7 +74,7 @@ export function AddBlogForm() {
   );
   const [contentFileName, setContentFileName] = useState<string | null>(null);
   const [videoFileName, setVideoFileName] = useState<string | null>(null);
-  const [contentType, setContentType] = useState<"video-file" | "pdf">(
+  const [contentType, setContentType] = useState<"video-file" | "pdf" | "youtube">(
     "video-file"
   );
   const [uploadState, setUploadState] = useState<UploadState>({
@@ -128,6 +129,11 @@ export function AddBlogForm() {
       form.setValue("videoUrl", "", { shouldValidate: false });
       form.setValue("videoFile", undefined, { shouldValidate: false });
       setVideoFileName(null);
+    } else if (contentType === "youtube") {
+      form.setValue("videoFile", undefined, { shouldValidate: false });
+      form.setValue("contentFile", undefined, { shouldValidate: false });
+      setVideoFileName(null);
+      setContentFileName(null);
     }
   }, [contentType, form]);
 
@@ -140,6 +146,7 @@ export function AddBlogForm() {
       formData.append("grade", data.grade);
       formData.append("unit", data.unit);
       formData.append("lesson", data.lesson);
+      if (data.videoUrl) formData.append("videoUrl", data.videoUrl);
 
       if (data.learningOutcomes) {
         formData.append(
@@ -515,8 +522,31 @@ export function AddBlogForm() {
                 >
                   <TabsList>
                     <TabsTrigger value="video-file">ملف فيديو</TabsTrigger>
+                    <TabsTrigger value="youtube">رابط يوتيوب</TabsTrigger>
                     <TabsTrigger value="pdf">ملف PDF</TabsTrigger>
                   </TabsList>
+
+                  <TabsContent value="youtube" className="mt-6">
+                    <FormField
+                      control={form.control}
+                      name="videoUrl"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>رابط فيديو يوتيوب</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="https://www.youtube.com/watch?v=..."
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            أدخل رابط فيديو يوتيوب صالح.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </TabsContent>
 
                   <TabsContent value="video-file" className="mt-6">
                     <FormField

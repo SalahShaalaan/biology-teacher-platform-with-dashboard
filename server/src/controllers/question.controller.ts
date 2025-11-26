@@ -19,6 +19,28 @@ export const getQuestions = async (req: Request, res: Response) => {
   }
 };
 
+export const getQuestionById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const question = await Question.findById(id);
+
+    if (!question) {
+      return res.status(404).json({
+        success: false,
+        message: "Question not found",
+      });
+    }
+
+    res.status(200).json({ success: true, data: question });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching question",
+      error,
+    });
+  }
+};
+
 export const addQuestion = async (req: Request, res: Response) => {
   try {
     const newQuestionData = req.body;
@@ -33,13 +55,96 @@ export const addQuestion = async (req: Request, res: Response) => {
         message: "A question must have at least 2 options.",
       });
     }
-    const question = new Question(newQuestionData);
-    await question.save();
+    const {
+      grade,
+      unitTitle,
+      lessonTitle,
+      questionText,
+      options,
+      correctAnswer,
+      image,
+      externalLink,
+    } = newQuestionData;
+
+    const question = await Question.create({
+      grade,
+      unitTitle,
+      lessonTitle,
+      questionText,
+      options,
+      correctAnswer,
+      image,
+      externalLink,
+    });
+
     res.status(201).json({ success: true, data: question });
   } catch (error) {
     res
       .status(400)
       .json({ success: false, message: "Error adding question", error });
+  }
+};
+
+export const updateQuestion = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    // If options are being updated, validate them
+    if (
+      updateData.options &&
+      (!Array.isArray(updateData.options) || updateData.options.length < 2)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "A question must have at least 2 options.",
+      });
+    }
+
+    const question = await Question.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!question) {
+      return res.status(404).json({
+        success: false,
+        message: "Question not found",
+      });
+    }
+
+    res.status(200).json({ success: true, data: question });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: "Error updating question",
+      error,
+    });
+  }
+};
+
+export const deleteQuestion = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const question = await Question.findByIdAndDelete(id);
+
+    if (!question) {
+      return res.status(404).json({
+        success: false,
+        message: "Question not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Question deleted successfully",
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: "Error deleting question",
+      error,
+    });
   }
 };
 

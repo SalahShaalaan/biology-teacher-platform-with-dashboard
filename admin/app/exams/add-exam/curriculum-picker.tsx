@@ -39,34 +39,42 @@ export function CurriculumPicker({ onSelectLesson }: CurriculumPickerProps) {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className=" border-gray-700">
         <CardHeader>
-          <CardTitle>جاري تحميل المنهج...</CardTitle>
+          <CardTitle className="text-gray-200">جاري تحميل المنهج...</CardTitle>
         </CardHeader>
       </Card>
     );
   }
 
   return (
-    <Card className="shadow-none">
+    <Card className="shadow-none  border-gray-700">
       <CardHeader>
-        <CardTitle>اختر من المنهج الحالي</CardTitle>
-        <CardDescription>اضغط على درس لتعبئة الحقول تلقائياً.</CardDescription>
+        <CardTitle className="text-gray-100">اختر من المنهج الحالي</CardTitle>
+        <CardDescription className="text-gray-400">
+          اضغط على درس لتعبئة الحقول تلقائياً.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Accordion type="multiple" className="w-full">
           {curriculum?.map((grade) => (
-            <AccordionItem key={grade.grade} value={grade.grade}>
-              <AccordionTrigger>{grade.grade}</AccordionTrigger>
+            <AccordionItem
+              key={grade.grade}
+              value={grade.grade}
+              className="border-gray-700"
+            >
+              <AccordionTrigger className="text-gray-200 hover:no-underline">
+                {grade.grade}
+              </AccordionTrigger>
               <AccordionContent>
                 <Accordion type="multiple" className="w-full">
                   {grade.units.map((unit) => (
                     <AccordionItem
                       key={unit.unitTitle}
                       value={unit.unitTitle}
-                      className="pr-4 border-r"
+                      className="pr-4 border-r border-gray-700"
                     >
-                      <AccordionTrigger className="text-sm">
+                      <AccordionTrigger className="text-sm text-gray-300 hover:no-underline">
                         {unit.unitTitle}
                       </AccordionTrigger>
                       <AccordionContent>
@@ -82,7 +90,7 @@ export function CurriculumPicker({ onSelectLesson }: CurriculumPickerProps) {
                                     lessonTitle: lesson,
                                   })
                                 }
-                                className="w-full text-right p-2 rounded transition-colors text-sm font-medium hover:bg-gray-100"
+                                className="w-full text-right p-2 rounded transition-colors text-sm font-medium text-gray-400 hover:bg-gray-700"
                               >
                                 {lesson}
                               </button>
