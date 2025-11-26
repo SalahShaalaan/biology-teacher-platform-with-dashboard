@@ -163,6 +163,8 @@ import { gradeRoutes } from "./routes/grade.route";
 import dashboardRoutes from "./routes/dashboard.route";
 import blobRoutes from "./routes/blob.route";
 import testimonialRoutes from "./routes/testimonial.route";
+import { orderRoutes } from "./routes/order.route";
+import { bestOfMonthRoutes } from "./routes/best-of-month.route";
 
 dotenv.config({ path: "./src/.env" });
 
@@ -289,7 +291,8 @@ app.use("/api/blogs", blogRoutes);
 app.use("/api/questions", questionRoutes);
 app.use("/api/grades", gradeRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/testimonials", testimonialRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/best-of-month", bestOfMonthRoutes);
 
 app.get("/", (req, res) => {
   res.send("Akram Platform API is running!");
