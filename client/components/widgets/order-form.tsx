@@ -179,7 +179,7 @@ export function OrderForm({ onSuccess }: OrderFormProps) {
       <Button
         type="submit"
         disabled={isPending}
-        className="w-full bg-[var(--main-blue)] hover:bg-[var(--main-blue)]/90 cursor-pointer text-white font-bold py-3 px-4 rounded-lg transition-all duration-300"
+        className="w-full bg-[#0047AB] hover:bg-[#0047AB]/90 cursor-pointer text-white font-bold py-3 px-4 rounded-lg transition-all duration-300"
       >
         {isPending ? "جاري الإرسال..." : "إرسال الطلب"}
       </Button>
