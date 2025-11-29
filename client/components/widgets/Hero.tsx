@@ -127,7 +127,7 @@ export default function Hero() {
                     أستاذ أكرم مسلم
                   </h3>
                   <p className="text-slate-600 dark:text-slate-300 mb-3">
-                    معلم الاحياء
+                    معلم العلوم والأحياء
                   </p>
                 </div>
               </div>

@@ -19,13 +19,15 @@ export default function Navbar() {
       <div className="container mx-auto px-4 lg:px-6">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <div className="flex items-center space-x-4 space-x-reverse">
-            <div className="text-right">
-              <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 logo-font">
-                الأستاذ أكـرم مسلم
-              </h1>
+          <Link href="/">
+            <div className="flex items-center space-x-4 space-x-reverse">
+              <div className="text-right">
+                <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 logo-font">
+                  الأستاذ أكـرم مسلم
+                </h1>
+              </div>
             </div>
-          </div>
+          </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-1 space-x-reverse">

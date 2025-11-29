@@ -26,13 +26,20 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { UploadCloud, Loader2, X } from "lucide-react";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Check, ChevronsUpDown, UploadCloud, Loader2, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import { addClassResult, fetchStudents, Student } from "@/lib/api";
 import { classResultFormSchema, ClassResultFormData } from "@/lib/validators";
@@ -42,6 +49,7 @@ export default function ResultsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [open, setOpen] = useState(false);
 
   const {
     data: students,
@@ -139,36 +147,90 @@ export default function ResultsPage() {
                 control={form.control}
                 name="studentCode"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>اختر الطالب</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      disabled={isLoadingStudents}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="قائمة الطلاب..." />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {isLoadingStudents ? (
-                          <SelectItem value="loading" disabled>
-                            جاري تحميل الطلاب...
-                          </SelectItem>
-                        ) : studentsError ? (
-                          <SelectItem value="error" disabled>
-                            خطأ في تحميل الطلاب
-                          </SelectItem>
-                        ) : (
-                          students?.map((student) => (
-                            <SelectItem key={student.code} value={student.code}>
-                              {student.name} ({student.code})
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
+                    <Popover open={open} onOpenChange={setOpen}>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={open}
+                            className={cn(
+                              "w-full justify-between",
+                              !field.value && "text-muted-foreground"
+                            )}
+                            disabled={isLoadingStudents}
+                          >
+                            {field.value
+                              ? students?.find(
+                                  (student) => student.code === field.value
+                                )?.name
+                              : "اختر طالبًا..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                        <Command>
+                          <CommandInput placeholder="ابحث عن طالب..." />
+                          <CommandList>
+                            <CommandEmpty>
+                              لا يوجد طالب بهذا الاسم.
+                            </CommandEmpty>
+                            {isLoadingStudents ? (
+                              <div className="p-4 text-sm text-center text-muted-foreground">
+                                جاري التحميل...
+                              </div>
+                            ) : studentsError ? (
+                              <div className="p-4 text-sm text-center text-destructive">
+                                خطأ في التحميل
+                              </div>
+                            ) : (
+                              Object.entries(
+                                students?.reduce((acc, student) => {
+                                  const grade = student.grade;
+                                  if (!acc[grade]) acc[grade] = [];
+                                  acc[grade].push(student);
+                                  return acc;
+                                }, {} as Record<string, Student[]>) || {}
+                              ).map(([grade, gradeStudents]) => (
+                                <CommandGroup heading={grade} key={grade}>
+                                  {gradeStudents.map((student) => (
+                                    <CommandItem
+                                      value={student.name}
+                                      key={student.code}
+                                      onSelect={() => {
+                                        form.setValue(
+                                          "studentCode",
+                                          student.code
+                                        );
+                                        setOpen(false);
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          student.code === field.value
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        )}
+                                      />
+                                      <div className="flex flex-col">
+                                        <span>{student.name}</span>
+                                        <span className="text-xs text-muted-foreground">
+                                          {student.code}
+                                        </span>
+                                      </div>
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              ))
+                            )}
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}

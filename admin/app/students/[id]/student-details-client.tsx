@@ -68,8 +68,9 @@ const homeworkCompletionOptions: HomeworkCompletion[] = [
 const formSchema = z.object({
   name: z.string().min(1, "الاسم مطلوب"),
   grade: z.string().min(1, "الصف الدراسي مطلوب"),
-  age: z.coerce.number().min(5, "العمر يجب أن يكون 5 سنوات على الأقل"),
+
   gender: z.string().min(1, "الجنس مطلوب"),
+  phoneNumber: z.string().optional(),
   monthlyPayment: z.boolean().optional(),
   performance: z
     .object({
@@ -183,7 +184,7 @@ const DisplayField = ({
 );
 
 // --- Exams Sections ---
-type QuizResult = Student["quizResults"][0];
+type QuizResult = NonNullable<Student["quizResults"]>[number];
 
 const quizResultsColumns: ColumnDef<QuizResult>[] = [
   { accessorKey: "lessonTitle", header: "الدرس" },
@@ -350,9 +351,16 @@ export default function StudentDetailsClient({
     initialData: initialStudent,
   });
 
-  const form = useForm<StudentFormData>({
+  const form = useForm({
     resolver: zodResolver(formSchema),
-    defaultValues: initialStudent,
+    defaultValues: {
+      ...initialStudent,
+      ...initialStudent,
+      performance: {
+        ...initialStudent.performance,
+        absences: Number(initialStudent.performance?.absences ?? 0),
+      },
+    },
   });
 
   useEffect(() => {
@@ -436,10 +444,10 @@ export default function StudentDetailsClient({
         <form onSubmit={form.handleSubmit(handleFormSubmit)}>
           <Card className="shadow-none mb-6">
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="relative">
-                    <Avatar className="h-20 w-20">
+                    <Avatar className="h-16 w-16 md:h-20 md:w-20">
                       <AvatarImage
                         src={previewImageUrl || undefined}
                         alt={student.name}
@@ -470,15 +478,36 @@ export default function StudentDetailsClient({
                     )}
                   </div>
                   <div>
-                    <h1 className="text-2xl font-bold">{student.name}</h1>
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) =>
+                        isEditMode ? (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                className="text-xl md:text-2xl font-bold h-auto py-1 px-2"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        ) : (
+                          <h1 className="text-xl md:text-2xl font-bold">
+                            {field.value}
+                          </h1>
+                        )
+                      }
+                    />
                     <p className="text-muted-foreground">@{student.code}</p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2 justify-center md:justify-end mt-4 md:mt-0">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => router.back()}
+                    className="w-full sm:w-auto"
                   >
                     العودة <ArrowRight className="mr-2 h-4 w-4" />
                   </Button>
@@ -489,15 +518,24 @@ export default function StudentDetailsClient({
                         variant="ghost"
                         onClick={handleCancel}
                         disabled={isMutating}
+                        className="w-full sm:w-auto"
                       >
                         إلغاء
                       </Button>
-                      <Button type="submit" disabled={isMutating}>
+                      <Button
+                        type="submit"
+                        disabled={isMutating}
+                        className="w-full sm:w-auto"
+                      >
                         {isMutating ? "جاري الحفظ..." : "حفظ التعديلات"}
                       </Button>
                     </>
                   ) : (
-                    <Button type="button" onClick={() => setIsEditMode(true)}>
+                    <Button
+                      type="button"
+                      onClick={() => setIsEditMode(true)}
+                      className="w-full sm:w-auto"
+                    >
                       تعديل البيانات <Edit className="mr-2 h-4 w-4" />
                     </Button>
                   )}
@@ -581,23 +619,7 @@ export default function StudentDetailsClient({
                             )
                           }
                         />
-                        <FormField
-                          control={form.control}
-                          name="age"
-                          render={({ field }) =>
-                            isEditMode ? (
-                              <FormItem>
-                                <FormLabel>العمر</FormLabel>
-                                <FormControl>
-                                  <Input type="number" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            ) : (
-                              <DisplayField label="العمر" value={field.value} />
-                            )
-                          }
-                        />
+
                         <FormField
                           control={form.control}
                           name="gender"
@@ -612,6 +634,26 @@ export default function StudentDetailsClient({
                               </FormItem>
                             ) : (
                               <DisplayField label="الجنس" value={field.value} />
+                            )
+                          }
+                        />
+                        <FormField
+                          control={form.control}
+                          name="phoneNumber"
+                          render={({ field }) =>
+                            isEditMode ? (
+                              <FormItem>
+                                <FormLabel>رقم الهاتف</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            ) : (
+                              <DisplayField
+                                label="رقم الهاتف"
+                                value={field.value}
+                              />
                             )
                           }
                         />
@@ -656,7 +698,7 @@ export default function StudentDetailsClient({
                                 <FormLabel>التقييم الشهري</FormLabel>
                                 <p
                                   className={`pt-2 text-sm font-medium ${
-                                    performanceColorMap[field.value] || ""
+                                    performanceColorMap[field.value ?? ""] || ""
                                   }`}
                                 >
                                   {field.value || "غير محدد"}
@@ -696,7 +738,7 @@ export default function StudentDetailsClient({
                                 <FormLabel>تقييم المعلم</FormLabel>
                                 <p
                                   className={`pt-2 text-sm font-medium ${
-                                    performanceColorMap[field.value] || ""
+                                    performanceColorMap[field.value ?? ""] || ""
                                   }`}
                                 >
                                   {field.value || "غير محدد"}
@@ -736,7 +778,7 @@ export default function StudentDetailsClient({
                                 <FormLabel>مدى الاستجابة</FormLabel>
                                 <p
                                   className={`pt-2 text-sm font-medium ${
-                                    performanceColorMap[field.value] || ""
+                                    performanceColorMap[field.value ?? ""] || ""
                                   }`}
                                 >
                                   {field.value || "غير محدد"}
@@ -776,7 +818,7 @@ export default function StudentDetailsClient({
                                 <FormLabel>إكمال الواجبات</FormLabel>
                                 <p
                                   className={`pt-2 text-sm font-medium ${
-                                    performanceColorMap[field.value] || ""
+                                    performanceColorMap[field.value ?? ""] || ""
                                   }`}
                                 >
                                   {field.value || "غير محدد"}
@@ -793,14 +835,18 @@ export default function StudentDetailsClient({
                               <FormItem>
                                 <FormLabel>عدد الغيابات</FormLabel>
                                 <FormControl>
-                                  <Input type="number" {...field} />
+                                  <Input
+                                    type="number"
+                                    {...field}
+                                    value={String(field.value ?? "")}
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
                             ) : (
                               <DisplayField
                                 label="عدد الغيابات"
-                                value={field.value}
+                                value={Number(field.value)}
                               />
                             )
                           }

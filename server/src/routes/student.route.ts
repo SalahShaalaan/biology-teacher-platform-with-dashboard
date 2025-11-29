@@ -20,7 +20,7 @@ router.get("/:id", getStudentById);
 router.patch("/:id", updateStudent);
 router.patch(
   "/:id/update-image",
-  upload.single("profile-image"),
+  upload.single("profile_image"),
   updateStudentImage
 );
 router.delete("/:id", deleteStudent);
