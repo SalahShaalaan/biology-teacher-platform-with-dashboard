@@ -613,17 +613,9 @@ export default function QuestionsPage() {
                 </motion.div>
               </AnimatePresence>
             </CardContent>
-            <CardFooter>
-              {currentQuestion.questionType === "external_link" ? (
-                <Button
-                  onClick={handleExternalLinkNext}
-                  className="w-full text-lg p-6 bg-green-600 rounded-none cursor-pointer"
-                >
-                  {currentQuestionIndex < questions.length - 1
-                    ? "التالي ←"
-                    : "إنهاء الاختبار"}
-                </Button>
-              ) : (
+            {/* Only show footer button for MCQ questions */}
+            {(!currentQuestion.questionType || currentQuestion.questionType === "mcq") && (
+              <CardFooter>
                 <Button
                   onClick={handleCheckAnswer}
                   className="w-full text-lg p-6 bg-green-600 rounded-none disabled:opacity-70 disabled:cursor-not-allowed"
@@ -633,8 +625,8 @@ export default function QuestionsPage() {
                     ? "تأكيد الإجابة"
                     : "إنهاء الاختبار"}
                 </Button>
-              )}
-            </CardFooter>
+              </CardFooter>
+            )}
           </Card>
         </div>
       </div>
