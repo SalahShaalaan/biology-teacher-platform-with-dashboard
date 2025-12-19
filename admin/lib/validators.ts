@@ -460,7 +460,7 @@ export const questionSchema = z
     lessonTitle: z.string().min(1, "اسم الدرس مطلوب"),
     questionText: z.string().min(1, "نص السؤال مطلوب"),
     image: optionalImageValidator,
-    externalLink: z.string().url("رابط غير صحيح").optional().or(z.literal("")),
+    externalLink: z.string().optional().or(z.literal("")),
     options: z
       .array(
         z.object({
@@ -498,14 +498,23 @@ export const questionSchema = z
   )
   .refine(
     (data) => {
-      // If external_link type, externalLink must be provided
+      // If external_link type, externalLink must be provided and be a valid URL
       if (data.questionType === "external_link") {
-        return data.externalLink && data.externalLink.length > 0;
+        if (!data.externalLink || data.externalLink.length === 0) {
+          return false;
+        }
+        // Basic URL validation
+        try {
+          new URL(data.externalLink);
+          return true;
+        } catch {
+          return false;
+        }
       }
       return true;
     },
     {
-      message: "الرابط الخارجي مطلوب",
+      message: "الرابط الخارجي مطلوب ويجب أن يكون صحيحًا",
       path: ["externalLink"],
     }
   );

@@ -167,14 +167,27 @@ export function AddQuestionForm({
 
 
 
-      const payload = {
-        ...data,
+      const payload: any = {
+        questionType: data.questionType,
+        grade: data.grade,
+        unitTitle: data.unitTitle,
+        lessonTitle: data.lessonTitle,
+        questionText: data.questionText,
         image: imageUrl,
-        options: data.options?.map((o) => o.text), // Transform options to string array
       };
 
-      mutation.mutate(payload as any);
+      // Add fields based on question type
+      if (data.questionType === "mcq") {
+        payload.options = data.options?.map((o) => o.text);
+        payload.correctAnswer = data.correctAnswer;
+      } else if (data.questionType === "external_link") {
+        payload.externalLink = data.externalLink;
+      }
+
+      console.log("Submitting payload:", payload);
+      mutation.mutate(payload);
     } catch (error: any) {
+      console.error("Submit error:", error);
       toast.error("حدث خطأ: " + error.message);
     }
   };

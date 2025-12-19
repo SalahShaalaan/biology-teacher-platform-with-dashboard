@@ -45,6 +45,7 @@ export const getQuestionById = async (req: Request, res: Response) => {
 export const addQuestion = async (req: Request, res: Response) => {
   try {
     const newQuestionData = req.body;
+    console.log("Received question data:", JSON.stringify(newQuestionData, null, 2));
     const questionType = newQuestionData.questionType || "mcq";
 
     // Validate based on question type
@@ -55,12 +56,14 @@ export const addQuestion = async (req: Request, res: Response) => {
         !Array.isArray(newQuestionData.options) ||
         newQuestionData.options.length < 2
       ) {
+        console.error("MCQ validation failed: insufficient options");
         return res.status(400).json({
           success: false,
           message: "A question must have at least 2 options.",
         });
       }
-      if (newQuestionData.correctAnswer === undefined || newQuestionData.correctAnswer === null) {
+      if (newQuestionData.correctAnswer === undefined || newQuestionData.correctAnswer === null || newQuestionData.correctAnswer === "") {
+        console.error("MCQ validation failed: missing correctAnswer");
         return res.status(400).json({
           success: false,
           message: "Correct answer is required for MCQ questions.",
@@ -69,6 +72,7 @@ export const addQuestion = async (req: Request, res: Response) => {
     } else if (questionType === "external_link") {
       // External Link type: validate externalLink
       if (!newQuestionData.externalLink || newQuestionData.externalLink.trim() === "") {
+        console.error("External link validation failed: missing externalLink");
         return res.status(400).json({
           success: false,
           message: "External link is required for external link questions.",
@@ -87,20 +91,29 @@ export const addQuestion = async (req: Request, res: Response) => {
       externalLink,
     } = newQuestionData;
 
-    const question = await Question.create({
+    const questionData: any = {
       questionType,
       grade,
       unitTitle,
       lessonTitle,
       questionText,
-      options,
-      correctAnswer,
       image,
       externalLink,
-    });
+    };
+
+    // Only add options and correctAnswer for MCQ
+    if (questionType === "mcq") {
+      questionData.options = options;
+      questionData.correctAnswer = typeof correctAnswer === 'string' ? parseInt(correctAnswer) : correctAnswer;
+    }
+
+    console.log("Creating question with data:", JSON.stringify(questionData, null, 2));
+    const question = await Question.create(questionData);
+    console.log("Question created successfully:", question._id);
 
     res.status(201).json({ success: true, data: question });
   } catch (error) {
+    console.error("Error creating question:", error);
     res
       .status(400)
       .json({ success: false, message: "Error adding question", error });
