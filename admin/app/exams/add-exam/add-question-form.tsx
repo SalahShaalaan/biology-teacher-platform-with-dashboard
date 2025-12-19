@@ -153,15 +153,7 @@ export function AddQuestionForm({
             imageUrl = initialData.image;
         }
       } else if (initialData?.image) {
-          // If no file in form but we have initialData (and user didn't delete it explicitly? 
-          // well, if they deleted it, imageFiles would be empty array. 
-          // But if they didn't touch it, it might be empty or mock.
-          // Actually, if they clear the file input, imageFiles is empty.
-          // If they want to keep the image, they usually leave it.
-          // But our FileUpload component might behave differently.
-          // Let's assume if they didn't touch it, we keep it.
-          // But if they explicitly removed it, we should probably respect that?
-          // For now, let's keep it simple: if no new file, keep old one.
+        
           imageUrl = initialData.image;
       }
 
