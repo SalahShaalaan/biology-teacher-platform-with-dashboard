@@ -44,8 +44,12 @@ export const ExamSelection: FC<ExamSelectionProps> = ({
             const result = getExamResult(exam.title);
             const isCompleted =
               !!result && result["total-score"] === exam.questionCount;
-            const isUpdated =
-              !!result && result["total-score"] !== exam.questionCount;
+            
+            // Calculate percentage for color coding
+            const percentage = result ? Math.round((result.score / result["total-score"]) * 100) : 0;
+            const isExcellent = percentage >= 80;
+            const isGood = percentage >= 50 && percentage < 80;
+            const needsImprovement = percentage < 50 && percentage > 0;
 
             return (
               <motion.div
@@ -55,8 +59,11 @@ export const ExamSelection: FC<ExamSelectionProps> = ({
                 transition={{ delay: index * 0.1 }}
               >
                 <Card className={cn(
-                  "flex flex-col h-full shadow-none border transition-colors",
-                  isCompleted && "border-green-200 bg-green-50/50"
+                  "flex flex-col h-full shadow-none border-2 transition-all",
+                  isCompleted && isExcellent && "border-green-500 bg-green-50/50",
+                  isCompleted && isGood && "border-amber-500 bg-amber-50/50",
+                  isCompleted && needsImprovement && "border-red-500 bg-red-50/50",
+                  !isCompleted && "border-border"
                 )}>
                   <CardHeader>
                     <div className="flex items-center justify-between mb-2">
@@ -65,9 +72,14 @@ export const ExamSelection: FC<ExamSelectionProps> = ({
                         <span className="text-sm text-muted-foreground">{exam.grade}</span>
                       </div>
                       {isCompleted && (
-                        <span className="flex items-center gap-1 text-sm text-green-700 bg-green-100 px-2 py-1 rounded">
+                        <span className={cn(
+                          "flex items-center gap-1 text-sm font-medium px-3 py-1 rounded-full",
+                          isExcellent && "bg-green-600 text-white",
+                          isGood && "bg-amber-600 text-white",
+                          needsImprovement && "bg-red-600 text-white"
+                        )}>
                           <CheckCircle className="w-4 h-4" />
-                          مكتمل
+                          {isExcellent ? "ممتاز" : isGood ? "جيد" : "يحتاج تحسين"}
                         </span>
                       )}
                     </div>
@@ -75,18 +87,31 @@ export const ExamSelection: FC<ExamSelectionProps> = ({
                     <CardDescription className="flex items-center gap-4">
                       <span>عدد الأسئلة: {exam.questionCount}</span>
                       {isCompleted && (
-                        <span className="flex items-center text-amber-600 font-medium">
+                        <span className={cn(
+                          "flex items-center font-bold",
+                          isExcellent && "text-green-700",
+                          isGood && "text-amber-700",
+                          needsImprovement && "text-red-700"
+                        )}>
                           <Trophy className="w-4 h-4 ms-1" />
-                          {result.score} / {result["total-score"]}
+                          {result.score} / {result["total-score"]} ({percentage}%)
                         </span>
                       )}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="flex-grow flex flex-col justify-end">
                     {isCompleted && result.feedback && (
-                      <div className="bg-muted/50 p-3 rounded mb-4 text-sm text-muted-foreground border-r-4 border-[#295638]">
-                        <p className="font-medium text-foreground mb-1">ملاحظة:</p>
-                        <p>{result.feedback}</p>
+                      <div className={cn(
+                        "p-4 rounded mb-4 text-sm border-r-4",
+                        isExcellent && "bg-green-100/50 border-green-600 text-green-900",
+                        isGood && "bg-amber-100/50 border-amber-600 text-amber-900",
+                        needsImprovement && "bg-red-100/50 border-red-600 text-red-900"
+                      )}>
+                        <p className="font-bold mb-1 flex items-center gap-2">
+                          <Award className="w-4 h-4" />
+                          ملاحظة:
+                        </p>
+                        <p className="leading-relaxed">{result.feedback}</p>
                       </div>
                     )}
                     <Button
