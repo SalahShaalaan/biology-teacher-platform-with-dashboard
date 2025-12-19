@@ -2,8 +2,9 @@
 
 import { FC } from "react";
 import { motion } from "framer-motion";
-import { ChevronLeft, Layers, Info, CheckCircle, Trophy } from "lucide-react";
+import { BookOpen, CheckCircle, Trophy, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ExamInfo, Student } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -26,19 +27,19 @@ export const ExamSelection: FC<ExamSelectionProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-3xl mx-auto"
+      className="container mx-auto p-4 sm:p-6 md:p-8 text-right"
     >
-      <header className="text-center mb-12">
-        <h1 className="text-3xl font-bold tracking-tight text-blue-950 sm:text-4xl">
-          أهلاً بك، {student.name}
+      <header className="mb-8 pb-4 border-b border-border">
+        <h1 className="text-3xl font-bold text-foreground">
+          مرحباً بك، {student.name}!
         </h1>
-        <p className="mt-4 text-lg leading-8 text-gray-600">
+        <p className="text-lg text-muted-foreground mt-1">
           اختر أحد الاختبارات المتاحة لصفك الدراسي ({student.grade}).
         </p>
       </header>
 
       {exams.length > 0 ? (
-        <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {exams.map((exam, index) => {
             const result = getExamResult(exam.title);
             const isCompleted =
@@ -49,108 +50,72 @@ export const ExamSelection: FC<ExamSelectionProps> = ({
             return (
               <motion.div
                 key={exam.title}
-                initial={{ opacity: 0, x: -30 }}
-                animate={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <div
-                  className={cn(
-                    "p-6 rounded-xl border shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors",
-                    isCompleted
-                      ? "bg-green-50 border-green-200"
-                      : isUpdated
-                      ? "bg-amber-50 border-amber-200"
-                      : "bg-white hover:border-blue-300"
-                  )}
-                >
-                  <div className="flex-grow">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm text-gray-500 flex items-center bg-gray-100 px-2 py-0.5 rounded-full">
-                        <Layers className="w-3 h-3 ml-1" />
-                        {exam.grade}
-                      </span>
+                <Card className={cn(
+                  "flex flex-col h-full shadow-none border transition-colors",
+                  isCompleted && "border-green-200 bg-green-50/50"
+                )}>
+                  <CardHeader>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <BookOpen className="w-5 h-5 text-[#295638]" />
+                        <span className="text-sm text-muted-foreground">{exam.grade}</span>
+                      </div>
                       {isCompleted && (
-                        <span className="text-sm text-green-700 flex items-center bg-green-100 px-2 py-0.5 rounded-full font-medium">
-                          <CheckCircle className="w-3 h-3 ml-1" />
-                          تم الاختبار
-                        </span>
-                      )}
-                      {isUpdated && (
-                        <span className="text-sm text-amber-700 flex items-center bg-amber-100 px-2 py-0.5 rounded-full font-medium">
-                          <Info className="w-3 h-3 ml-1" />
-                          أسئلة جديدة
+                        <span className="flex items-center gap-1 text-sm text-green-700 bg-green-100 px-2 py-1 rounded">
+                          <CheckCircle className="w-4 h-4" />
+                          مكتمل
                         </span>
                       )}
                     </div>
-                    <h3 className="text-xl font-semibold text-blue-950 mt-2">
-                      {exam.title}
-                    </h3>
-                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                    <CardTitle className="leading-snug">{exam.title}</CardTitle>
+                    <CardDescription className="flex items-center gap-4">
                       <span>عدد الأسئلة: {exam.questionCount}</span>
                       {isCompleted && (
-                        <span className="flex items-center text-amber-600 font-bold">
-                          <Trophy className="w-4 h-4 ml-1" />
-                          الدرجة: {result.score} / {result["total-score"]}
+                        <span className="flex items-center text-amber-600 font-medium">
+                          <Trophy className="w-4 h-4 ms-1" />
+                          {result.score} / {result["total-score"]}
                         </span>
                       )}
-                      {isUpdated && (
-                        <span className="flex items-center text-gray-500">
-                          الدرجة السابقة: {result.score} /{" "}
-                          {result["total-score"]}
-                        </span>
-                      )}
-                    </div>
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-grow flex flex-col justify-end">
                     {isCompleted && result.feedback && (
-                      <p className="mt-3 text-sm text-gray-600 bg-white/50 p-3 rounded-lg border border-green-100">
-                        <span className="font-semibold text-green-800">
-                          ملاحظة:{" "}
-                        </span>
-                        {result.feedback}
-                      </p>
+                      <div className="bg-muted/50 p-3 rounded mb-4 text-sm text-muted-foreground border-r-4 border-[#295638]">
+                        <p className="font-medium text-foreground mb-1">ملاحظة:</p>
+                        <p>{result.feedback}</p>
+                      </div>
                     )}
-                  </div>
-                  <Button
-                    onClick={() => onSelectExam(exam)}
-                    size="lg"
-                    variant={isCompleted ? "outline" : "default"}
-                    className={cn(
-                      "rounded-full w-full sm:w-auto min-w-[140px]",
-                      isCompleted
-                        ? "border-green-600 text-green-700 hover:bg-green-100 hover:text-green-800"
-                        : isUpdated
-                        ? "bg-amber-600 hover:bg-amber-700 text-white"
-                        : ""
-                    )}
-                  >
-                    <span className="mr-2">
-                      {isCompleted
-                        ? "إعادة الاختبار"
-                        : isUpdated
-                        ? "ابدأ الاختبار"
-                        : "ابدأ الاختبار"}
-                    </span>
-                    <ChevronLeft className="w-5 h-5" />
-                  </Button>
-                </div>
+                    <Button
+                      onClick={() => onSelectExam(exam)}
+                      className={cn(
+                        "w-full",
+                        isCompleted
+                          ? "bg-muted hover:bg-muted/80 text-foreground"
+                          : "bg-[#295638] hover:bg-[#295638]/90"
+                      )}
+                    >
+                      {isCompleted ? "إعادة الاختبار" : "ابدأ الاختبار"}
+                    </Button>
+                  </CardContent>
+                </Card>
               </motion.div>
             );
           })}
         </div>
       ) : (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center py-16 px-6 bg-white rounded-xl border"
-        >
-          <Info className="mx-auto h-12 w-12 text-blue-400" />
-          <h3 className="mt-4 text-xl font-semibold text-gray-800">
+        <div className="text-center py-20 border border-dashed rounded-lg">
+          <BookOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h2 className="text-xl font-medium text-muted-foreground">
             لا توجد اختبارات متاحة
-          </h3>
-          <p className="mt-2 text-gray-500 max-w-md mx-auto">
-            لا توجد حاليًا اختبارات مخصصة لصفك الدراسي. يرجى المراجعة لاحقًا،
-            حيث نعمل على إضافة المزيد من المحتوى باستمرار.
+          </h2>
+          <p className="mt-2 text-muted-foreground max-w-md mx-auto">
+            لا توجد حاليًا اختبارات مخصصة لصفك الدراسي. يرجى المراجعة لاحقًا.
           </p>
-        </motion.div>
+        </div>
       )}
     </motion.div>
   );

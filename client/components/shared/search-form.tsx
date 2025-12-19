@@ -2,11 +2,11 @@
 
 import { useState, FormEvent, FC } from "react";
 import { motion } from "framer-motion";
-import { AlertCircle, LoaderCircle, Search } from "lucide-react";
+import { User, Search } from "lucide-react";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 interface SearchFormProps {
   title: string;
@@ -31,50 +31,59 @@ export const SearchForm: FC<SearchFormProps> = ({
   };
 
   return (
-    <div className="max-w-xl mx-auto text-center">
-      <h1 className="text-3xl font-bold tracking-tight text-blue-950 sm:text-4xl">
-        {title}
-      </h1>
-      <p className="mt-4 text-lg leading-8 text-gray-600">{description}</p>
-      <form
-        onSubmit={onSubmit}
-        className="mt-8 flex flex-col sm:flex-row items-start gap-4"
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md"
       >
-        <Input
-          type="text"
-          value={code}
-          onChange={(e) => setCode(e.target.value.toUpperCase())}
-          placeholder="أدخل الكود هنا..."
-          className="h-12 text-center text-lg tracking-widest"
-          disabled={isLoading}
-        />
-        <Button
-          type="submit"
-          size="lg"
-          className="h-12 w-full sm:w-auto bg-[#6b5bd8] hover:bg-[#5b4ec1]"
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <LoaderCircle className="animate-spin" />
-          ) : (
-            <Search className="w-5 h-5" />
-          )}
-          <span className="mr-2">بحث</span>
-        </Button>
-      </form>
-      {error && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-4"
-        >
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>خطأ</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        </motion.div>
-      )}
+        <Card className="shadow-none border">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={onSubmit} className="space-y-4">
+              <div className="relative">
+                <Input
+                  type="text"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.toUpperCase())}
+                  placeholder="أدخل الكود هنا"
+                  onKeyDown={(e) => e.key === "Enter" && onSubmit(e)}
+                  className="text-center text-lg p-6 pe-12"
+                  disabled={isLoading}
+                  dir="ltr"
+                />
+                <User className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              </div>
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full text-lg p-6 bg-[#295638] hover:bg-[#295638]/90 cursor-pointer"
+              >
+                {isLoading ? (
+                  "جاري التحقق..."
+                ) : (
+                  <>
+                    <Search className="ms-2 h-5 w-5" />
+                    <span>عرض الاختبارات</span>
+                  </>
+                )}
+              </Button>
+              {error && (
+                <motion.p 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="mt-2 text-sm text-destructive text-center"
+                >
+                  {error}
+                </motion.p>
+              )}
+            </form>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 };

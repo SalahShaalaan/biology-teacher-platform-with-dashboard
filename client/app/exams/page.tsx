@@ -43,7 +43,7 @@ export default async function ExamsPage() {
   const exams = groupQuestionsIntoExams(allQuestions);
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen bg-muted/40">
       <div className="container mx-auto px-4 py-20 sm:py-28">
         <ExamsClient exams={exams} />
       </div>
