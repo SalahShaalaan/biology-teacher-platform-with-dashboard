@@ -1,70 +1,59 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { EditBlogForm } from "./edit-blog-form";
-import { notFound } from "next/navigation";
+import { getBlogById } from "@/lib/api";
+import { Blog } from "@/types";
+import { Loader2 } from "lucide-react";
 
-interface Blog {
-  _id: string;
-  name: string;
-  description: string;
-  grade: string;
-  unit: string;
-  lesson: string;
-  type: "video" | "pdf";
-  url: string;
-  coverImage: string;
-  videoUrl?: string;
-}
+export default function EditBlogPage() {
+  const params = useParams();
+  const id = params?.id as string;
+  const router = useRouter();
 
-async function getBlog(id: string): Promise<Blog | null> {
-  try {
-    // Validate ID format before making request
-    if (!id || id.length !== 24) {
-      console.error("Invalid MongoDB ID format:", id);
-      return null;
-    }
+  const [blogData, setBlogData] = useState<Blog | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-    const url = `${apiUrl}/api/blogs/${id}`;
+  useEffect(() => {
+    const fetchBlog = async () => {
+      try {
+        if (!id) return;
+        const data = await getBlogById(id);
+        setBlogData(data);
+      } catch (err: any) {
+        console.error("Failed to fetch blog:", err);
+        setError("فشل في تحميل بيانات الشرح.");
+        // Optional: Redirect or show error
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    console.log("Fetching blog from:", url);
+    fetchBlog();
+  }, [id]);
 
-    const res = await fetch(url, {
-      cache: "no-store",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!res.ok) {
-      console.error(`API returned ${res.status}: ${res.statusText}`);
-      return null;
-    }
-
-    const result = await res.json();
-
-    if (!result.success || !result.data) {
-      console.error("Invalid API response structure:", result);
-      return null;
-    }
-
-    return result.data;
-  } catch (error) {
-    console.error("Failed to fetch blog:", error);
-    return null;
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
-}
-interface EditBlogPageProps {
-  params: {
-    id: string;
-  };
-}
 
-export default async function EditBlogPage({ params }: EditBlogPageProps) {
-  const { id } = await params;
-
-  const blogData = await getBlog(id);
-
-  if (!blogData) {
-    notFound();
+  if (error || !blogData) {
+    return (
+      <div className="flex h-screen items-center justify-center flex-col gap-4">
+        <p className="text-destructive font-medium">{error || "لم يتم العثور على الشرح"}</p>
+        <button 
+            onClick={() => router.back()}
+            className="text-sm text-muted-foreground hover:underline"
+        >
+            العودة للخلف
+        </button>
+      </div>
+    );
   }
 
   return (

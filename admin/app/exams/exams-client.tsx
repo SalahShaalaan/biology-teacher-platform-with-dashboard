@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PlusCircle, BookOpen, CheckCircle2, Pencil, Trash2, ExternalLink } from "lucide-react";
 import Image from "next/image";
-import { deleteQuestion } from "@/lib/api";
+import { deleteQuestion, getCurriculum, getQuestionsList } from "@/lib/api";
 import { toast } from "react-hot-toast";
 
 // --- Types ---
@@ -23,18 +23,7 @@ import { Question } from "@/types";
 type SelectedLesson = { grade: string; unitTitle: string; lessonTitle: string };
 
 // --- API Functions ---
-const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/questions`;
-const fetchCurriculum = async (): Promise<Curriculum[]> => {
-  const res = await fetch(`${API_URL}/curriculum`);
-  if (!res.ok) throw new Error("فشل في جلب المنهج الدراسي");
-  return (await res.json()).data;
-};
-const fetchQuestions = async (lesson: SelectedLesson): Promise<Question[]> => {
-  const params = new URLSearchParams(lesson);
-  const res = await fetch(`${API_URL}?${params.toString()}`);
-  if (!res.ok) throw new Error("فشل في جلب الأسئلة");
-  return (await res.json()).data;
-};
+// Removed local raw fetch functions in favor of api.ts versions
 
 // --- Main Page Component ---
 export default function ExamsClient() {
@@ -48,14 +37,17 @@ export default function ExamsClient() {
     Curriculum[]
   >({
     queryKey: ["curriculum"],
-    queryFn: fetchCurriculum,
+    queryFn: getCurriculum,
   });
 
   const { data: questions, isLoading: isLoadingQuestions } = useQuery<
     Question[]
   >({
     queryKey: ["questions", selectedLesson],
-    queryFn: () => fetchQuestions(selectedLesson!),
+    queryFn: () => {
+        const params = new URLSearchParams(selectedLesson as any);
+        return getQuestionsList(params.toString());
+    },
     enabled: !!selectedLesson,
   });
 
@@ -222,17 +214,7 @@ export default function ExamsClient() {
                           </div>
                         )}
                         
-                        {q.externalLink && (
-                            <a 
-                                href={q.externalLink} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 text-blue-400 hover:underline mb-4 text-sm"
-                            >
-                                <ExternalLink className="h-4 w-4" />
-                                رابط خارجي
-                            </a>
-                        )}
+                    
 
                         <ul className="space-y-2 text-sm">
                           {q.options.map((opt, i) => (

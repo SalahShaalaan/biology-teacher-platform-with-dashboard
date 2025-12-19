@@ -48,7 +48,7 @@ export function MainSidebar() {
   return (
     <>
       <SidebarHeader className="flex items-center justify-center p-4 group-data-[collapsible=icon]:hidden ">
-        <h1>أكرم مسلم</h1>
+        <h1>عبدالله مسلم</h1>
       </SidebarHeader>
 
       <SidebarContent className="overflow-hidden p-2">

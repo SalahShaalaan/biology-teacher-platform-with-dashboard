@@ -11,8 +11,8 @@ const mainfont = Cairo({
 });
 
 export const metadata: Metadata = {
-  title: "أكرم مسلم | لوحة التحكم",
-  description: "لوحة تحكم للأدمن أكرم مسلم",
+  title: "أستاذ عبدالله مسلم | لوحة التحكم",
+  description: "لوحة تحكم للأدمن عبدالله مسلم",
 };
 
 export default function RootLayout({
@@ -21,8 +21,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar" dir="rtl">
-      <body className={`${mainfont.className} antialiased`}>
+    <html lang="ar" dir="rtl" className="dark">
+      <body
+        className={`${mainfont.className} bg-gray-50 dark:bg-[#191919] antialiased`}
+      >
         <Providers>
           <MainLayout>
             {children}

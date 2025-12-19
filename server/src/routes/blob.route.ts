@@ -1,5 +1,6 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { Router } from "express";
+import { protect, admin } from "../middleware/auth.middleware";
 
 const router = Router();
 
@@ -42,7 +43,7 @@ router.get("/", (req, res) => {
  * The @vercel/blob/client upload() function calls this endpoint
  * to get permission and a presigned URL for uploading.
  */
-router.post("/", async (req, res) => {
+router.post("/", protect, admin, async (req, res) => {
   try {
     console.log("[Blob] Received upload request");
     console.log("[Blob] Request body:", JSON.stringify(req.body, null, 2));

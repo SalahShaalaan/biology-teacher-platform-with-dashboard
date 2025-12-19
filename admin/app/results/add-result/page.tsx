@@ -175,9 +175,7 @@ export default function ResultsPage() {
                         <Command>
                           <CommandInput placeholder="ابحث عن طالب..." />
                           <CommandList>
-                            <CommandEmpty>
-                              لا يوجد طالب بهذا الاسم.
-                            </CommandEmpty>
+                            <CommandEmpty>لا يوجد طالب بهذا الاسم.</CommandEmpty>
                             {isLoadingStudents ? (
                               <div className="p-4 text-sm text-center text-muted-foreground">
                                 جاري التحميل...

@@ -27,7 +27,13 @@ export const getStudents = async (req: Request, res: Response) => {
 
 export const getStudentById = async (req: Request, res: Response) => {
   try {
-    const student = await Student.findOne({ code: req.params.id });
+    const id = req.params.id?.trim();
+
+    if (!id) {
+      return res.status(400).json({ success: false, message: "Invalid student ID" });
+    }
+
+    const student = await Student.findOne({ code: id });
     if (!student) {
       return res
         .status(404)
@@ -444,5 +450,162 @@ export const addQuizResult = async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ success: false, message: "Error adding quiz result" });
+  }
+};
+
+export const addExamResult = async (req: Request, res: Response) => {
+  try {
+    console.log("Adding exam result for student:", req.params.id);
+    console.log("Request body:", req.body);
+
+    const student = await Student.findOne({ code: req.params.id });
+    if (!student) {
+      console.log("Student not found");
+      return res
+        .status(404)
+        .json({ success: false, message: "Student not found" });
+    }
+
+    const { examName, score, totalScore, feedback } = req.body;
+
+    const newResult = {
+      "exam-name": examName,
+      score,
+      "total-score": totalScore,
+      feedback,
+      date: new Date(),
+    };
+
+    console.log("New result object:", newResult);
+
+    // Check if exam already exists (optional: update or push new)
+    // For now, we'll just push a new one, or you could replace if same exam name
+    const existingIndex = (student.exams ?? []).findIndex(
+      (e) => e["exam-name"] === examName
+    );
+
+    if (existingIndex > -1) {
+      console.log("Updating existing exam at index:", existingIndex);
+      // Mongoose array update might need explicit set or markModified
+      // Let's try creating a new array to be safe
+      const updatedExams = [...student.exams];
+      updatedExams[existingIndex] = {
+        ...updatedExams[existingIndex],
+        ...newResult,
+        date: new Date(),
+      };
+      student.exams = updatedExams;
+    } else {
+      console.log("Pushing new exam");
+      student.exams = [...(student.exams ?? []), newResult];
+    }
+
+    await student.save();
+    console.log("Student saved. Exams count:", student.exams.length);
+    res.status(200).json({ success: true, data: student.exams });
+  } catch (error) {
+    console.error("Error adding exam result:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Error adding exam result" });
+  }
+};
+export const submitExam = async (req: Request, res: Response) => {
+  try {
+    const { studentCode, examName, answers } = req.body;
+    // answers: [{ questionId: string, answerIndex: number }]
+
+    if (!studentCode || !examName || !answers || !Array.isArray(answers)) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields: studentCode, examName, answers",
+      });
+    }
+
+    const student = await Student.findOne({ code: studentCode });
+    if (!student) {
+      return res.status(404).json({ success: false, message: "Student not found" });
+    }
+
+    // Fetch all questions involved in the exam
+    // We assume answers contains all question IDs. 
+    // Ideally, we should fetch questions by examName (unit/grade) to ensure we have all of them, 
+    // but the client sends what it took. 
+    // To be secure, we should re-fetch the exam questions based on the exam criteria (grade, unit, etc)
+    // OR just validate the provided answers against the question IDs.
+    // Let's trust the questionIds sent for now but verify they exist.
+    
+    // Better approach: functionality in exams-client groups questions by unitTitle. 
+    // The client knows the examName (which is the unitTitle). 
+    // So we can fetch all questions for this unit and grade.
+    // However, the `examName` in client is just `title`. 
+    // Let's assume `answers` contains `{ questionId, answerIndex }`.
+    
+    const questionIds = answers.map((a: any) => a.questionId);
+    // Find these questions in DB to get correct answers
+    // importing Question from model (need to ensure import exists at top)
+    const questions = await require("../models/Question.model").default.find({
+      _id: { $in: questionIds },
+    });
+
+    let score = 0;
+    const totalQuestions = questions.length;
+
+    // Create a map for quick lookup
+    const questionMap = new Map();
+    questions.forEach((q: any) => {
+        questionMap.set(String(q._id), q);
+    });
+
+    answers.forEach((ans: any) => {
+        const question = questionMap.get(ans.questionId);
+        if (question && question.correctAnswer === ans.answerIndex) {
+            score++;
+        }
+    });
+
+    // Calculate feedback
+    const percentage = totalQuestions > 0 ? (score / totalQuestions) * 100 : 0;
+    let feedback = "";
+    if (percentage >= 90) feedback = "أداء ممتاز! استمر في هذا المستوى الرائع.";
+    else if (percentage >= 75) feedback = "جيد جداً! أنت في الطريق الصحيح.";
+    else if (percentage >= 50) feedback = "جيد، ولكن تحتاج إلى المزيد من المراجعة.";
+    else feedback = "تحتاج إلى بذل المزيد من الجهد. لا تيأس!";
+
+    // Save result to student
+    const newResult = {
+      "exam-name": examName,
+      score,
+      "total-score": totalQuestions,
+      feedback,
+      date: new Date(),
+    };
+
+    // Update or push new exam result
+    const existingIndex = (student.exams ?? []).findIndex(
+      (e) => e["exam-name"] === examName
+    );
+
+    if (existingIndex > -1) {
+        student.exams![existingIndex] = newResult; // Using non-null assertion as we know exams exists or ?? []
+    } else {
+        student.exams = [...(student.exams ?? []), newResult];
+    }
+
+    await student.save();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        score,
+        totalScore: totalQuestions,
+        feedback,
+        percentage
+      }
+    });
+
+  } catch (error) {
+    console.error("Error submitting exam:", error);
+    res.status(500).json({ success: false, message: "Error submitting exam" });
   }
 };

@@ -122,14 +122,14 @@ export default function StudentTable({ initialStudents }: StudentTableProps) {
   const numSelected = table.getFilteredSelectedRowModel().rows.length;
 
   return (
-    <div className="w-full space-y-4 rounded-2xl border border-gray-200 bg-white p-4 md:p-6">
+    <div className="w-full space-y-4 rounded-lg border border-gray-800 bg-[#202124] p-4 md:p-6">
       <ReusableTabs
         activeTab={activeTab}
         tabItems={tabItems}
         onTabChange={setActiveTab}
       />
 
-      <div className="flex flex-col items-stretch gap-4 pt-2 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col-reverse items-stretch gap-4 pt-2 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-wrap items-center gap-2">
           {numSelected > 0 ? (
             <Button
@@ -146,22 +146,20 @@ export default function StudentTable({ initialStudents }: StudentTableProps) {
               <Trash2 className="ml-2 h-4 w-4" /> حذف ({numSelected})
             </Button>
           ) : (
-            <>
-              <Button asChild className="h-10">
-                <Link href="/students/add-student">إضافة طالب</Link>
-              </Button>
-            </>
+            <Button asChild className="h-10 text-white">
+              <Link href="/students/add-student">إضافة طالب</Link>
+            </Button>
           )}
         </div>
         <div className="relative">
-          <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
           <Input
             placeholder="ابحث بالاسم..."
             value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
               table.getColumn("name")?.setFilterValue(event.target.value)
             }
-            className="h-10 w-full max-w-sm border-gray-200 pl-4 pr-10 shadow-none"
+            className="h-10 w-full max-w-sm rounded-md border-gray-700 bg-[#303134] pl-4 pr-10 text-gray-200 shadow-none placeholder:text-gray-400"
           />
         </div>
       </div>
@@ -174,17 +172,18 @@ export default function StudentTable({ initialStudents }: StudentTableProps) {
       </div>
 
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
+        <DialogContent className="border-gray-700 bg-gray-900 text-white">
           <DialogHeader>
-            <DialogTitle>تأكيد الحذف</DialogTitle>
+            <DialogTitle className="text-white">تأكيد الحذف</DialogTitle>
           </DialogHeader>
-          <p>
+          <p className="text-gray-300">
             هل أنت متأكد أنك تريد حذف بيانات ({studentsToDelete.length}) طالب؟
           </p>
           <div className="mt-4 flex justify-end gap-2">
             <Button
               variant="outline"
               onClick={() => setIsDeleteDialogOpen(false)}
+              className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
             >
               إلغاء
             </Button>

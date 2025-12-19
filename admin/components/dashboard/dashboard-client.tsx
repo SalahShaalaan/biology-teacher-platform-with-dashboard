@@ -30,7 +30,7 @@ interface DashboardClientProps {
   data: DashboardStats;
 }
 
-const chartColor = "#0047AB	";
+const chartColor = "#3b82f6"; // A brighter blue for better contrast
 
 export default function DashboardClient({ data }: DashboardClientProps) {
   const [isClient, setIsClient] = useState(false);
@@ -73,29 +73,29 @@ export default function DashboardClient({ data }: DashboardClientProps) {
           title="إجمالي الطلاب"
           value={stats.totalStudents}
           iconUrl="/people.svg"
-          iconBgColor="bg-blue-100"
+          iconBgColor="bg-blue-500/10"
         />
         <StatCard
           title="امتحانات الفصل"
           value={stats.totalExams}
           iconUrl="/exam.svg"
-          iconBgColor="bg-green-100"
+          iconBgColor="bg-green-500/10"
         />
         <StatCard
           title="اختبارات المنصة"
           value={stats.totalQuizzes}
           iconUrl="/platform.svg"
-          iconBgColor="bg-purple-100"
+          iconBgColor="bg-purple-500/10"
         />
         <StatCard
           title="إجمالي الشروحات"
           value={stats.totalBlogs}
           iconUrl="/youtube.svg"
-          iconBgColor="bg-red-100"
+          iconBgColor="bg-red-500/10"
         />
       </div>
 
-      <Card className="shadow-none">
+      <Card className="border-gray-700 bg-[#191919] shadow-none">
         <CardHeader>
           <div className="flex flex-col items-stretch justify-between gap-4 sm:flex-row sm:items-start">
             <div className="flex flex-col items-start">
@@ -105,17 +105,17 @@ export default function DashboardClient({ data }: DashboardClientProps) {
                     percentageChange >= 0 ? "bg-green-500" : "bg-red-500"
                   }`}
                 />
-                <span className="font-semibold">
+                <span className="font-semibold text-gray-50">
                   {percentageChange.toFixed(1)}%
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground">مقارنة بآخر شهر</p>
+              <p className="text-xs text-gray-400">مقارنة بآخر شهر</p>
             </div>
             <div className="flex flex-col items-start sm:items-end">
-              <p className="text-sm font-medium text-muted-foreground">
+              <p className="text-sm font-medium text-gray-400">
                 متوسط أداء آخر شهر
               </p>
-              <p className="text-3xl font-bold">
+              <p className="text-3xl font-bold text-gray-50">
                 {latestPerformance.toFixed(1)}%
               </p>
             </div>
@@ -138,16 +138,21 @@ export default function DashboardClient({ data }: DashboardClientProps) {
                     <stop offset="95%" stopColor={chartColor} stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid vertical horizontal={false} stroke="#f0f0f0" />
+                <CartesianGrid
+                  vertical
+                  horizontal={false}
+                  stroke="rgba(255, 255, 255, 0.1)"
+                />
                 <XAxis dataKey="name" hide />
                 <YAxis hide domain={["dataMin - 10", "dataMax + 10"]} />
                 <Tooltip
                   cursor={false}
                   contentStyle={{
-                    backgroundColor: "rgba(255, 255, 255, 0.8)",
-                    border: "1px solid #ddd",
+                    backgroundColor: "rgba(25, 25, 25, 0.8)",
+                    border: "1px solid rgba(255, 255, 255, 0.2)",
                     borderRadius: "0.5rem",
                     backdropFilter: "blur(5px)",
+                    color: "#ffffff",
                   }}
                   formatter={(value: number) => [
                     `${value.toFixed(2)}%`,
@@ -166,7 +171,7 @@ export default function DashboardClient({ data }: DashboardClientProps) {
               </AreaChart>
             ) : (
               <div className="flex h-[250px] w-full items-center justify-center">
-                <p className="text-muted-foreground">
+                <p className="text-gray-400">
                   لا توجد بيانات كافية لعرض الرسم البياني. تحتاج إلى بيانات
                   لشهرين على الأقل.
                 </p>

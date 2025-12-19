@@ -145,12 +145,11 @@ export function AddStudentForm({ initialGrades }: AddStudentFormProps) {
 
       // إضافة باقي البيانات بشكل صحيح
       formData.append("name", data.name.trim());
-      formData.append("age", String(data.age));
       formData.append("gender", data.gender);
       formData.append("grade", data.grade);
-      formData.append("phoneNumber", data.phoneNumber.trim());
-
-      console.log("Submitting form data...");
+      if (data.phoneNumber && data.phoneNumber.trim() !== "") {
+        formData.append("phoneNumber", data.phoneNumber.trim());
+      }
 
       // طباعة محتويات FormData للتحقق
       for (const [key, value] of formData.entries()) {
@@ -294,40 +293,13 @@ export function AddStudentForm({ initialGrades }: AddStudentFormProps) {
                   name="phoneNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>
-                        رقم الهاتف <span className="text-red-500">*</span>
-                      </FormLabel>
+                      <FormLabel>رقم الهاتف</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="01234567890"
                           {...field}
+                          value={field.value ?? ""}
                           disabled={isLoading}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Age */}
-                <FormField
-                  control={form.control}
-                  name="age"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        العمر <span className="text-red-500">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="أدخل عمر الطالب"
-                          {...field}
-                          disabled={isLoading}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            field.onChange(value === "" ? "" : Number(value));
-                          }}
                         />
                       </FormControl>
                       <FormMessage />

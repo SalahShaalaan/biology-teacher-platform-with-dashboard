@@ -3,7 +3,7 @@ import { generateUniqueFilename, uploadToBlob } from "./blob-upload";
 
 export type { Student, Blog };
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://mr-abdallah-server.vercel.app";
 
 // ============================================================================
 // Types
@@ -77,20 +77,48 @@ async function handleResponse<T>(response: Response): Promise<T> {
 // Blog API Functions
 // ============================================================================
 
+import Cookies from "js-cookie";
+
+// Helper to add Auth header
+async function authFetch(url: string, options: RequestInit = {}) {
+  const token = Cookies.get("admin_token");
+  
+  // Debug logging to track token availability
+  if (!token) {
+    console.warn("[authFetch] No admin_token found in cookies for request:", url);
+    // Only access document.cookie in browser environment
+    if (typeof window !== "undefined") {
+      console.warn("[authFetch] All cookies:", document.cookie);
+    }
+  } else {
+    console.log("[authFetch] Token found, making authenticated request to:", url);
+  }
+  
+  // Robust header handling using Headers API
+  const headers = new Headers(options.headers);
+  
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+    headers.set("x-access-token", token); // Redundancy for stripped headers
+  }
+
+  return fetch(url, { ...options, headers });
+}
+
 export async function getBlogs(): Promise<Blog[]> {
-  const response = await fetch(`${API_BASE_URL}/api/blogs`, {
+  const response = await authFetch(`${API_BASE_URL}/api/blogs`, {
     cache: "no-store",
   });
   return handleResponse<Blog[]>(response);
 }
 
 export async function getBlogById(id: string): Promise<Blog> {
-  const response = await fetch(`${API_BASE_URL}/api/blogs/${id}`);
+  const response = await authFetch(`${API_BASE_URL}/api/blogs/${id}`);
   return handleResponse<Blog>(response);
 }
 
 async function createBlog(payload: BlogPayload): Promise<Blog> {
-  const response = await fetch(`${API_BASE_URL}/api/blogs`, {
+  const response = await authFetch(`${API_BASE_URL}/api/blogs`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -174,7 +202,7 @@ async function updateBlogRequest({
   id: string;
   payload: Partial<BlogPayload>;
 }): Promise<Blog> {
-  const response = await fetch(`${API_BASE_URL}/api/blogs/${id}`, {
+  const response = await authFetch(`${API_BASE_URL}/api/blogs/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -267,7 +295,7 @@ export async function updateBlogWithUploads({
 }
 
 export async function deleteBlog(id: string): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE_URL}/api/blogs/${id}`, {
+  const response = await authFetch(`${API_BASE_URL}/api/blogs/${id}`, {
     method: "DELETE",
   });
   return handleResponse<{ message: string }>(response);
@@ -278,14 +306,14 @@ export async function deleteBlog(id: string): Promise<{ message: string }> {
 // ============================================================================
 
 export async function fetchGrades(): Promise<string[]> {
-  const response = await fetch(`${API_BASE_URL}/api/grades`, {
+  const response = await authFetch(`${API_BASE_URL}/api/grades`, {
     cache: "no-store",
   });
   return handleResponse<string[]>(response);
 }
 
 export async function addNewGrade(newGrade: string): Promise<any> {
-  const response = await fetch(`${API_BASE_URL}/api/grades`, {
+  const response = await authFetch(`${API_BASE_URL}/api/grades`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ newGrade }),
@@ -298,27 +326,88 @@ export async function addNewGrade(newGrade: string): Promise<any> {
 // ============================================================================
 
 export async function fetchStudents(): Promise<Student[]> {
-  const response = await fetch(`${API_BASE_URL}/api/students`, {
+  const response = await authFetch(`${API_BASE_URL}/api/students`, {
     cache: "no-store",
   });
   return handleResponse<Student[]>(response);
 }
 
 export async function createStudent(formData: FormData): Promise<Student> {
+  // FormData handling: do NOT set Content-Type manually, fetch does it
+  const token = Cookies.get("admin_token");
+  const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+  
   const response = await fetch(`${API_BASE_URL}/api/students`, {
     method: "POST",
+    headers,
     body: formData,
   });
   return handleResponse<Student>(response);
 }
 
+export async function createStudentJson(data: any): Promise<Student> {
+  const response = await authFetch(`${API_BASE_URL}/api/students`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<Student>(response);
+}
+
+export async function fetchTestimonials(): Promise<any[]> {
+    const response = await authFetch(`${API_BASE_URL}/api/testimonials`);
+    // Note: If endpoint doesn't exist, this will throw in handleResponse or return 404
+    return handleResponse<any[]>(response);
+}
+
+export async function deleteTestimonial(id: string): Promise<void> {
+    const response = await authFetch(`${API_BASE_URL}/api/testimonials/${id}`, {
+        method: "DELETE",
+    });
+    return handleResponse<void>(response);
+}
+
 export async function deleteStudent(
   code: string
 ): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE_URL}/api/students/${code}`, {
+  const response = await authFetch(`${API_BASE_URL}/api/students/${code}`, {
     method: "DELETE",
   });
   return handleResponse<{ message: string }>(response);
+}
+
+export async function getStudent(studentId: string): Promise<Student> {
+    const res = await authFetch(`${API_BASE_URL}/api/students/${studentId}`);
+    if (!res.ok) throw new Error("Failed to fetch student");
+    const result = await res.json();
+    return result.data;
+}
+
+export async function updateStudentDetails(studentId: string, data: any) {
+    const res = await authFetch(`${API_BASE_URL}/api/students/${studentId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to update student");
+    return res.json();
+}
+
+export async function updateStudentImage(studentId: string, imageFile: File) {
+    const formData = new FormData();
+    formData.append("profile_image", imageFile);
+    // authFetch handles headers, but for FormData we should rely on browser to set Content-Type
+    // We need to manually construct headers for authFetch but EXCLUDE Content-Type
+    const token = Cookies.get("admin_token");
+    const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+
+    const res = await fetch(`${API_BASE_URL}/api/students/${studentId}/update-image`, {
+        method: "PATCH",
+        headers,
+        body: formData,
+    });
+    if (!res.ok) throw new Error("Failed to update student image");
+    return res.json();
 }
 
 export async function addClassResult({
@@ -328,32 +417,44 @@ export async function addClassResult({
   code: string;
   formData: FormData;
 }): Promise<any> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/students/${code}/class-results`,
-    {
-      method: "POST",
-      body: formData,
-    }
-  );
-  return handleResponse<any>(response);
+    const token = Cookies.get("admin_token");
+    const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+
+    const response = await fetch(
+        `${API_BASE_URL}/api/students/${code}/class-results`,
+        {
+            method: "POST",
+            headers,
+            body: formData,
+        }
+    );
+    return handleResponse<any>(response);
+}
+
+export async function deleteClassResult(studentCode: string, resultId: string): Promise<any> {
+    const response = await authFetch(
+        `${API_BASE_URL}/api/students/${studentCode}/class-results/${resultId}`,
+        { method: "DELETE" }
+    );
+    return handleResponse<any>(response);
 }
 
 export async function getAllOrders(): Promise<IOrder[]> {
-  const response = await fetch(`${API_BASE_URL}/api/orders`, {
+  const response = await authFetch(`${API_BASE_URL}/api/orders`, {
     cache: "no-store",
   });
   return handleResponse<IOrder[]>(response);
 }
 
 export async function deleteOrder(id: string): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE_URL}/api/orders/${id}`, {
+  const response = await authFetch(`${API_BASE_URL}/api/orders/${id}`, {
     method: "DELETE",
   });
   return handleResponse<{ message: string }>(response);
 }
 
 export async function getAllBestOfMonth(): Promise<IBestOfMonth[]> {
-  const response = await fetch(`${API_BASE_URL}/api/best-of-month`, {
+  const response = await authFetch(`${API_BASE_URL}/api/best-of-month`, {
     cache: "no-store",
   });
   return handleResponse<IBestOfMonth[]>(response);
@@ -380,7 +481,7 @@ export async function createBestOfMonthWithUpload(
   };
 
   // 3. Send data to the server
-  const response = await fetch(`${API_BASE_URL}/api/best-of-month`, {
+  const response = await authFetch(`${API_BASE_URL}/api/best-of-month`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -412,7 +513,7 @@ export async function updateBestOfMonthWithUpload({
     payload.imageUrl = uploadResult.url;
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/best-of-month/${id}`, {
+  const response = await authFetch(`${API_BASE_URL}/api/best-of-month/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -424,7 +525,7 @@ export async function updateBestOfMonthWithUpload({
 export async function deleteBestOfMonth(
   id: string
 ): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE_URL}/api/best-of-month/${id}`, {
+  const response = await authFetch(`${API_BASE_URL}/api/best-of-month/${id}`, {
     method: "DELETE",
   });
   return handleResponse<{ message: string }>(response);
@@ -437,7 +538,7 @@ export async function deleteBestOfMonth(
 import { QuestionFormData } from "./validators";
 
 export const getQuestionById = async (id: string) => {
-  const res = await fetch(`${API_BASE_URL}/api/questions/${id}`);
+  const res = await authFetch(`${API_BASE_URL}/api/questions/${id}`);
   if (!res.ok) {
     const errorData = await res.json();
     throw new Error(errorData.message || "Failed to fetch question");
@@ -446,7 +547,7 @@ export const getQuestionById = async (id: string) => {
 };
 
 export const addQuestion = async (data: QuestionFormData) => {
-  const res = await fetch(`${API_BASE_URL}/api/questions`, {
+  const res = await authFetch(`${API_BASE_URL}/api/questions`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -459,7 +560,7 @@ export const addQuestion = async (data: QuestionFormData) => {
 };
 
 export const updateQuestion = async (id: string, data: QuestionFormData) => {
-  const res = await fetch(`${API_BASE_URL}/api/questions/${id}`, {
+  const res = await authFetch(`${API_BASE_URL}/api/questions/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -472,7 +573,7 @@ export const updateQuestion = async (id: string, data: QuestionFormData) => {
 };
 
 export const deleteQuestion = async (id: string) => {
-  const res = await fetch(`${API_BASE_URL}/api/questions/${id}`, {
+  const res = await authFetch(`${API_BASE_URL}/api/questions/${id}`, {
     method: "DELETE",
   });
   if (!res.ok) {
@@ -480,6 +581,39 @@ export const deleteQuestion = async (id: string) => {
     throw new Error(errorData.message || "Failed to delete question");
   }
   return res.json();
+  return res.json();
+};
+
+export const getCurriculum = async () => {
+    const res = await authFetch(`${API_BASE_URL}/api/questions/curriculum`);
+    if (!res.ok) {
+        throw new Error("Failed to fetch curriculum");
+    }
+    const data = await res.json();
+    return data.data; // Wrap in data property handling if needed, usually response is { success: true, data: ... }
+};
+
+export const getQuestionsList = async (params: string) => {
+    const res = await authFetch(`${API_BASE_URL}/api/questions?${params}`);
+    if (!res.ok) {
+        throw new Error("Failed to fetch questions");
+    }
+    const data = await res.json();
+    return data.data;
+};
+
+export const getDashboardStats = async () => {
+    const res = await authFetch(`${API_BASE_URL}/api/dashboard/stats`, {
+        cache: "no-store",
+    });
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        console.error("[getDashboardStats] Error:", errorData);
+        throw new Error(errorData.message || "Failed to fetch dashboard stats");
+    }
+    const result = await res.json();
+    // Return the data property if it exists, otherwise return the result
+    return result.data || result;
 };
 
 // ============================================================================

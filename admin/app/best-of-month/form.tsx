@@ -193,7 +193,6 @@ export function BestOfMonthForm({
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              required
             />
           </div>
         </div>

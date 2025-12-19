@@ -52,27 +52,13 @@ interface Student {
 // --- API Functions ---
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-async function fetchStudentsWithResults(): Promise<Student[]> {
-  const res = await fetch(`${API_URL}/api/students`);
-  if (!res.ok) throw new Error("فشل في جلب الطلاب");
-  const data = await res.json();
-  return data.data;
-}
+// Imports at top
+import { fetchStudents, deleteClassResult } from "@/lib/api";
 
-async function deleteClassResult(params: {
-  studentCode: string;
-  resultId: string;
-}) {
-  const res = await fetch(
-    `${API_URL}/api/students/${params.studentCode}/class-results/${params.resultId}`,
-    { method: "DELETE" }
-  );
-  if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.message || "فشل في حذف النتيجة");
-  }
-  return res.json();
-}
+// Removed local fetchStudentsWithResults
+// Removed deleteClassResult local function
+
+// Removed local deleteClassResult in favor of import
 
 // --- Main Component ---
 export default function ResultsDashboardPage() {
@@ -85,11 +71,12 @@ export default function ResultsDashboardPage() {
     error,
   } = useQuery<Student[]>({
     queryKey: ["studentsWithResults"],
-    queryFn: fetchStudentsWithResults,
+    queryFn: fetchStudents,
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deleteClassResult,
+    mutationFn: ({ studentCode, resultId }: { studentCode: string; resultId: string }) =>
+      deleteClassResult(studentCode, resultId),
     onSuccess: () => {
       toast.success("تم حذف النتيجة بنجاح.");
       queryClient.invalidateQueries({ queryKey: ["studentsWithResults"] });

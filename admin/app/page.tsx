@@ -1,61 +1,48 @@
+"use client";
+
 import DashboardClient from "@/components/dashboard/dashboard-client";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Suspense } from "react";
+import { getDashboardStats } from "@/lib/api";
+import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+export default function DashboardPage() {
+  const [dashboardData, setDashboardData] = useState({
+    stats: {
+      totalStudents: 0,
+      totalExams: 0,
+      totalQuizzes: 0,
+      totalBlogs: 0,
+    },
+    performanceData: [],
+  });
+  const [loading, setLoading] = useState(true);
 
-// Server-side data fetching function
-async function getDashboardData() {
-  try {
-    const res = await fetch(`${API_URL}/api/dashboard/stats`, {
-      cache: "no-store", // Fetch fresh data on every request
-    });
-    if (!res.ok) {
-      throw new Error("Failed to fetch dashboard data");
-    }
-    const result = await res.json();
-    return result.data;
-  } catch (error) {
-    console.error(error);
-    // Return a default/empty state on error
-    return {
-      stats: {
-        totalStudents: 0,
-        totalExams: 0,
-        totalQuizzes: 0,
-        totalBlogs: 0,
-      },
-      performanceData: [],
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await getDashboardStats();
+        setDashboardData(data);
+      } catch (error) {
+        console.error("Failed to fetch dashboard stats", error);
+      } finally {
+        setLoading(false);
+      }
     };
-  }
-}
+    fetchData();
+  }, []);
 
-// Loading Skeleton Component
-function DashboardLoading() {
-  return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Skeleton className="h-[126px]" />
-        <Skeleton className="h-[126px]" />
-        <Skeleton className="h-[126px]" />
-        <Skeleton className="h-[126px]" />
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
-      <Skeleton className="h-[445px]" />
-      <Skeleton className="h-[445px]" />
-    </div>
-  );
-}
-export default async function DashboardPage() {
-  const dashboardData = await getDashboardData();
+    );
+  }
 
   return (
-    <div className="space-y-6 bg-[#fafafa] p-6">
-      <h1 className="text-3xl font-bold text-[var(--main-text-color)]">
-        لوحة التحكم
-      </h1>
-      <Suspense fallback={<DashboardLoading />}>
-        <DashboardClient data={dashboardData} />
-      </Suspense>
+    <div className="space-y-6 rounded-lg bg-white p-6 dark:bg-[#191919]">
+      <h1 className="text-3xl font-bold">لوحة التحكم</h1>
+      <DashboardClient data={dashboardData} />
     </div>
   );
 }

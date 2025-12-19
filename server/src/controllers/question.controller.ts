@@ -10,7 +10,8 @@ export const getQuestions = async (req: Request, res: Response) => {
     if (unitTitle) filter.unitTitle = unitTitle as string;
     if (lessonTitle) filter.lessonTitle = lessonTitle as string;
 
-    const questions = await Question.find(filter);
+    // SECURITY: Do not return correctAnswer to the client
+    const questions = await Question.find(filter).select("-correctAnswer");
     res.status(200).json({ success: true, data: questions });
   } catch (error) {
     res

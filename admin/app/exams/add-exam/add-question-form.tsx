@@ -31,10 +31,14 @@ import { uploadToBlob, generateUniqueFilename } from "@/lib/blob-upload";
 import { addQuestion, updateQuestion } from "@/lib/api";
 import { Question } from "@/types";
 
+
+
 const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/questions`;
 // Removed local addQuestion function in favor of api.ts import
 
 // ...
+
+
 
 interface AddQuestionFormProps {
   form?: UseFormReturn<QuestionFormData>; // Make optional as we might initialize it inside
@@ -59,12 +63,8 @@ export function AddQuestionForm({
           unitTitle: initialData.unitTitle,
           lessonTitle: initialData.lessonTitle,
           questionText: initialData.questionText,
-          image: initialData.image
-            ? ([
-                { name: "image", size: 0, type: "image/png" },
-              ] as unknown as File[])
-            : [], // Mock file for existing image
-          externalLink: initialData.externalLink || "",
+          image: initialData.image ? ([{ name: "image", size: 0, type: "image/png" }] as unknown as File[]) : [], // Mock file for existing image
+
           options: initialData.options.map((opt) => ({ text: opt })),
           correctAnswer: initialData.correctAnswer.toString(),
         }
@@ -74,7 +74,7 @@ export function AddQuestionForm({
           lessonTitle: "",
           questionText: "",
           image: undefined,
-          externalLink: "",
+
           options: [{ text: "" }, { text: "" }],
           correctAnswer: undefined,
         },
@@ -96,15 +96,29 @@ export function AddQuestionForm({
       }
     },
     onSuccess: () => {
-      toast.success(
-        initialData ? "تم تحديث السؤال بنجاح!" : "تمت إضافة السؤال بنجاح!"
-      );
+      const message = initialData
+        ? "تم تحديث السؤال بنجاح!"
+        : "تمت إضافة السؤال بنجاح! يمكنك إضافة سؤال آخر.";
+      toast.success(message);
       queryClient.invalidateQueries({ queryKey: ["curriculum"] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
+
       if (onSuccess) {
         onSuccess();
-      } else {
+      } else if (initialData) {
         router.push("/exams");
+      } else {
+        // Add mode: Reset form but keep curriculum info
+        form.reset({
+          grade: form.getValues("grade"),
+          unitTitle: form.getValues("unitTitle"),
+          lessonTitle: form.getValues("lessonTitle"),
+          questionText: "",
+          image: undefined,
+
+          options: [{ text: "" }, { text: "" }],
+          correctAnswer: undefined,
+        });
       }
     },
     onError: (error: any) => toast.error(error.message),
@@ -120,34 +134,34 @@ export function AddQuestionForm({
         // Only upload if it's a real File object (new upload)
         // If it's a mock file or existing image, we handle it below
         if (file instanceof File) {
-          const toastId = toast.loading("جاري رفع الصورة...");
-          try {
+            const toastId = toast.loading("جاري رفع الصورة...");
+            try {
             const filename = generateUniqueFilename(file.name, "questions");
             const result = await uploadToBlob(file, filename);
             imageUrl = result.url;
             toast.success("تم رفع الصورة بنجاح", { id: toastId });
-          } catch (uploadError: any) {
-            toast.error("فشل في رفع الصورة: " + uploadError.message, {
-              id: toastId,
-            });
-            throw uploadError;
-          }
+            } catch (uploadError: any) {
+            toast.error("فشل في رفع الصورة: " + uploadError.message, { id: toastId });
+            throw uploadError; 
+            }
         } else if (initialData?.image) {
-          // If it's not a File (e.g. mock) but we have initialData, keep existing
-          imageUrl = initialData.image;
+            // If it's not a File (e.g. mock) but we have initialData, keep existing
+            imageUrl = initialData.image;
         }
       } else if (initialData?.image) {
-        // If no file in form but we have initialData (and user didn't delete it explicitly?
-        // well, if they deleted it, imageFiles would be empty array.
-        // But if they didn't touch it, it might be empty or mock.
-        // Actually, if they clear the file input, imageFiles is empty.
-        // If they want to keep the image, they usually leave it.
-        // But our FileUpload component might behave differently.
-        // Let's assume if they didn't touch it, we keep it.
-        // But if they explicitly removed it, we should probably respect that?
-        // For now, let's keep it simple: if no new file, keep old one.
-        imageUrl = initialData.image;
+          // If no file in form but we have initialData (and user didn't delete it explicitly? 
+          // well, if they deleted it, imageFiles would be empty array. 
+          // But if they didn't touch it, it might be empty or mock.
+          // Actually, if they clear the file input, imageFiles is empty.
+          // If they want to keep the image, they usually leave it.
+          // But our FileUpload component might behave differently.
+          // Let's assume if they didn't touch it, we keep it.
+          // But if they explicitly removed it, we should probably respect that?
+          // For now, let's keep it simple: if no new file, keep old one.
+          imageUrl = initialData.image;
       }
+
+
 
       const payload = {
         ...data,
@@ -284,23 +298,7 @@ export function AddQuestionForm({
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="externalLink"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>رابط خارجي (اختياري)</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="https://example.com"
-                        className="bg-gray-700 border-gray-600 text-white"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+
               <FormField
                 control={form.control}
                 name="correctAnswer"
@@ -373,11 +371,7 @@ export function AddQuestionForm({
                 إلغاء
               </Button>
               <Button type="submit" disabled={mutation.isPending}>
-                {mutation.isPending
-                  ? "جاري الحفظ..."
-                  : initialData
-                  ? "تحديث السؤال"
-                  : "حفظ السؤال"}
+                {mutation.isPending ? "جاري الحفظ..." : initialData ? "تحديث السؤال" : "حفظ السؤال"}
               </Button>
             </div>
           </form>

@@ -20,9 +20,9 @@ export type Student = {
   _id: string;
   code: string;
   name: string;
-  age: number;
-  gender: string;
   grade: string;
+  age?: number;
+  phoneNumber?: string;
   profile_image?: string;
   performance?: {
     "monthly-evaluation": PerformanceEvaluation;
@@ -33,7 +33,6 @@ export type Student = {
   };
   exams?: {
     "exam-name": string;
-    subject: string;
     score: number;
     "total-score": number;
     feedback?: string;
@@ -79,7 +78,7 @@ export interface IBestOfMonth {
   name: string;
   grade: string;
   imageUrl: string;
-  description: string;
+  description?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -91,7 +90,6 @@ export interface Question {
   lessonTitle: string;
   questionText: string;
   image?: string;
-  externalLink?: string;
   options: string[];
   correctAnswer: number;
 }

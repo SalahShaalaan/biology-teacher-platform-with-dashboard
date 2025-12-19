@@ -68,8 +68,6 @@ const homeworkCompletionOptions: HomeworkCompletion[] = [
 const formSchema = z.object({
   name: z.string().min(1, "الاسم مطلوب"),
   grade: z.string().min(1, "الصف الدراسي مطلوب"),
-
-  gender: z.string().min(1, "الجنس مطلوب"),
   phoneNumber: z.string().optional(),
   monthlyPayment: z.boolean().optional(),
   performance: z
@@ -111,45 +109,8 @@ const normalizeImageUrl = (
 };
 
 // --- API Functions ---
-const getStudent = async (studentId: string): Promise<Student> => {
-  const res = await fetch(`${API_URL}/${studentId}`);
-  if (!res.ok) throw new Error("فشل في جلب بيانات الطالب");
-  const result = await res.json();
-  return result.data;
-};
-
-const updateStudentDetails = async ({
-  studentId,
-  data,
-}: {
-  studentId: string;
-  data: Record<string, any>;
-}) => {
-  const res = await fetch(`${API_URL}/${studentId}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error("فشل في تحديث بيانات الطالب");
-  return res.json();
-};
-
-const updateStudentImage = async ({
-  studentId,
-  imageFile,
-}: {
-  studentId: string;
-  imageFile: File;
-}) => {
-  const formData = new FormData();
-  formData.append("profile_image", imageFile);
-  const res = await fetch(`${API_URL}/${studentId}/update-image`, {
-    method: "PATCH",
-    body: formData,
-  });
-  if (!res.ok) throw new Error("فشل في تحديث صورة الطالب");
-  return res.json();
-};
+// --- API Functions ---
+import { getStudent, updateStudentDetails, updateStudentImage } from "@/lib/api";
 
 // --- Helper Functions & Components ---
 const flattenObject = (obj: any, parentKey = "", result: any = {}) => {
@@ -184,14 +145,14 @@ const DisplayField = ({
 );
 
 // --- Exams Sections ---
-type QuizResult = NonNullable<Student["quizResults"]>[number];
+type ExamResult = NonNullable<Student["exams"]>[number];
 
-const quizResultsColumns: ColumnDef<QuizResult>[] = [
-  { accessorKey: "lessonTitle", header: "الدرس" },
-  { accessorKey: "unitTitle", header: "الوحدة" },
+const platformExamsColumns: ColumnDef<ExamResult>[] = [
+  { accessorKey: "exam-name", header: "اسم الاختبار" },
   {
     header: "النتيجة",
-    cell: ({ row }) => `${row.original.score} / ${row.original.totalQuestions}`,
+    cell: ({ row }) =>
+      `${row.original.score} / ${row.original["total-score"]}`,
   },
   {
     accessorKey: "date",
@@ -201,14 +162,14 @@ const quizResultsColumns: ColumnDef<QuizResult>[] = [
   },
 ];
 
-const OnlineExamsSection = ({
-  quizResults,
+const PlatformExamsSection = ({
+  exams,
 }: {
-  quizResults: Student["quizResults"];
+  exams: Student["exams"];
 }) => {
   const table = useReactTable({
-    data: quizResults ?? [],
-    columns: quizResultsColumns,
+    data: exams ?? [],
+    columns: platformExamsColumns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: { pagination: { pageSize: 5 } },
@@ -217,11 +178,11 @@ const OnlineExamsSection = ({
   return (
     <Card className="shadow-none">
       <CardHeader>
-        <CardTitle>الامتحانات على المنصة</CardTitle>
+        <CardTitle>امتحانات المنصة</CardTitle>
       </CardHeader>
       <CardContent>
-        {quizResults && quizResults.length > 0 ? (
-          <DataTable table={table} columns={quizResultsColumns} />
+        {exams && exams.length > 0 ? (
+          <DataTable table={table} columns={platformExamsColumns} />
         ) : (
           <p className="text-muted-foreground text-center py-8">
             لا توجد امتحانات مكتملة على المنصة.
@@ -328,48 +289,46 @@ const InClassExamsSection = ({
 
 // --- Main Component ---
 interface StudentDetailsClientProps {
-  initialStudent: Student;
+  studentId: string;
 }
 
 export default function StudentDetailsClient({
-  initialStudent,
+  studentId,
 }: StudentDetailsClientProps) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
-  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(
-    normalizeImageUrl(initialStudent["profile_image"])
-  );
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("details");
 
   const router = useRouter();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: student } = useQuery<Student>({
-    queryKey: ["student", initialStudent.code],
-    queryFn: () => getStudent(initialStudent.code),
-    initialData: initialStudent,
+  const { data: student, isLoading, error } = useQuery<Student>({
+    queryKey: ["student", studentId],
+    queryFn: () => getStudent(studentId),
   });
 
   const form = useForm({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      ...initialStudent,
-      ...initialStudent,
-      performance: {
-        ...initialStudent.performance,
-        absences: Number(initialStudent.performance?.absences ?? 0),
-      },
-    },
+    defaultValues: student || {},
   });
 
   useEffect(() => {
-    form.reset(student);
-    setPreviewImageUrl(normalizeImageUrl(student["profile_image"]));
+    if (student) {
+      form.reset(student);
+      setPreviewImageUrl(normalizeImageUrl(student["profile_image"]));
+    }
   }, [student, form]);
 
-  const detailsMutation = useMutation({ mutationFn: updateStudentDetails });
-  const imageMutation = useMutation({ mutationFn: updateStudentImage });
+  const detailsMutation = useMutation({
+    mutationFn: ({ studentId, data }: { studentId: string; data: any }) =>
+      updateStudentDetails(studentId, data),
+  });
+  const imageMutation = useMutation({
+    mutationFn: ({ studentId, imageFile }: { studentId: string; imageFile: File }) =>
+      updateStudentImage(studentId, imageFile),
+  });
 
   const handleFormSubmit = async (values: z.infer<typeof formSchema>) => {
     const changedData = diff(student || {}, values);
@@ -386,7 +345,7 @@ export default function StudentDetailsClient({
       if (hasImageChanged) {
         promises.push(
           imageMutation.mutateAsync({
-            studentId: student.code,
+            studentId: student!.code,
             imageFile: selectedImageFile!,
           })
         );
@@ -395,7 +354,7 @@ export default function StudentDetailsClient({
         const flattenedData = flattenObject(changedData);
         promises.push(
           detailsMutation.mutateAsync({
-            studentId: student.code,
+            studentId: student!.code,
             data: flattenedData,
           })
         );
@@ -403,7 +362,7 @@ export default function StudentDetailsClient({
 
       await Promise.all(promises);
       await queryClient.invalidateQueries({
-        queryKey: ["student", student.code],
+        queryKey: ["student", student!.code],
       });
 
       setIsEditMode(false);
@@ -430,6 +389,7 @@ export default function StudentDetailsClient({
   };
 
   const handleCancel = () => {
+    if (!student) return;
     form.reset(student);
     setSelectedImageFile(null);
     setPreviewImageUrl(normalizeImageUrl(student["profile_image"]));
@@ -437,6 +397,24 @@ export default function StudentDetailsClient({
   };
 
   const isMutating = detailsMutation.isPending || imageMutation.isPending;
+
+  // Handle loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-gray-400">جاري تحميل بيانات الطالب...</p>
+      </div>
+    );
+  }
+
+  // Handle error state
+  if (error || !student) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-red-400">حدث خطأ أثناء تحميل بيانات الطالب</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -620,23 +598,6 @@ export default function StudentDetailsClient({
                           }
                         />
 
-                        <FormField
-                          control={form.control}
-                          name="gender"
-                          render={({ field }) =>
-                            isEditMode ? (
-                              <FormItem>
-                                <FormLabel>الجنس</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            ) : (
-                              <DisplayField label="الجنس" value={field.value} />
-                            )
-                          }
-                        />
                         <FormField
                           control={form.control}
                           name="phoneNumber"
@@ -858,7 +819,7 @@ export default function StudentDetailsClient({
               )}
               {activeTab === "results" && (
                 <div className="space-y-6">
-                  <OnlineExamsSection quizResults={student.quizResults} />
+                  <PlatformExamsSection exams={student.exams} />
                   <InClassExamsSection classResults={student.classResults} />
                 </div>
               )}

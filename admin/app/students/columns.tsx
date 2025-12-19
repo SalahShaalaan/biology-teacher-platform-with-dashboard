@@ -49,22 +49,22 @@ export const getColumns = (): ColumnDef<Student>[] => [
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="px-0 hover:bg-transparent"
+        className="px-0 text-gray-300 hover:bg-transparent hover:text-white"
       >
         الاسم
-        <div className="flex flex-col -space-y-1 mr-2">
+        <div className="mr-2 -space-y-1 flex flex-col">
           <ChevronUp
             size={14}
             className={cn(
-              "text-gray-400",
-              column.getIsSorted() === "asc" && "text-gray-900"
+              "text-gray-500",
+              column.getIsSorted() === "asc" && "text-white"
             )}
           />
           <ChevronDown
             size={14}
             className={cn(
-              "text-gray-400",
-              column.getIsSorted() === "desc" && "text-gray-900"
+              "text-gray-500",
+              column.getIsSorted() === "desc" && "text-white"
             )}
           />
         </div>
@@ -78,7 +78,7 @@ export const getColumns = (): ColumnDef<Student>[] => [
             <AvatarImage src={student["profile_image"]} alt={student.name} />
             <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
           </Avatar>
-          <div className="font-medium">{student.name}</div>
+          <div className="font-medium text-gray-100">{student.name}</div>
         </div>
       );
     },
@@ -89,35 +89,40 @@ export const getColumns = (): ColumnDef<Student>[] => [
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="px-0 hover:bg-transparent"
+        className="px-0 text-gray-300 hover:bg-transparent hover:text-white"
       >
         الكود
-        <div className="flex flex-col -space-y-1 mr-2">
+        <div className="mr-2 -space-y-1 flex flex-col">
           <ChevronUp
             size={14}
             className={cn(
-              "text-gray-400",
-              column.getIsSorted() === "asc" && "text-gray-900"
+              "text-gray-500",
+              column.getIsSorted() === "asc" && "text-white"
             )}
           />
           <ChevronDown
             size={14}
             className={cn(
-              "text-gray-400",
-              column.getIsSorted() === "desc" && "text-gray-900"
+              "text-gray-500",
+              column.getIsSorted() === "desc" && "text-white"
             )}
           />
         </div>
       </Button>
     ),
+    cell: ({ row }) => <div className="text-gray-300">{row.original.code}</div>,
   },
   {
     accessorKey: "grade",
-    header: "الصف الدراسي",
+    header: () => <div className="text-gray-300">الصف الدراسي</div>,
+    cell: ({ row }) => (
+      <div className="text-gray-300">{row.original.grade}</div>
+    ),
   },
   {
     accessorKey: "age",
-    header: "العمر",
+    header: () => <div className="text-gray-300">العمر</div>,
+    cell: ({ row }) => <div className="text-gray-300">{row.original.age}</div>,
   },
   {
     accessorKey: "monthlyPayment",
@@ -125,22 +130,22 @@ export const getColumns = (): ColumnDef<Student>[] => [
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="px-0 hover:bg-transparent"
+        className="px-0 text-gray-300 hover:bg-transparent hover:text-white"
       >
         حالة الدفع
-        <div className="flex flex-col -space-y-1 mr-2">
+        <div className="mr-2 -space-y-1 flex flex-col">
           <ChevronUp
             size={14}
             className={cn(
-              "text-gray-400",
-              column.getIsSorted() === "asc" && "text-gray-900"
+              "text-gray-500",
+              column.getIsSorted() === "asc" && "text-white"
             )}
           />
           <ChevronDown
             size={14}
             className={cn(
-              "text-gray-400",
-              column.getIsSorted() === "desc" && "text-gray-900"
+              "text-gray-500",
+              column.getIsSorted() === "desc" && "text-white"
             )}
           />
         </div>
@@ -152,8 +157,10 @@ export const getColumns = (): ColumnDef<Student>[] => [
         <div className="flex justify-center">
           <div
             className={cn(
-              "px-3 py-1.5 w-fit rounded-full text-xs font-medium",
-              isPaid ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+              "w-fit rounded-full px-3 py-1.5 text-xs font-medium",
+              isPaid
+                ? "bg-green-500/20 text-green-400"
+                : "bg-red-500/20 text-red-400"
             )}
           >
             {isPaid ? "مدفوع" : "غير مدفوع"}

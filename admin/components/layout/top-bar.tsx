@@ -7,16 +7,16 @@ import Image from "next/image";
 export function Topbar() {
   return (
     <header>
-      <div className="bg-gray-50 border border-gray-200 rounded-3xl h-16 lg:h-20 flex items-center justify-between gap-4 px-4 lg:px-6">
+      <div className="bg-gray-50 dark:bg-[#191919] border border-gray-700 rounded-3xl h-16 lg:h-20 flex items-center justify-between gap-4 px-4 lg:px-6">
         <div className="flex items-center gap-3 min-w-0">
           <SidebarTrigger
             className="rounded-full border border-gray-200"
             aria-label="Toggle sidebar"
           />
           <div className="hidden md:block min-w-0">
-            <p className="text-gray-500 text-xs leading-none">مرحباً،</p>
-            <p className="text-gray-800 font-semibold text-sm truncate">
-              أكرم مسلم
+            <p className="text-slate-300 text-xs leading-none">مرحباً،</p>
+            <p className="text-slate-300 font-semibold text-sm truncate">
+              عبدالله مسلم
               <span aria-hidden className="ms-1">
                 👋
               </span>
@@ -31,7 +31,7 @@ export function Topbar() {
             aria-label="Admin profile"
           >
             <Image
-              src="/akram-img.png"
+              src="/abdallah-1.png"
               width={48}
               height={48}
               alt="user image"

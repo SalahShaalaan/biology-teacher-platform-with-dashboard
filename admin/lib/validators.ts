@@ -348,7 +348,6 @@ export type ClassResultFormValues = z.infer<typeof classResultSchema>;
 // Exam Schema
 export const examSchema = z.object({
   "exam-name": z.string().min(1, "اسم الاختبار مطلوب").trim(),
-  subject: z.string().min(1, "المادة مطلوبة").trim(),
   score: z.number().min(0, "الدرجة لا يمكن أن تكون سالبة"),
   "total-score": z.number().min(1, "إجمالي الدرجات يجب أن يكون على الأقل 1"),
   feedback: z.string().trim().optional(),
@@ -459,7 +458,6 @@ export const questionSchema = z.object({
   lessonTitle: z.string().min(1, "اسم الدرس مطلوب"),
   questionText: z.string().min(1, "نص السؤال مطلوب"),
   image: optionalImageValidator,
-  externalLink: z.string().url("الرابط غير صحيح").optional().or(z.literal("")),
   options: z
     .array(
       z.object({

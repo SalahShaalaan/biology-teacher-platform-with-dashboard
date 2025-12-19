@@ -2,7 +2,6 @@ import mongoose, { Schema, Document } from "mongoose";
 
 interface IExam {
   "exam-name": string;
-  subject: string;
   score: number;
   "total-score": number;
   feedback?: string;
@@ -12,7 +11,6 @@ interface IExam {
 const ExamSchema: Schema = new Schema(
   {
     "exam-name": { type: String, required: true },
-    subject: { type: String, required: true },
     score: { type: Number, required: true },
     "total-score": { type: Number, required: true },
     feedback: { type: String, required: false },

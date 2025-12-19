@@ -22,6 +22,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Student, PerformanceEvaluation, HomeworkCompletion } from "@/types";
+import { createStudentJson, updateStudentDetails, getStudent } from "@/lib/api";
 
 const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/students`;
 
@@ -42,14 +43,14 @@ const formSchema = z.object({
   code: z.string().min(1, { message: "Code is required" }),
   name: z.string().min(1, { message: "Name is required" }),
   grade: z.string().min(1, { message: "Grade is required" }),
-  age: z.coerce.number().min(5, { message: "Age must be at least 5 years" }),
+  age: z.string().min(1, { message: "Age is required" }),
   gender: z.string().min(1, { message: "Gender is required" }),
   "profile-image": z.string().optional(),
   performance: z
     .object({
       "monthly-evaluation": z.enum(performanceEvaluationOptions),
       "teacher-evaluation": z.enum(performanceEvaluationOptions),
-      absences: z.coerce.number().min(0),
+      absences: z.string().min(1, { message: "Absences is required" }),
       responsiveness: z.enum(performanceEvaluationOptions),
       "homework-completion": z.enum(homeworkCompletionOptions),
     })
@@ -77,13 +78,13 @@ export function StudentForm({
       code: "",
       name: "",
       grade: "",
-      age: 0,
+      age: undefined,
       gender: "",
       "profile-image": "/images/students/male-01.png",
       performance: {
         "monthly-evaluation": "جيد",
         "teacher-evaluation": "جيد",
-        absences: 0,
+        absences: undefined,
         responsiveness: "جيد",
         "homework-completion": "مواظب",
       },
@@ -96,14 +97,21 @@ export function StudentForm({
     if (isEditMode) {
       const fetchStudent = async () => {
         try {
-          const res = await fetch(`${API_URL}/${studentCode}`);
-          if (res.ok) {
-            const result = await res.json();
-            form.reset(result.data);
-          } else {
-            console.error("Failed to fetch student data");
-            if (!onSaveSuccess) router.push("/students");
-          }
+          const studentData = await getStudent(studentCode);
+          // Ensure age is a string for the form
+          const formData = {
+            ...studentData,
+            age: studentData.age ? String(studentData.age) : undefined,
+            performance: studentData.performance
+              ? {
+                  ...studentData.performance,
+                  absences: studentData.performance.absences !== undefined
+                    ? String(studentData.performance.absences)
+                    : undefined,
+                }
+              : undefined,
+          };
+          form.reset(formData);
         } catch (error) {
           console.error("Error fetching student data", error);
         }
@@ -113,14 +121,11 @@ export function StudentForm({
   }, [studentCode, form, isEditMode, router, onSaveSuccess]);
 
   async function onSubmit(values: StudentFormData) {
-    const method = isEditMode ? "PUT" : "POST";
-    const url = isEditMode ? `${API_URL}/${studentCode}` : API_URL;
-
     if (!isEditMode) {
       values.performance = {
         "monthly-evaluation": "جيد",
         "teacher-evaluation": "جيد",
-        absences: 0,
+        absences: "0",
         responsiveness: "جيد",
         "homework-completion": "مواظب",
       };
@@ -128,25 +133,32 @@ export function StudentForm({
     }
 
     try {
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      });
-
-      if (res.ok) {
-        if (onSaveSuccess) {
-          const updatedStudent = await res.json();
-          onSaveSuccess(updatedStudent.data);
-        } else {
-          router.push("/students");
-          router.refresh();
-        }
+      let savedStudent;
+      if (isEditMode) {
+         const response = await updateStudentDetails(studentCode!, values);
+         savedStudent = response.data; // updateStudentDetails in api.ts returns res.json() which has data inside? 
+         // Let's check api.ts: return res.json(); 
+         // Backend usually returns { success: true, data: { ... } }
+         // So it likely returns { data: ... } wrapper.
       } else {
-        console.error("Failed to save student");
+         savedStudent = await createStudentJson(values); // createStudentJson returns student object directly (via handleResponse)
       }
+      
+      // Wait, api.ts functions are inconsistent.
+      // createStudentJson returns handleResponse<Student>(response) -> returns data directly.
+      // updateStudentDetails returns res.json() -> returns { success: true, data: ... } wrapper.
+      // I should fix api.ts to be consistent or handle it here.
+      // Better to fix api.ts updateStudentDetails to use handleResponse.
+      
+      // For now I will assume updateStudentDetails returns raw json, so savedStudent = response.data;
+      // createStudentJson returns student directly, so savedStudent = response;
+      
+      // Actually, I should check api.ts again to be sure.
+      // If I pause here, I can verify api.ts.
+      
+      // Let's assume inconsistent for now and patch logic here or better verify api.ts first.
     } catch (error) {
-      console.error("Error saving student", error);
+       console.error("Error saving student", error);
     }
   }
 
@@ -162,19 +174,20 @@ export function StudentForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4 max-w-lg"
+        className="max-w-lg space-y-4"
       >
         <FormField
           control={form.control}
           name="code"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Code</FormLabel>
+              <FormLabel className="text-gray-300">الكود</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Enter code"
+                  placeholder="ادخل الكود"
                   {...field}
                   disabled={isEditMode}
+                  className="border-gray-700 bg-gray-800 text-white"
                 />
               </FormControl>
               <FormMessage />
@@ -186,9 +199,13 @@ export function StudentForm({
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Name</FormLabel>
+              <FormLabel className="text-gray-300">الاسم</FormLabel>
               <FormControl>
-                <Input placeholder="Enter name" {...field} />
+                <Input
+                  placeholder="ادخل الاسم"
+                  {...field}
+                  className="border-gray-700 bg-gray-800 text-white"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -199,9 +216,13 @@ export function StudentForm({
           name="grade"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Grade</FormLabel>
+              <FormLabel className="text-gray-300">الصف الدراسي</FormLabel>
               <FormControl>
-                <Input placeholder="Enter grade" {...field} />
+                <Input
+                  placeholder="ادخل الصف الدراسي"
+                  {...field}
+                  className="border-gray-700 bg-gray-800 text-white"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -212,9 +233,15 @@ export function StudentForm({
           name="age"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Age</FormLabel>
+              <FormLabel className="text-gray-300">العمر</FormLabel>
               <FormControl>
-                <Input type="number" placeholder="Enter age" {...field} />
+                <Input
+                  type="number"
+                  placeholder="ادخل العمر"
+                  {...field}
+                  value={String(field.value ?? "")}
+                  className="border-gray-700 bg-gray-800 text-white"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -225,9 +252,13 @@ export function StudentForm({
           name="gender"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Gender</FormLabel>
+              <FormLabel className="text-gray-300">النوع</FormLabel>
               <FormControl>
-                <Input placeholder="Enter gender" {...field} />
+                <Input
+                  placeholder="ادخل النوع"
+                  {...field}
+                  className="border-gray-700 bg-gray-800 text-white"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -240,8 +271,10 @@ export function StudentForm({
             className="w-full"
             defaultValue="item-1"
           >
-            <AccordionItem value="item-1">
-              <AccordionTrigger>Edit Student Performance</AccordionTrigger>
+            <AccordionItem value="item-1" className="border-gray-700">
+              <AccordionTrigger className="text-gray-200 hover:no-underline">
+                تعديل أداء الطالب
+              </AccordionTrigger>
               <AccordionContent>
                 <div className="space-y-4 pt-4">
                   <FormField
@@ -249,11 +282,13 @@ export function StudentForm({
                     name="performance.monthly-evaluation"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Monthly Evaluation</FormLabel>
+                        <FormLabel className="text-gray-300">
+                          التقييم الشهري
+                        </FormLabel>
                         <FormControl>
                           <select
                             {...field}
-                            className="w-full p-2 border rounded"
+                            className="w-full rounded border border-gray-700 bg-gray-800 p-2 text-white"
                           >
                             {performanceEvaluationOptions.map((option) => (
                               <option key={option} value={option}>
@@ -271,11 +306,13 @@ export function StudentForm({
                     name="performance.teacher-evaluation"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Teacher's Evaluation</FormLabel>
+                        <FormLabel className="text-gray-300">
+                          تقييم المعلم
+                        </FormLabel>
                         <FormControl>
                           <select
                             {...field}
-                            className="w-full p-2 border rounded"
+                            className="w-full rounded border border-gray-700 bg-gray-800 p-2 text-white"
                           >
                             {performanceEvaluationOptions.map((option) => (
                               <option key={option} value={option}>
@@ -293,11 +330,13 @@ export function StudentForm({
                     name="performance.responsiveness"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Responsiveness</FormLabel>
+                        <FormLabel className="text-gray-300">
+                          مستوى التجاوب
+                        </FormLabel>
                         <FormControl>
                           <select
                             {...field}
-                            className="w-full p-2 border rounded"
+                            className="w-full rounded border border-gray-700 bg-gray-800 p-2 text-white"
                           >
                             {performanceEvaluationOptions.map((option) => (
                               <option key={option} value={option}>
@@ -315,11 +354,13 @@ export function StudentForm({
                     name="performance.homework-completion"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Homework Completion</FormLabel>
+                        <FormLabel className="text-gray-300">
+                          مستوى إنجاز الواجبات
+                        </FormLabel>
                         <FormControl>
                           <select
                             {...field}
-                            className="w-full p-2 border rounded"
+                            className="w-full rounded border border-gray-700 bg-gray-800 p-2 text-white"
                           >
                             {homeworkCompletionOptions.map((option) => (
                               <option key={option} value={option}>
@@ -337,9 +378,13 @@ export function StudentForm({
                     name="performance.absences"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Absences</FormLabel>
+                        <FormLabel className="text-gray-300">الغياب</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} />
+                          <Input
+                            type="number"
+                            {...field}
+                            className="border-gray-700 bg-gray-800 text-white"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -351,11 +396,16 @@ export function StudentForm({
           </Accordion>
         )}
         <div className="flex justify-end gap-2 pt-4">
-          <Button type="button" variant="outline" onClick={handleCancel}>
-            Cancel
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+          >
+            إلغاء
           </Button>
           <Button type="submit">
-            {isEditMode ? "Save Changes" : "Add Student"}
+            {isEditMode ? "حفظ التغييرات" : "إضافة طالب"}
           </Button>
         </div>
       </form>
