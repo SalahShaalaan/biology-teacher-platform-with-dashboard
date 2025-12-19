@@ -9,7 +9,7 @@ export default function Navbar() {
 
   const navItems = [
     { href: "/", label: "الرئيسية" },
-    { href: "/questions-section", label: "قسم الاسئله" },
+    { href: "/exams", label: "قسم الاسئله" },
     { href: "/blogs", label: "الشروحات النظرية" },
     { href: "/results", label: "نتائج الامتحانات" },
   ];

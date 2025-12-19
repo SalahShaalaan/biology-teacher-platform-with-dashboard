@@ -86,3 +86,52 @@ export interface IBestOfMonth {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface ClassResult {
+  title: string;
+  imageUrls: string[];
+  note: string;
+  date: string;
+}
+
+
+export interface Question {
+  _id: string;
+  grade: string;
+  unitTitle: string;
+  lessonTitle: string;
+  questionText: string;
+  image?: string;
+  options: string[];
+  correctAnswer: number;
+}
+
+export interface Exam {
+  "exam-name": string;
+  score: number;
+  "total-score": number;
+  feedback: string;
+  date: string;
+}
+
+
+export interface Student {
+  code: string;
+  name: string;
+  age: number;
+  gender: string;
+  grade: string;
+  phoneNumber: string;
+  profile_image: string;
+  performance: Performance;
+  monthlyPayment: boolean;
+  exams: Exam[];
+  classResults: ClassResult[];
+}
+
+export interface ExamInfo {
+  title: string;
+  grade: string;
+  questionCount: number;
+  questions: Question[];
+}
