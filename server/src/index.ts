@@ -28,11 +28,9 @@ app.set("trust proxy", 1);
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:3001",
-  "https://mr-abdallah-platform.vercel.app",
-  "https://mr-abdallah-platform-pi.vercel.app",
-  "https://mr-abdallah-dashboard.vercel.app",
-  "https://www.mr-abdallah-dashboard.vercel.app",
-  "https://abdallah-server.vercel.app"
+  "https://mr-akram-musallam-dashboard.vercel.app",
+  "https://mr-akram-musallam-platform.vercel.app",
+  "https://akram-musallam-platform-server.vercel.app",
 ];
 
 const corsOptions = {
@@ -120,7 +118,7 @@ app.use("/api/auth", authRoutes);
 app.use(errorHandler);
 
 app.get("/", (req, res) => {
-  res.send("Abdallah Server is running!");
+  res.send("Akram Server is running!");
 });
 
 app.listen(PORT, () => {
