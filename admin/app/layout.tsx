@@ -11,8 +11,8 @@ const mainfont = Cairo({
 });
 
 export const metadata: Metadata = {
-  title: "أستاذ عبدالله مسلم | لوحة التحكم",
-  description: "لوحة تحكم للأدمن عبدالله مسلم",
+  title: "أستاذ أكرم مسلم | لوحة التحكم",
+  description: "لوحة تحكم للأدمن أكرم مسلم",
 };
 
 export default function RootLayout({
