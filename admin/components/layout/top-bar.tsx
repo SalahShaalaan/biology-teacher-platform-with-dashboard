@@ -16,8 +16,7 @@ export function Topbar() {
           <div className="hidden md:block min-w-0">
             <p className="text-slate-300 text-xs leading-none">مرحباً،</p>
             <p className="text-slate-300 font-semibold text-sm truncate">
-              عبدالله مسلم
-              <span aria-hidden className="ms-1">
+أكرم مسلم              <span aria-hidden className="ms-1">
                 👋
               </span>
             </p>
@@ -31,7 +30,7 @@ export function Topbar() {
             aria-label="Admin profile"
           >
             <Image
-              src="/abdallah-1.png"
+              src="/icon.png"
               width={48}
               height={48}
               alt="user image"

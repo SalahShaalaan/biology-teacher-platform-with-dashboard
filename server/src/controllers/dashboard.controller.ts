@@ -40,7 +40,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
           averageScore: {
             $avg: {
               $multiply: [
-                { $divide: ["$exams.score", "$exams.total-score"] },
+                { $divide: ["$exams.score", "$exams['total-score']"] },
                 100,
               ],
             },
@@ -56,7 +56,9 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         },
       },
       { $sort: { year: 1, month: 1 } },
-    ]);
+    ])
+
+    console.log("Student Performance Aggregation Results:", JSON.stringify(studentPerformance, null, 2));
 
     // Create a map for easy lookup of performance data
     const performanceMap = new Map<string, number>();
