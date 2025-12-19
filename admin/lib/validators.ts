@@ -454,7 +454,7 @@ export const isBlogFormData = (data: unknown): data is BlogFormData => {
 
 export const questionSchema = z
   .object({
-    questionType: z.enum(["mcq", "external_link"]).default("mcq"),
+    questionType: z.enum(["mcq", "external_link"]),
     grade: z.string().min(1, "المرحلة الدراسية مطلوبة"),
     unitTitle: z.string().min(1, "اسم الوحدة مطلوب"),
     lessonTitle: z.string().min(1, "اسم الدرس مطلوب"),
