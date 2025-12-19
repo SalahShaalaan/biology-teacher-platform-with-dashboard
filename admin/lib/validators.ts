@@ -464,60 +464,67 @@ export const questionSchema = z
     options: z
       .array(
         z.object({
-          text: z.string().min(1, "خيار الإجابة لا يمكن أن يكون فارغًا"),
+          text: z.string(),
         })
       )
       .optional(),
     correctAnswer: z.string().optional(),
   })
-  .refine(
-    (data) => {
-      // If MCQ type, options must have at least 2 items
-      if (data.questionType === "mcq") {
-        return data.options && data.options.length >= 2;
+  .superRefine((data, ctx) => {
+    // Only validate options for MCQ type
+    if (data.questionType === "mcq") {
+      // Check if options exist and have at least 2
+      if (!data.options || data.options.length < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "يجب أن يكون هناك خياران على الأقل",
+          path: ["options"],
+        });
+      } else {
+        // Validate each option text is not empty
+        data.options.forEach((option, index) => {
+          if (!option.text || option.text.trim() === "") {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "خيار الإجابة لا يمكن أن يكون فارغًا",
+              path: ["options", index, "text"],
+            });
+          }
+        });
       }
-      return true;
-    },
-    {
-      message: "يجب أن يكون هناك خياران على الأقل",
-      path: ["options"],
-    }
-  )
-  .refine(
-    (data) => {
-      // If MCQ type, correctAnswer must be defined
-      if (data.questionType === "mcq") {
-        return data.correctAnswer !== undefined && data.correctAnswer !== "";
+
+      // Check correctAnswer is defined
+      if (data.correctAnswer === undefined || data.correctAnswer === "") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "الرجاء تحديد الإجابة الصحيحة.",
+          path: ["correctAnswer"],
+        });
       }
-      return true;
-    },
-    {
-      message: "الرجاء تحديد الإجابة الصحيحة.",
-      path: ["correctAnswer"],
     }
-  )
-  .refine(
-    (data) => {
-      // If external_link type, externalLink must be provided and be a valid URL
-      if (data.questionType === "external_link") {
-        if (!data.externalLink || data.externalLink.length === 0) {
-          return false;
-        }
-        // Basic URL validation
+
+    // Validate external link for external_link type
+    if (data.questionType === "external_link") {
+      if (!data.externalLink || data.externalLink.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "الرابط الخارجي مطلوب",
+          path: ["externalLink"],
+        });
+      } else {
+        // Validate URL format
         try {
           new URL(data.externalLink);
-          return true;
         } catch {
-          return false;
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "الرابط الخارجي غير صحيح",
+            path: ["externalLink"],
+          });
         }
       }
-      return true;
-    },
-    {
-      message: "الرابط الخارجي مطلوب ويجب أن يكون صحيحًا",
-      path: ["externalLink"],
     }
-  );
+  });
 
 export type QuestionFormData = z.infer<typeof questionSchema>;
 
