@@ -3,7 +3,7 @@ import { generateUniqueFilename, uploadToBlob } from "./blob-upload";
 
 export type { Student, Blog };
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://mr-abdallah-server.vercel.app";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
 
 // ============================================================================
 // Types

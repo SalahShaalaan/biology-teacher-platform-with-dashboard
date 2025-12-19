@@ -208,6 +208,7 @@ export const loginAdmin = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: "Server error during login. Please try again later.",
+      error: error.message,
     });
   }
 };
@@ -296,6 +297,7 @@ export const createAdmin = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: "Server error during signup. Please try again later.",
+      error: error.message,
     });
   }
 };
