@@ -14,10 +14,12 @@ function AddExamPage() {
   const form = useForm<QuestionFormData>({
     resolver: zodResolver(questionSchema),
     defaultValues: {
+      questionType: "mcq",
       grade: searchParams.get("grade") || "",
       unitTitle: searchParams.get("unitTitle") || "",
       lessonTitle: searchParams.get("lessonTitle") || "",
       questionText: "",
+      externalLink: "",
       options: [{ text: "" }, { text: "" }],
     },
   });

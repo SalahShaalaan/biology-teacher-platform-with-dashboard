@@ -45,17 +45,37 @@ export const getQuestionById = async (req: Request, res: Response) => {
 export const addQuestion = async (req: Request, res: Response) => {
   try {
     const newQuestionData = req.body;
-    // Updated validation: Ensure there are at least 2 options
-    if (
-      !newQuestionData.options ||
-      !Array.isArray(newQuestionData.options) ||
-      newQuestionData.options.length < 2
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "A question must have at least 2 options.",
-      });
+    const questionType = newQuestionData.questionType || "mcq";
+
+    // Validate based on question type
+    if (questionType === "mcq") {
+      // MCQ type: validate options and correctAnswer
+      if (
+        !newQuestionData.options ||
+        !Array.isArray(newQuestionData.options) ||
+        newQuestionData.options.length < 2
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "A question must have at least 2 options.",
+        });
+      }
+      if (newQuestionData.correctAnswer === undefined || newQuestionData.correctAnswer === null) {
+        return res.status(400).json({
+          success: false,
+          message: "Correct answer is required for MCQ questions.",
+        });
+      }
+    } else if (questionType === "external_link") {
+      // External Link type: validate externalLink
+      if (!newQuestionData.externalLink || newQuestionData.externalLink.trim() === "") {
+        return res.status(400).json({
+          success: false,
+          message: "External link is required for external link questions.",
+        });
+      }
     }
+
     const {
       grade,
       unitTitle,
@@ -68,6 +88,7 @@ export const addQuestion = async (req: Request, res: Response) => {
     } = newQuestionData;
 
     const question = await Question.create({
+      questionType,
       grade,
       unitTitle,
       lessonTitle,
@@ -90,16 +111,29 @@ export const updateQuestion = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
+    const questionType = updateData.questionType || "mcq";
 
-    // If options are being updated, validate them
-    if (
-      updateData.options &&
-      (!Array.isArray(updateData.options) || updateData.options.length < 2)
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "A question must have at least 2 options.",
-      });
+    // Validate based on question type
+    if (questionType === "mcq") {
+      // MCQ type: validate options and correctAnswer
+      if (
+        updateData.options &&
+        (!Array.isArray(updateData.options) || updateData.options.length < 2)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "A question must have at least 2 options.",
+        });
+      }
+    } else if (questionType === "external_link") {
+      // External Link type: validate externalLink
+      if (updateData.externalLink !== undefined && 
+          (!updateData.externalLink || updateData.externalLink.trim() === "")) {
+        return res.status(400).json({
+          success: false,
+          message: "External link is required for external link questions.",
+        });
+      }
     }
 
     const question = await Question.findByIdAndUpdate(id, updateData, {

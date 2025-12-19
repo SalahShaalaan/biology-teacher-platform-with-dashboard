@@ -452,24 +452,63 @@ export const isBlogFormData = (data: unknown): data is BlogFormData => {
   return blogSchema.safeParse(data).success;
 };
 
-export const questionSchema = z.object({
-  grade: z.string().min(1, "المرحلة الدراسية مطلوبة"),
-  unitTitle: z.string().min(1, "اسم الوحدة مطلوب"),
-  lessonTitle: z.string().min(1, "اسم الدرس مطلوب"),
-  questionText: z.string().min(1, "نص السؤال مطلوب"),
-  image: optionalImageValidator,
-  options: z
-    .array(
-      z.object({
-        text: z.string().min(1, "خيار الإجابة لا يمكن أن يكون فارغًا"),
-      })
-    )
-    .min(2, "يجب أن يكون هناك خياران على الأقل"),
-  correctAnswer: z
-    .string()
-    .optional()
-    .refine((val) => val !== undefined, "الرجاء تحديد الإجابة الصحيحة."),
-});
+export const questionSchema = z
+  .object({
+    questionType: z.enum(["mcq", "external_link"]).default("mcq"),
+    grade: z.string().min(1, "المرحلة الدراسية مطلوبة"),
+    unitTitle: z.string().min(1, "اسم الوحدة مطلوب"),
+    lessonTitle: z.string().min(1, "اسم الدرس مطلوب"),
+    questionText: z.string().min(1, "نص السؤال مطلوب"),
+    image: optionalImageValidator,
+    externalLink: z.string().url("رابط غير صحيح").optional().or(z.literal("")),
+    options: z
+      .array(
+        z.object({
+          text: z.string().min(1, "خيار الإجابة لا يمكن أن يكون فارغًا"),
+        })
+      )
+      .optional(),
+    correctAnswer: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      // If MCQ type, options must have at least 2 items
+      if (data.questionType === "mcq") {
+        return data.options && data.options.length >= 2;
+      }
+      return true;
+    },
+    {
+      message: "يجب أن يكون هناك خياران على الأقل",
+      path: ["options"],
+    }
+  )
+  .refine(
+    (data) => {
+      // If MCQ type, correctAnswer must be defined
+      if (data.questionType === "mcq") {
+        return data.correctAnswer !== undefined && data.correctAnswer !== "";
+      }
+      return true;
+    },
+    {
+      message: "الرجاء تحديد الإجابة الصحيحة.",
+      path: ["correctAnswer"],
+    }
+  )
+  .refine(
+    (data) => {
+      // If external_link type, externalLink must be provided
+      if (data.questionType === "external_link") {
+        return data.externalLink && data.externalLink.length > 0;
+      }
+      return true;
+    },
+    {
+      message: "الرابط الخارجي مطلوب",
+      path: ["externalLink"],
+    }
+  );
 
 export type QuestionFormData = z.infer<typeof questionSchema>;
 

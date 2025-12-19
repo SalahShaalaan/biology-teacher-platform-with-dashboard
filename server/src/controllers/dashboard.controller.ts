@@ -28,6 +28,16 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const totalQuizzes =
       quizzesAggregation.length > 0 ? quizzesAggregation[0].totalQuizzes : 0;
 
+    // Debug: Check if there are any students with exams
+    const studentsWithExams = await Student.countDocuments({ exams: { $exists: true, $ne: [] } });
+    console.log("Students with exams:", studentsWithExams);
+    
+    // Get a sample student with exams to check data structure
+    if (studentsWithExams > 0) {
+      const sampleStudent = await Student.findOne({ exams: { $exists: true, $ne: [] } }).select('name exams').limit(1);
+      console.log("Sample student exam data:", JSON.stringify(sampleStudent?.exams?.[0], null, 2));
+    }
+
     // 4. Aggregate student performance data from the database
     const studentPerformance = await Student.aggregate([
       { $unwind: "$exams" },
@@ -40,7 +50,12 @@ export const getDashboardStats = async (req: Request, res: Response) => {
           averageScore: {
             $avg: {
               $multiply: [
-                { $divide: ["$exams.score", "$exams['total-score']"] },
+                { 
+                  $divide: [
+                    "$exams.score", 
+                    { $getField: { field: "total-score", input: "$exams" } }
+                  ] 
+                },
                 100,
               ],
             },

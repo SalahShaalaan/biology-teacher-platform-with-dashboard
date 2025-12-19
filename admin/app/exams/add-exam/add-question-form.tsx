@@ -24,6 +24,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlusCircle, Trash2, ArrowRight } from "lucide-react";
 import { FileUpload } from "@/components/ui/file-upload";
 import { QuestionFormData, questionSchema } from "@/lib/validators";
@@ -59,22 +60,24 @@ export function AddQuestionForm({
     resolver: zodResolver(questionSchema),
     defaultValues: initialData
       ? {
+          questionType: (initialData as any).questionType || "mcq",
           grade: initialData.grade,
           unitTitle: initialData.unitTitle,
           lessonTitle: initialData.lessonTitle,
           questionText: initialData.questionText,
           image: initialData.image ? ([{ name: "image", size: 0, type: "image/png" }] as unknown as File[]) : [], // Mock file for existing image
-
-          options: initialData.options.map((opt) => ({ text: opt })),
-          correctAnswer: initialData.correctAnswer.toString(),
+          externalLink: (initialData as any).externalLink || "",
+          options: initialData.options?.map((opt) => ({ text: opt })) || [],
+          correctAnswer: initialData.correctAnswer?.toString() || "",
         }
       : {
+          questionType: "mcq",
           grade: "",
           unitTitle: "",
           lessonTitle: "",
           questionText: "",
           image: undefined,
-
+          externalLink: "",
           options: [{ text: "" }, { text: "" }],
           correctAnswer: undefined,
         },
@@ -110,12 +113,13 @@ export function AddQuestionForm({
       } else {
         // Add mode: Reset form but keep curriculum info
         form.reset({
+          questionType: form.getValues("questionType"),
           grade: form.getValues("grade"),
           unitTitle: form.getValues("unitTitle"),
           lessonTitle: form.getValues("lessonTitle"),
           questionText: "",
           image: undefined,
-
+          externalLink: "",
           options: [{ text: "" }, { text: "" }],
           correctAnswer: undefined,
         });
@@ -166,7 +170,7 @@ export function AddQuestionForm({
       const payload = {
         ...data,
         image: imageUrl,
-        options: data.options.map((o) => o.text), // Transform options to string array
+        options: data.options?.map((o) => o.text), // Transform options to string array
       };
 
       mutation.mutate(payload as any);
@@ -266,12 +270,39 @@ export function AddQuestionForm({
               <legend className="-ml-1 px-1 text-sm font-medium text-gray-300">
                 تفاصيل السؤال
               </legend>
+              
+              {/* Question Type Tabs */}
+              <FormField
+                control={form.control}
+                name="questionType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>نوع السؤال</FormLabel>
+                    <FormControl>
+                      <Tabs
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        className="w-full"
+                      >
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="mcq">سؤال اختيارات متعددة</TabsTrigger>
+                          <TabsTrigger value="external_link">رابط خارجي</TabsTrigger>
+                        </TabsList>
+                      </Tabs>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="questionText"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>نص السؤال</FormLabel>
+                    <FormLabel>
+                      {form.watch("questionType") === "external_link" ? "الوصف" : "نص السؤال"}
+                    </FormLabel>
                     <FormControl>
                       <Input
                         {...field}
@@ -282,83 +313,112 @@ export function AddQuestionForm({
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="image"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>صورة توضيحية (اختياري)</FormLabel>
-                    <FormControl>
-                      <FileUpload
-                        onChange={(files) => field.onChange(files)}
-                        initialImageUrl={initialData?.image || null}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
-              <FormField
-                control={form.control}
-                name="correctAnswer"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>الخيارات والإجابة الصحيحة</FormLabel>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      className="space-y-4"
-                    >
-                      {fields.map((item, index) => (
-                        <FormField
-                          key={item.id}
-                          control={form.control}
-                          name={`options.${index}.text`} // Update field name
-                          render={({ field: optionField }) => (
-                            <FormItem>
-                              <FormControl>
-                                <div className="flex items-center gap-3">
-                                  <RadioGroupItem
-                                    value={index.toString()}
-                                    id={`option-${index}`}
-                                  />
-                                  <Input
-                                    {...optionField}
-                                    placeholder={`الخيار ${index + 1}`}
-                                    className="flex-1 bg-gray-700 border-gray-600 text-white"
-                                  />
-                                  {fields.length > 2 && (
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => remove(index)}
-                                    >
-                                      <Trash2 className="h-4 w-4 text-red-500" />
-                                    </Button>
-                                  )}
-                                </div>
-                              </FormControl>
-                              <FormMessage className="pr-8" />
-                            </FormItem>
-                          )}
+              {/* External Link Field - only for external_link type */}
+              {form.watch("questionType") === "external_link" && (
+                <FormField
+                  control={form.control}
+                  name="externalLink"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>الرابط الخارجي</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="url"
+                          placeholder="https://example.com"
+                          className="bg-gray-700 border-gray-600 text-white"
                         />
-                      ))}
-                    </RadioGroup>
-                    <FormMessage />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="mt-4 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
-                      onClick={() => append({ text: "" })} // Append an object
-                    >
-                      <PlusCircle className="mr-2 h-4 w-4" /> إضافة خيار
-                    </Button>
-                  </FormItem>
-                )}
-              />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {/* Image Field - only for MCQ type */}
+              {form.watch("questionType") === "mcq" && (
+                <FormField
+                  control={form.control}
+                  name="image"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>صورة توضيحية (اختياري)</FormLabel>
+                      <FormControl>
+                        <FileUpload
+                          onChange={(files) => field.onChange(files)}
+                          initialImageUrl={initialData?.image || null}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {/* Options and Correct Answer - only for MCQ type */}
+              {form.watch("questionType") === "mcq" && (
+                <FormField
+                  control={form.control}
+                  name="correctAnswer"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>الخيارات والإجابة الصحيحة</FormLabel>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        className="space-y-4"
+                      >
+                        {fields.map((item, index) => (
+                          <FormField
+                            key={item.id}
+                            control={form.control}
+                            name={`options.${index}.text`}
+                            render={({ field: optionField }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <div className="flex items-center gap-3">
+                                    <RadioGroupItem
+                                      value={index.toString()}
+                                      id={`option-${index}`}
+                                    />
+                                    <Input
+                                      {...optionField}
+                                      placeholder={`الخيار ${index + 1}`}
+                                      className="flex-1 bg-gray-700 border-gray-600 text-white"
+                                    />
+                                    {fields.length > 2 && (
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => remove(index)}
+                                      >
+                                        <Trash2 className="h-4 w-4 text-red-500" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                </FormControl>
+                                <FormMessage className="pr-8" />
+                              </FormItem>
+                            )}
+                          />
+                        ))}
+                      </RadioGroup>
+                      <FormMessage />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="mt-4 border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                        onClick={() => append({ text: "" })}
+                      >
+                        <PlusCircle className="mr-2 h-4 w-4" /> إضافة خيار
+                      </Button>
+                    </FormItem>
+                  )}
+                />
+              )}
             </fieldset>
 
             <div className="flex items-center gap-4 justify-end border-t border-gray-700 pt-6">

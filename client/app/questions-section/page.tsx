@@ -39,13 +39,15 @@ interface IStudent {
 
 interface IQuestion {
   _id: string;
+  questionType?: "mcq" | "external_link";
   grade: string;
   unitTitle: string;
   lessonTitle: string;
   questionText: string;
-  options: string[];
-  correctAnswer: number;
+  options?: string[];
+  correctAnswer?: number;
   image?: string;
+  externalLink?: string;
 }
 
 interface Unit {
@@ -223,6 +225,14 @@ export default function QuestionsPage() {
         setQuizState("finished");
       }
     }, 1500);
+  };
+
+  const handleExternalLinkNext = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex((prevIndex) => prevIndex + 1);
+    } else {
+      setQuizState("finished");
+    }
   };
 
   const resetQuiz = () => {
@@ -419,7 +429,10 @@ export default function QuestionsPage() {
   }
 
   if (quizState === "finished") {
-    const percentage = Math.round((score / questions.length) * 100);
+    // Only count MCQ questions in score calculation
+    const mcqQuestions = questions.filter(q => !q.questionType || q.questionType === "mcq");
+    const totalMCQ = mcqQuestions.length;
+    const percentage = totalMCQ > 0 ? Math.round((score / totalMCQ) * 100) : 0;
     const getFeedback = (p: number) => {
       if (p >= 80)
         return {
@@ -474,7 +487,7 @@ export default function QuestionsPage() {
                 {percentage}%
               </motion.p>
               <p className="text-lg text-gray-600">
-                ({score} من {questions.length} إجابات صحيحة)
+                ({score} من {questions.filter(q => !q.questionType || q.questionType === "mcq").length} إجابات صحيحة)
               </p>
               <Button
                 onClick={resetQuiz}
@@ -527,7 +540,7 @@ export default function QuestionsPage() {
                     {currentQuestionIndex + 1}. {currentQuestion.questionText}
                   </h2>
 
-                  {currentQuestion.image && (
+                  {currentQuestion.image && currentQuestion.questionType !== "external_link" && (
                     <div className="relative mb-6 h-64 w-full overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
                       <Image
                         src={currentQuestion.image}
@@ -538,60 +551,89 @@ export default function QuestionsPage() {
                     </div>
                   )}
 
-                  <RadioGroup
-                    dir="rtl"
-                    value={String(selectedAnswer)}
-                    onValueChange={(value) => setSelectedAnswer(Number(value))}
-                    disabled={showFeedback}
-                  >
-                    {currentQuestion.options.map((option, index) => {
-                      const isCorrect = index === currentQuestion.correctAnswer;
-                      const isSelected = selectedAnswer === index;
-                      return (
-                        <div
-                          key={index}
-                          onClick={() =>
-                            !showFeedback && setSelectedAnswer(index)
-                          }
-                          className={cn(
-                            "flex items-center space-x-4 space-x-reverse mb-3 p-4 border transition-colors duration-300 rounded-none cursor-pointer",
-                            isSelected && !showFeedback && "bg-blue-50",
-                            showFeedback &&
-                              isCorrect &&
-                              "bg-green-100 border-green-400 text-green-800",
-                            showFeedback &&
-                              isSelected &&
-                              !isCorrect &&
-                              "bg-red-100 border-red-400 text-red-800"
-                          )}
-                        >
-                          <RadioGroupItem
-                            value={String(index)}
-                            id={`option-${index}`}
-                          />
-                          <Label
-                            htmlFor={`option-${index}`}
-                            className="flex-1 text-lg cursor-pointer"
+                  {/* External Link Question */}
+                  {currentQuestion.questionType === "external_link" && currentQuestion.externalLink && (
+                    <div className="space-y-4 text-center">
+                      <p className="text-gray-600 text-lg mb-6">
+                        اضغط على الزر أدناه للوصول إلى المحتوى الخارجي
+                      </p>
+                      <Button
+                        onClick={() => window.open(currentQuestion.externalLink, "_blank")}
+                        className="w-full text-lg p-6 bg-blue-600 hover:bg-blue-700 rounded-none cursor-pointer"
+                      >
+                        🔗 افتح الرابط الخارجي
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* MCQ Question Options */}
+                  {(!currentQuestion.questionType || currentQuestion.questionType === "mcq") && currentQuestion.options && (
+                    <RadioGroup
+                      dir="rtl"
+                      value={String(selectedAnswer)}
+                      onValueChange={(value) => setSelectedAnswer(Number(value))}
+                      disabled={showFeedback}
+                    >
+                      {currentQuestion.options.map((option, index) => {
+                        const isCorrect = index === currentQuestion.correctAnswer;
+                        const isSelected = selectedAnswer === index;
+                        return (
+                          <div
+                            key={index}
+                            onClick={() =>
+                              !showFeedback && setSelectedAnswer(index)
+                            }
+                            className={cn(
+                              "flex items-center space-x-4 space-x-reverse mb-3 p-4 border transition-colors duration-300 rounded-none cursor-pointer",
+                              isSelected && !showFeedback && "bg-blue-50",
+                              showFeedback &&
+                                isCorrect &&
+                                "bg-green-100 border-green-400 text-green-800",
+                              showFeedback &&
+                                isSelected &&
+                                !isCorrect &&
+                                "bg-red-100 border-red-400 text-red-800"
+                            )}
                           >
-                            {option}
-                          </Label>
-                        </div>
-                      );
-                    })}
-                  </RadioGroup>
+                            <RadioGroupItem
+                              value={String(index)}
+                              id={`option-${index}`}
+                            />
+                            <Label
+                              htmlFor={`option-${index}`}
+                              className="flex-1 text-lg cursor-pointer"
+                            >
+                              {option}
+                            </Label>
+                          </div>
+                        );
+                      })}
+                    </RadioGroup>
+                  )}
                 </motion.div>
               </AnimatePresence>
             </CardContent>
             <CardFooter>
-              <Button
-                onClick={handleCheckAnswer}
-                className="w-full text-lg p-6 bg-green-600 rounded-none disabled:opacity-70 disabled:cursor-not-allowed"
-                disabled={selectedAnswer === null || showFeedback}
-              >
-                {currentQuestionIndex < questions.length - 1
-                  ? "تأكيد الإجابة"
-                  : "إنهاء الاختبار"}
-              </Button>
+              {currentQuestion.questionType === "external_link" ? (
+                <Button
+                  onClick={handleExternalLinkNext}
+                  className="w-full text-lg p-6 bg-green-600 rounded-none cursor-pointer"
+                >
+                  {currentQuestionIndex < questions.length - 1
+                    ? "التالي ←"
+                    : "إنهاء الاختبار"}
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleCheckAnswer}
+                  className="w-full text-lg p-6 bg-green-600 rounded-none disabled:opacity-70 disabled:cursor-not-allowed"
+                  disabled={selectedAnswer === null || showFeedback}
+                >
+                  {currentQuestionIndex < questions.length - 1
+                    ? "تأكيد الإجابة"
+                    : "إنهاء الاختبار"}
+                </Button>
+              )}
             </CardFooter>
           </Card>
         </div>
