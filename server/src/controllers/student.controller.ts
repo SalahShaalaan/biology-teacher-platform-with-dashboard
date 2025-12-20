@@ -29,11 +29,19 @@ export const getStudentById = async (req: Request, res: Response) => {
   try {
     const id = req.params.id?.trim();
 
-    if (!id) {
-      return res.status(400).json({ success: false, message: "Invalid student ID" });
+    // STRICT VALIDATION to prevent crashes and abuse
+    if (!id || typeof id !== 'string' || id.trim().length === 0) {
+      return res.status(400).json({ success: false, message: "Invalid student code: Empty input" });
     }
 
-    const student = await Student.findOne({ code: id });
+    const cleanId = id.trim();
+
+    // Ensure code is alphanumeric only (prevent injection/junk)
+    if (!/^[A-Z0-9]+$/i.test(cleanId)) {
+      return res.status(400).json({ success: false, message: "Invalid student code format" });
+    }
+
+    const student = await Student.findOne({ code: cleanId });
     if (!student) {
       return res
         .status(404)

@@ -98,7 +98,16 @@ export const loginAdmin = async (req: Request, res: Response) => {
     // Input validation and sanitization
     let { email, password } = req.body;
 
-    if (!email || !password) {
+    // Prevent server crash if email/password are not strings (e.g. objects or arrays)
+    if (typeof email !== "string" || typeof password !== "string") {
+      console.log(`⚠️  Invalid payload type from IP: ${clientIp}`);
+       return res.status(400).json({
+        success: false,
+        message: "Invalid input format",
+      });
+    }
+
+    if (!email.trim() || !password.trim()) {
       console.log(`⚠️  Login attempt with missing credentials from IP: ${clientIp}`);
       // Add delay to prevent timing attacks
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -208,7 +217,6 @@ export const loginAdmin = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: "Server error during login. Please try again later.",
-      error: error.message,
     });
   }
 };
@@ -297,7 +305,6 @@ export const createAdmin = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: "Server error during signup. Please try again later.",
-      error: error.message,
     });
   }
 };

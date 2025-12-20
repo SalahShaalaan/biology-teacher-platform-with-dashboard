@@ -20,8 +20,8 @@ import toast from "react-hot-toast";
 import { useAuth } from "./auth-provider";
 
 const formSchema = z.object({
-  email: z.string().email({ message: "البريد الإلكتروني غير صالح" }),
-  password: z.string().min(6, { message: "كلمة المرور يجب أن تكون 6 أحرف على الأقل" }),
+  email: z.string().trim().email({ message: "البريد الإلكتروني غير صالح" }),
+  password: z.string().trim().min(6, { message: "كلمة المرور يجب أن تكون 6 أحرف على الأقل" }),
 });
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
@@ -79,7 +79,11 @@ export default function LoginForm() {
                 <FormItem>
                   <FormLabel>البريد الإلكتروني</FormLabel>
                   <FormControl>
-                    <Input placeholder="admin@example.com" {...field} />
+                    <Input 
+                      placeholder="admin@example.com" 
+                      {...field} 
+                      onChange={(e) => field.onChange(e.target.value.replace(/\s/g, ""))}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

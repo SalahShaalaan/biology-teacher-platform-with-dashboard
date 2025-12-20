@@ -23,7 +23,8 @@ export const getQuestions = async (req: Request, res: Response) => {
 export const getQuestionById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const question = await Question.findById(id);
+    // SECURITY: Do not return correctAnswer to the client
+    const question = await Question.findById(id).select("-correctAnswer");
 
     if (!question) {
       return res.status(404).json({
@@ -45,41 +46,17 @@ export const getQuestionById = async (req: Request, res: Response) => {
 export const addQuestion = async (req: Request, res: Response) => {
   try {
     const newQuestionData = req.body;
-    console.log("Received question data:", JSON.stringify(newQuestionData, null, 2));
-    const questionType = newQuestionData.questionType || "mcq";
-
-    // Validate based on question type
-    if (questionType === "mcq") {
-      // MCQ type: validate options and correctAnswer
-      if (
-        !newQuestionData.options ||
-        !Array.isArray(newQuestionData.options) ||
-        newQuestionData.options.length < 2
-      ) {
-        console.error("MCQ validation failed: insufficient options");
-        return res.status(400).json({
-          success: false,
-          message: "A question must have at least 2 options.",
-        });
-      }
-      if (newQuestionData.correctAnswer === undefined || newQuestionData.correctAnswer === null || newQuestionData.correctAnswer === "") {
-        console.error("MCQ validation failed: missing correctAnswer");
-        return res.status(400).json({
-          success: false,
-          message: "Correct answer is required for MCQ questions.",
-        });
-      }
-    } else if (questionType === "external_link") {
-      // External Link type: validate externalLink
-      if (!newQuestionData.externalLink || newQuestionData.externalLink.trim() === "") {
-        console.error("External link validation failed: missing externalLink");
-        return res.status(400).json({
-          success: false,
-          message: "External link is required for external link questions.",
-        });
-      }
+    // Updated validation: Ensure there are at least 2 options
+    if (
+      !newQuestionData.options ||
+      !Array.isArray(newQuestionData.options) ||
+      newQuestionData.options.length < 2
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "A question must have at least 2 options.",
+      });
     }
-
     const {
       grade,
       unitTitle,
@@ -91,29 +68,19 @@ export const addQuestion = async (req: Request, res: Response) => {
       externalLink,
     } = newQuestionData;
 
-    const questionData: any = {
-      questionType,
+    const question = await Question.create({
       grade,
       unitTitle,
       lessonTitle,
       questionText,
+      options,
+      correctAnswer,
       image,
       externalLink,
-    };
-
-    // Only add options and correctAnswer for MCQ
-    if (questionType === "mcq") {
-      questionData.options = options;
-      questionData.correctAnswer = typeof correctAnswer === 'string' ? parseInt(correctAnswer) : correctAnswer;
-    }
-
-    console.log("Creating question with data:", JSON.stringify(questionData, null, 2));
-    const question = await Question.create(questionData);
-    console.log("Question created successfully:", question._id);
+    });
 
     res.status(201).json({ success: true, data: question });
   } catch (error) {
-    console.error("Error creating question:", error);
     res
       .status(400)
       .json({ success: false, message: "Error adding question", error });
@@ -124,29 +91,16 @@ export const updateQuestion = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
-    const questionType = updateData.questionType || "mcq";
 
-    // Validate based on question type
-    if (questionType === "mcq") {
-      // MCQ type: validate options and correctAnswer
-      if (
-        updateData.options &&
-        (!Array.isArray(updateData.options) || updateData.options.length < 2)
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: "A question must have at least 2 options.",
-        });
-      }
-    } else if (questionType === "external_link") {
-      // External Link type: validate externalLink
-      if (updateData.externalLink !== undefined && 
-          (!updateData.externalLink || updateData.externalLink.trim() === "")) {
-        return res.status(400).json({
-          success: false,
-          message: "External link is required for external link questions.",
-        });
-      }
+    // If options are being updated, validate them
+    if (
+      updateData.options &&
+      (!Array.isArray(updateData.options) || updateData.options.length < 2)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "A question must have at least 2 options.",
+      });
     }
 
     const question = await Question.findByIdAndUpdate(id, updateData, {

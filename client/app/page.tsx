@@ -5,7 +5,6 @@ import Hero from "@/components/widgets/Hero";
 import HowItWorks from "@/components/widgets/how-it-works";
 import JoinUs from "@/components/widgets/join-us";
 import ScienceSection from "@/components/widgets/science-section";
-import { TestimonialsSection } from "@/components/widgets/testimonials-section";
 import WhatTeacherProvides from "@/components/widgets/what-teacher-provides";
 
 export default function Home() {
@@ -18,7 +17,7 @@ export default function Home() {
       <HowItWorks />
       <WhatTeacherProvides />
       <JoinUs />
-      <TestimonialsSection />
+      {/* <TestimonialsSection /> */}
       <Footer />
     </main>
   );

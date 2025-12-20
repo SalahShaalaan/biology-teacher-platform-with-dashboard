@@ -165,7 +165,7 @@ export default function ResultsPage() {
                   type="text"
                   placeholder="أدخل الكود هنا"
                   value={studentCode}
-                  onChange={(e) => setStudentCode(e.target.value)}
+                  onChange={(e) => setStudentCode(e.target.value.replace(/\s/g, ""))}
                   onKeyDown={(e) => e.key === "Enter" && handleLogin()}
                   className="text-center text-lg p-6 pe-12"
                   dir="ltr"

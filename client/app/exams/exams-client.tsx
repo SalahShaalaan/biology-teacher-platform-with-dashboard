@@ -153,11 +153,7 @@ export function ExamsClient({ exams }: ExamsClientProps) {
     const newAnswers = [...userAnswers];
     newAnswers[currentQuestionIndex] = answerIndex;
     setUserAnswers(newAnswers);
-    if (
-      answerIndex === selectedExam.questions[currentQuestionIndex].correctAnswer
-    ) {
-      setScore((prev) => prev + 1);
-    }
+    // Client-side scoring removed for security (anti-cheat)
   };
 
   const handleNext = () => {

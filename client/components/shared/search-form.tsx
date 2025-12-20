@@ -48,7 +48,7 @@ export const SearchForm: FC<SearchFormProps> = ({
                 <Input
                   type="text"
                   value={code}
-                  onChange={(e) => setCode(e.target.value.toUpperCase())}
+                  onChange={(e) => setCode(e.target.value.replace(/\s/g, "").toUpperCase())}
                   placeholder="أدخل الكود هنا"
                   onKeyDown={(e) => e.key === "Enter" && onSubmit(e)}
                   className="text-center text-lg p-6 pe-12"

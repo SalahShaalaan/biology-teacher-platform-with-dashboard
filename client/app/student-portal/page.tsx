@@ -54,7 +54,8 @@ export default function Page() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmittedCode(studentCode);
+    if (!studentCode.trim()) return;
+    setSubmittedCode(studentCode.trim());
   };
 
   const loading = isLoading || isFetching;
@@ -68,7 +69,7 @@ export default function Page() {
           <input
             type="text"
             value={studentCode}
-            onChange={(e) => setStudentCode(e.target.value)}
+            onChange={(e) => setStudentCode(e.target.value.replace(/\s/g, ""))}
             placeholder="أدخل كود الطالب"
             className="bg-gray-900 text-gray-200 border border-gray-700 rounded-md p-3 mb-4 text-right focus:ring-2 focus:ring-[#295638] focus:border-[#295638] transition-all"
           />
