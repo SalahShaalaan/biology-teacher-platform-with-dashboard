@@ -65,7 +65,7 @@ export const QuestionCard: FC<QuestionCardProps> = ({
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
       transition={{ duration: 0.3 }}
-      className="bg-white p-8 rounded-2xl shadow-lg border w-full max-w-2xl"
+      className="bg-white p-8 rounded-2xl  border border-gray-200 w-full max-w-2xl"
     >
       <p className="text-sm text-gray-500 mb-2">
         {question.unitTitle} - {question.lessonTitle}
@@ -90,7 +90,7 @@ export const QuestionCard: FC<QuestionCardProps> = ({
           <button
             key={index}
             onClick={() => onSelectAnswer(index)}
-            disabled={isAnswered}
+            disabled={isAnswered && question.correctAnswer !== undefined}
             className={cn(
               "p-4 rounded-lg border-2 text-right transition-all duration-200 flex justify-between items-center text-lg",
               getOptionClass(index)
