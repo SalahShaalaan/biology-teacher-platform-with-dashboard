@@ -62,6 +62,7 @@ export function ExamsClient({ exams }: ExamsClientProps) {
   const [isAnswered, setIsAnswered] = useState(false);
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState(""); // State for server feedback
+  const [resultsDetails, setResultsDetails] = useState<any[]>([]); // New state for detailed results
 
   const {
     mutate: searchStudent,
@@ -79,49 +80,25 @@ export function ExamsClient({ exams }: ExamsClientProps) {
     },
   });
 
-  const { mutate: submitResult, isPending: isSubmitting } = useMutation({
+ const { mutate: submitResult, isPending: isSubmitting } = useMutation({
     mutationFn: (data: {
       studentCode: string;
       examName: string;
       answers: { questionId: string; answerIndex: number }[];
     }) => submitExamResult(data.studentCode, data.examName, data.answers),
     onSuccess: (responseData) => {
-        // responseData contains { score, totalScore, feedback, percentage }
-        // We need to update state to show results.
-        // We aren't getting the updated student object back with exams list directly (or maybe we are? Check controller)
-        // Controller returns { data: { score, totalScore, feedback, percentage } }
-        // Ideally we should refetch student or just update the UI state.
+        // responseData contains { score, totalScore, feedback, percentage, resultsDetails }
         
-        // Let's assume we just want to show the results page.
-        // We can manually reconstruct the exam result object for local state if needed
-        // Or better, refetch student to keep data in sync.
-
-        setScore(responseData.score); // Need to make sure ExamResults uses this
-        // Also ExamResults component uses `score` prop.
-        
-        // Pass result data to ExamResults via state maybe?
-        // Or just rely on `score` derived from state? 
-        // Wait, `score` in component state is manually calculated. we should override it.
-        
-        // Actually, ExamResults takes `score` and `questions` and `userAnswers`.
-        // If we want to show which were correct/incorrect, we need to know the correct answers...
-        // BUT WE HID THEM!
-        // So ExamResults can NO LONGER show "Correct/Incorrect" indicators per question unless the server returns the graded sheet.
-        // The server response currently only returns score/feedback.
-        
-        // If we want to show details, server needs to return { questions: [{ id, correct: boolean }] } etc.
-        // For now, let's just show Score and Feedback.
-        
-        // We need to pass feedback to ExamResults if possible, or just toast it.
         toast.success(responseData.feedback);
         setScore(responseData.score); // Update state score with server confirmed score
         setFeedback(responseData.feedback); // Store feedback for results component
+        setResultsDetails(responseData.resultsDetails); // Store detailed results
         
         setExamState("RESULTS");
     },
     onError: (err) => {
       toast.error(err.message || "حدث خطأ أثناء حفظ النتيجة.");
-      setExamState("RESULTS"); // Maybe stay on exam? for now go to results with 0 score
+      setExamState("RESULTS"); 
     },
   });
 
@@ -137,6 +114,7 @@ export function ExamsClient({ exams }: ExamsClientProps) {
     setSelectedAnswer(null);
     setIsAnswered(false);
     setScore(0);
+    setResultsDetails([]);
   };
 
   const handleSelectExam = (exam: ExamInfo) => {
@@ -153,7 +131,8 @@ export function ExamsClient({ exams }: ExamsClientProps) {
     const newAnswers = [...userAnswers];
     newAnswers[currentQuestionIndex] = answerIndex;
     setUserAnswers(newAnswers);
-    // Client-side scoring removed for security (anti-cheat)
+    newAnswers[currentQuestionIndex] = answerIndex;
+    setUserAnswers(newAnswers);
   };
 
   const handleNext = () => {
@@ -206,7 +185,21 @@ export function ExamsClient({ exams }: ExamsClientProps) {
     setExamState("SELECTION");
   };
 
-  const renderContent = () => {
+  const transformInput = (value: string) => {
+    return value.replace(/\s/g, "").toUpperCase();
+  };
+
+  const handleSearchWrapper = (code: string) => {
+      // Security check: Ensure code contains only alphanumeric characters
+      const isValidCode = /^[A-Z0-9]+$/.test(code);
+      if (!isValidCode) {
+        toast.error("كود الطالب يجب أن يحتوي على أحرف وأرقام إنجليزية فقط.");
+        return;
+      }
+      searchStudent(code);
+  };
+
+ const renderContent = () => {
     switch (examState) {
       case "SEARCH":
         return (
@@ -214,9 +207,10 @@ export function ExamsClient({ exams }: ExamsClientProps) {
             <SearchForm
               title="اختبر مستواك"
               description="الرجاء إدخال الكود الخاص بك لعرض الاختبارات المتاحة."
-              handleSearch={searchStudent}
+              handleSearch={handleSearchWrapper}
               isLoading={isLoading}
               error={error ? error.message : null}
+              transformValue={transformInput}
             />
           </motion.div>
         );
@@ -276,6 +270,7 @@ export function ExamsClient({ exams }: ExamsClientProps) {
             questions={selectedExam.questions}
             userAnswers={userAnswers}
             feedback={feedback} // Pass the feedback from state
+            resultsDetails={resultsDetails} // Pass details
           />
         ) : null;
     }

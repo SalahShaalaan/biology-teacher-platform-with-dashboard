@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import Question from "../models/Question.model";
 
+import jwt from "jsonwebtoken";
+
 export const getQuestions = async (req: Request, res: Response) => {
   try {
     const { grade, unitTitle, lessonTitle } = req.query;
@@ -10,8 +12,34 @@ export const getQuestions = async (req: Request, res: Response) => {
     if (unitTitle) filter.unitTitle = unitTitle as string;
     if (lessonTitle) filter.lessonTitle = lessonTitle as string;
 
-    // SECURITY: Do not return correctAnswer to the client
-    const questions = await Question.find(filter).select("-correctAnswer");
+    // Check for Admin Token to decide whether to return correctAnswer
+    let isAdmin = false;
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer")
+    ) {
+      try {
+        const token = req.headers.authorization.split(" ")[1];
+        jwt.verify(
+          token,
+          process.env.JWT_SECRET || "fallback_secret_for_development_only_12345"
+        );
+        // If verify succeeds, we assume it's an admin (since only admins have tokens currently)
+        isAdmin = true;
+      } catch (error) {
+        // Token invalid, treat as public/student
+        isAdmin = false;
+      }
+    }
+
+    let questionsQuery = Question.find(filter);
+
+    // SECURITY: Do not return correctAnswer to the client unless Admin
+    if (!isAdmin) {
+      questionsQuery = questionsQuery.select("-correctAnswer");
+    }
+
+    const questions = await questionsQuery;
     res.status(200).json({ success: true, data: questions });
   } catch (error) {
     res

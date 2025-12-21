@@ -30,18 +30,20 @@ export const getStudentById = async (req: Request, res: Response) => {
     const id = req.params.id?.trim();
 
     // STRICT VALIDATION to prevent crashes and abuse
-    if (!id || typeof id !== 'string' || id.trim().length === 0) {
-      return res.status(400).json({ success: false, message: "Invalid student code: Empty input" });
+    if (!id || id.length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid student code: Empty input" });
     }
-
-    const cleanId = id.trim();
 
     // Ensure code is alphanumeric only (prevent injection/junk)
-    if (!/^[A-Z0-9]+$/i.test(cleanId)) {
-      return res.status(400).json({ success: false, message: "Invalid student code format" });
+    if (!/^[A-Z0-9]+$/i.test(id)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid student code format" });
     }
 
-    const student = await Student.findOne({ code: cleanId });
+    const student = await Student.findOne({ code: id });
     if (!student) {
       return res
         .status(404)
@@ -532,23 +534,25 @@ export const submitExam = async (req: Request, res: Response) => {
 
     const student = await Student.findOne({ code: studentCode });
     if (!student) {
-      return res.status(404).json({ success: false, message: "Student not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Student not found" });
     }
 
     // Fetch all questions involved in the exam
-    // We assume answers contains all question IDs. 
-    // Ideally, we should fetch questions by examName (unit/grade) to ensure we have all of them, 
-    // but the client sends what it took. 
+    // We assume answers contains all question IDs.
+    // Ideally, we should fetch questions by examName (unit/grade) to ensure we have all of them,
+    // but the client sends what it took.
     // To be secure, we should re-fetch the exam questions based on the exam criteria (grade, unit, etc)
     // OR just validate the provided answers against the question IDs.
     // Let's trust the questionIds sent for now but verify they exist.
-    
-    // Better approach: functionality in exams-client groups questions by unitTitle. 
-    // The client knows the examName (which is the unitTitle). 
+
+    // Better approach: functionality in exams-client groups questions by unitTitle.
+    // The client knows the examName (which is the unitTitle).
     // So we can fetch all questions for this unit and grade.
-    // However, the `examName` in client is just `title`. 
+    // However, the `examName` in client is just `title`.
     // Let's assume `answers` contains `{ questionId, answerIndex }`.
-    
+
     const questionIds = answers.map((a: any) => a.questionId);
     // Find these questions in DB to get correct answers
     // importing Question from model (need to ensure import exists at top)
@@ -562,14 +566,24 @@ export const submitExam = async (req: Request, res: Response) => {
     // Create a map for quick lookup
     const questionMap = new Map();
     questions.forEach((q: any) => {
-        questionMap.set(String(q._id), q);
+      questionMap.set(String(q._id), q);
     });
 
+    const resultsDetails: any[] = [];
+
     answers.forEach((ans: any) => {
-        const question = questionMap.get(ans.questionId);
-        if (question && question.correctAnswer === ans.answerIndex) {
-            score++;
-        }
+      const question = questionMap.get(ans.questionId);
+      const isCorrect = question && question.correctAnswer === ans.answerIndex;
+
+      if (isCorrect) {
+        score++;
+      }
+
+      resultsDetails.push({
+        questionId: ans.questionId,
+        userAnswer: ans.answerIndex,
+        isCorrect,
+      });
     });
 
     // Calculate feedback
@@ -577,7 +591,8 @@ export const submitExam = async (req: Request, res: Response) => {
     let feedback = "";
     if (percentage >= 90) feedback = "أداء ممتاز! استمر في هذا المستوى الرائع.";
     else if (percentage >= 75) feedback = "جيد جداً! أنت في الطريق الصحيح.";
-    else if (percentage >= 50) feedback = "جيد، ولكن تحتاج إلى المزيد من المراجعة.";
+    else if (percentage >= 50)
+      feedback = "جيد، ولكن تحتاج إلى المزيد من المراجعة.";
     else feedback = "تحتاج إلى بذل المزيد من الجهد. لا تيأس!";
 
     // Save result to student
@@ -595,9 +610,9 @@ export const submitExam = async (req: Request, res: Response) => {
     );
 
     if (existingIndex > -1) {
-        student.exams![existingIndex] = newResult; // Using non-null assertion as we know exams exists or ?? []
+      student.exams![existingIndex] = newResult; // Using non-null assertion as we know exams exists or ?? []
     } else {
-        student.exams = [...(student.exams ?? []), newResult];
+      student.exams = [...(student.exams ?? []), newResult];
     }
 
     await student.save();
@@ -608,10 +623,10 @@ export const submitExam = async (req: Request, res: Response) => {
         score,
         totalScore: totalQuestions,
         feedback,
-        percentage
-      }
+        percentage,
+        resultsDetails,
+      },
     });
-
   } catch (error) {
     console.error("Error submitting exam:", error);
     res.status(500).json({ success: false, message: "Error submitting exam" });

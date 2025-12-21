@@ -6,7 +6,13 @@ import { User, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 
 interface SearchFormProps {
   title: string;
@@ -14,6 +20,7 @@ interface SearchFormProps {
   handleSearch: (code: string) => void;
   isLoading: boolean;
   error: string | null;
+  transformValue?: (value: string) => string;
 }
 
 export const SearchForm: FC<SearchFormProps> = ({
@@ -22,6 +29,7 @@ export const SearchForm: FC<SearchFormProps> = ({
   handleSearch,
   isLoading,
   error,
+  transformValue,
 }) => {
   const [code, setCode] = useState("");
 
@@ -48,7 +56,14 @@ export const SearchForm: FC<SearchFormProps> = ({
                 <Input
                   type="text"
                   value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\s/g, "").toUpperCase())}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    setCode(
+                      transformValue
+                        ? transformValue(newValue)
+                        : newValue.toUpperCase()
+                    );
+                  }}
                   placeholder="أدخل الكود هنا"
                   onKeyDown={(e) => e.key === "Enter" && onSubmit(e)}
                   className="text-center text-lg p-6 pe-12"
@@ -72,7 +87,7 @@ export const SearchForm: FC<SearchFormProps> = ({
                 )}
               </Button>
               {error && (
-                <motion.p 
+                <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   className="mt-2 text-sm text-destructive text-center"

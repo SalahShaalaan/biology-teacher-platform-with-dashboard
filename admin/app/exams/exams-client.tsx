@@ -11,7 +11,14 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, BookOpen, CheckCircle2, Pencil, Trash2, ExternalLink } from "lucide-react";
+import {
+  PlusCircle,
+  BookOpen,
+  CheckCircle2,
+  Pencil,
+  Trash2,
+  ExternalLink,
+} from "lucide-react";
 import Image from "next/image";
 import { deleteQuestion, getCurriculum, getQuestionsList } from "@/lib/api";
 import { toast } from "react-hot-toast";
@@ -45,8 +52,8 @@ export default function ExamsClient() {
   >({
     queryKey: ["questions", selectedLesson],
     queryFn: () => {
-        const params = new URLSearchParams(selectedLesson as any);
-        return getQuestionsList(params.toString());
+      const params = new URLSearchParams(selectedLesson as any);
+      return getQuestionsList(params.toString());
     },
     enabled: !!selectedLesson,
   });
@@ -180,27 +187,29 @@ export default function ExamsClient() {
                         className="border-b border-gray-700 pb-6 last:border-b-0"
                       >
                         <div className="flex justify-between items-start mb-3">
-                            <p className="font-semibold text-gray-200 flex-1">
-                              {index + 1}. {q.questionText}
-                            </p>
-                            <div className="flex gap-2">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => router.push(`/exams/edit-exam?id=${q._id}`)}
-                                    className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
-                                >
-                                    <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleDelete(q._id)}
-                                    className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </div>
+                          <p className="font-semibold text-gray-200 flex-1">
+                            {index + 1}. {q.questionText}
+                          </p>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                router.push(`/exams/edit-exam?id=${q._id}`)
+                              }
+                              className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(q._id)}
+                              className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
 
                         {q.image && (
@@ -213,20 +222,33 @@ export default function ExamsClient() {
                             />
                           </div>
                         )}
-                        
-                    
 
                         <ul className="space-y-2 text-sm">
                           {q.options.map((opt, i) => (
                             <li
                               key={i}
                               className={`flex items-center gap-3 p-2.5 rounded-md ${
-                                i === q.correctAnswer
+                                (() => {
+                                  // Safe strict comparison
+                                  if (
+                                    q.correctAnswer === null ||
+                                    q.correctAnswer === undefined
+                                  )
+                                    return false;
+                                  return Number(i) === Number(q.correctAnswer);
+                                })()
                                   ? "bg-green-500/10 text-green-400 font-semibold"
                                   : "text-gray-400"
                               }`}
                             >
-                              {i === q.correctAnswer && (
+                              {(() => {
+                                if (
+                                  q.correctAnswer === null ||
+                                  q.correctAnswer === undefined
+                                )
+                                  return false;
+                                return Number(i) === Number(q.correctAnswer);
+                              })() && (
                                 <CheckCircle2 className="w-5 h-5 text-green-500" />
                               )}
                               <span>{opt}</span>
@@ -257,8 +279,6 @@ export default function ExamsClient() {
           )}
         </div>
       </div>
-
-
     </div>
   );
 }

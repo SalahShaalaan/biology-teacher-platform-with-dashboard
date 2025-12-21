@@ -4,28 +4,38 @@ import { FC } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { RefreshCw, List } from "lucide-react";
+import { RefreshCw, List, Check, X } from "lucide-react";
 import { Question } from "@/types";
 import Image from "next/image";
 
 interface ExamResultsProps {
   score: number;
   totalQuestions: number;
-  feedback?: string; 
+  feedback?: string;
   onRestart: () => void;
   questions: Question[];
   userAnswers: (number | null)[];
   onBackToSelection: () => void;
+  resultsDetails?: {
+    questionId: string;
+    userAnswer: number;
+    isCorrect: boolean;
+  }[];
 }
 
 export const ExamResults: FC<ExamResultsProps> = ({
   score,
   totalQuestions,
-  feedback,
+  feedback, // Destructure feedback
   onRestart,
   onBackToSelection,
+  questions,
+  userAnswers,
+  resultsDetails,
 }) => {
   const percentage = Math.round((score / totalQuestions) * 100);
+  
+  // Use server feedback if available, fallback to local (though server should always provide it)
   const displayFeedback = feedback || (percentage >= 50 ? "أنت في الطريق الصحيح!" : "حاول مرة أخرى!");
   const isSuccess = percentage >= 50;
 
@@ -91,6 +101,76 @@ export const ExamResults: FC<ExamResultsProps> = ({
             </Button>
           </div>
         </CardContent>
+
+{resultsDetails && resultsDetails.length > 0 && (
+        <motion.div
+           initial={{ opacity: 0, y: 20 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ delay: 0.2 }}
+           className="bg-slate-50 p-6 rounded-2xl border border-slate-200"
+        >
+          <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center">مراجعة الإجابات</h3>
+          <div className="space-y-6">
+            {questions.map((q, idx) => {
+              const detail = resultsDetails.find(r => r.questionId === q._id);
+              if (!detail) return null;
+
+              const isCorrect = detail.isCorrect;
+              const userAnswerIndex = detail.userAnswer;
+              
+              return (
+                <div key={q._id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm text-right" dir="rtl">
+                  <div className="flex justify-between items-start mb-4">
+                     <span className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-2 ${isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {isCorrect ? (
+                            <>
+                                <Check className="w-4 h-4" /> إجابة صحيحة
+                            </>
+                        ) : (
+                            <>
+                                <X className="w-4 h-4" /> إجابة خاطئة
+                            </>
+                        )}
+                     </span>
+                     <span className="text-gray-400 font-mono text-sm">#{idx + 1}</span>
+                  </div>
+
+                  <h4 className="text-lg font-semibold text-gray-800 mb-4">{q.questionText}</h4>
+
+                  <div className="space-y-2">
+                    {q.options.map((opt, optIdx) => {
+                      const isSelected = userAnswerIndex === optIdx;
+                      
+                      let optionClass = "p-3 rounded-lg border flex justify-between items-center ";
+                      
+                      if (isSelected) {
+                          if (isCorrect) {
+                              optionClass += "bg-green-50 border-green-500 text-green-900";
+                          } else {
+                              optionClass += "bg-red-50 border-red-500 text-red-900";
+                          }
+                      } else {
+                          optionClass += "bg-gray-50 border-gray-200 text-gray-600";
+                      }
+
+                      return (
+                        <div key={optIdx} className={optionClass}>
+                            <span>{opt}</span>
+                            {isSelected && (
+                                isCorrect ? <Check className="w-5 h-5 text-green-600" /> : <X className="w-5 h-5 text-red-600" />
+                            )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {!isCorrect && <p className="mt-3 text-sm text-gray-500">راجع الدرس وحاول مرة أخرى!</p>}
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
+
       </Card>
     </motion.div>
   );
