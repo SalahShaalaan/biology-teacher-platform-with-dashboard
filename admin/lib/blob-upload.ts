@@ -1,6 +1,8 @@
 import { upload } from "@vercel/blob/client";
 import type { PutBlobResult } from "@vercel/blob";
 
+import Cookies from "js-cookie";
+
 export interface BlobUploadProgress {
   loaded: number;
   total: number;
@@ -15,7 +17,10 @@ export async function uploadToBlob(
   filename: string, // The unique filename generated on the client
   onProgress?: (progress: BlobUploadProgress) => void
 ): Promise<PutBlobResult> {
-  const handleUploadUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/upload`;
+  const token = Cookies.get("admin_token");
+  const handleUploadUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/upload${
+    token ? `?token=${token}` : ""
+  }`;
 
   try {
     const blob = await upload(filename, file, {

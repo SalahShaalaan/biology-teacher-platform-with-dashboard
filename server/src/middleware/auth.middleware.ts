@@ -20,9 +20,13 @@ export const protect = async (
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
   ) {
-    try {
-      token = req.headers.authorization.split(" ")[1];
+    token = req.headers.authorization.split(" ")[1];
+  } else if (req.query.token) {
+    token = req.query.token as string;
+  }
 
+  if (token) {
+    try {
       const decoded: any = jwt.verify(
         token,
         process.env.JWT_SECRET || "fallback_secret_for_development_only_12345"
@@ -33,25 +37,34 @@ export const protect = async (
       if (!req.user) {
         // Fallback: Check if it's a student token if we eventually add student auth
         // For now, if Admin not found, fail.
-         return res.status(401).json({ success: false, message: "Not authorized, user not found" });
+        return res
+          .status(401)
+          .json({ success: false, message: "Not authorized, user not found" });
       }
 
       next();
+      return; // Ensure we don't fall through to the error response
     } catch (error) {
       console.error(error);
-      res.status(401).json({ success: false, message: "Not authorized, token failed" });
+      res
+        .status(401)
+        .json({ success: false, message: "Not authorized, token failed" });
+      return; // Ensure we don't fall through
     }
   }
 
   if (!token) {
-    if (process.env.NODE_ENV === "development" || true) { // Always show detailed errors for now
-       res.status(401).json({ 
-           success: false, 
-           message: "Not authorized, no token",
-           debug_headers: req.headers // Return what we received
-       });
+    if (process.env.NODE_ENV === "development" || true) {
+      // Always show detailed errors for now
+      res.status(401).json({
+        success: false,
+        message: "Not authorized, no token",
+        debug_headers: req.headers, // Return what we received
+      });
     } else {
-       res.status(401).json({ success: false, message: "Not authorized, no token" });
+      res
+        .status(401)
+        .json({ success: false, message: "Not authorized, no token" });
     }
   }
 };
@@ -62,6 +75,8 @@ export const admin = (req: AuthRequest, res: Response, next: NextFunction) => {
     // because we only query the Admin model in 'protect'.
     next();
   } else {
-    res.status(401).json({ success: false, message: "Not authorized as an admin" });
+    res
+      .status(401)
+      .json({ success: false, message: "Not authorized as an admin" });
   }
 };
