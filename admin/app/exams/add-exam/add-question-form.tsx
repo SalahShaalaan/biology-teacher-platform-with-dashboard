@@ -31,13 +31,7 @@ import { QuestionFormData, questionSchema } from "@/lib/validators";
 import { uploadToBlob, generateUniqueFilename } from "@/lib/blob-upload";
 import { addQuestion, updateQuestion } from "@/lib/api";
 import { Question } from "@/types";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+// Select imports removed
 
 const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/questions`;
 
@@ -237,24 +231,21 @@ export function AddQuestionForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>المرحلة الدراسية</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                            <SelectValue placeholder="اختر المرحلة الدراسية" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="bg-gray-700 border-gray-600 text-white">
+                      <FormControl>
+                        <select
+                          {...field}
+                          className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 ring-offset-gray-900"
+                        >
+                          <option value="" disabled>
+                            اختر المرحلة الدراسية
+                          </option>
                           {grades.map((grade) => (
-                            <SelectItem key={grade} value={grade} className="focus:bg-gray-600 cursor-pointer">
+                            <option key={grade} value={grade}>
                               {grade}
-                            </SelectItem>
+                            </option>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </select>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
