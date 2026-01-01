@@ -3,7 +3,6 @@ import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
 import mongoSanitize from "express-mongo-sanitize";
-import rateLimit from "express-rate-limit";
 import connectDB from "./config/connect-db";
 
 import { studentRoutes } from "./routes/student.route";
@@ -65,23 +64,6 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } })); // S
 
 // Prevent NoSQL injection attacks
 app.use(mongoSanitize());
-
-// Connect to database (Non-blocking)
-connectDB();
-
-// Rate limiting: 100 requests per 15 minutes
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: "Too many requests from this IP, please try again after 15 minutes",
-});
-
-// Apply rate limiting to all requests
-app.use(limiter);
-
-// Important: Increase limits for video uploads
 app.use(express.json({ limit: "600mb" }));
 app.use(express.urlencoded({ limit: "600mb", extended: true }));
 
@@ -134,8 +116,20 @@ app.get("/", (req, res) => {
   res.send("Akram Server is running!");
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+// Connect to database and start server
+const startServer = async () => {
+  try {
+    await connectDB();
+    
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error("Failed to connect to database:", error);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 export default app;

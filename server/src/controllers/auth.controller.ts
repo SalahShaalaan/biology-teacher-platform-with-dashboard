@@ -22,8 +22,8 @@ const generateToken = (id: string): string => {
 
   return jwt.sign({ id }, secret, {
     expiresIn: TOKEN_EXPIRY,
-    issuer: "mr-abdallah-platform",
-    audience: "mr-abdallah-admin",
+    issuer: "akram-platform",
+    audience: "akram-admin",
   });
 };
 
@@ -85,12 +85,10 @@ const addLoginHistory = async (
  * Implements comprehensive security measures:
  * - Account lockout after failed attempts
  * - IP tracking and logging
- * - Timing attack protection
  * - Input sanitization
  * - Login history tracking
  */
 export const loginAdmin = async (req: Request, res: Response) => {
-  const startTime = Date.now();
   const clientIp = getClientIp(req);
   const userAgent = req.headers["user-agent"];
 
@@ -98,7 +96,7 @@ export const loginAdmin = async (req: Request, res: Response) => {
     // Input validation and sanitization
     let { email, password } = req.body;
 
-    // Prevent server crash if email/password are not strings (e.g. objects or arrays)
+    // Prevent server crash if email/password are not strings
     if (typeof email !== "string" || typeof password !== "string") {
       console.log(`⚠️  Invalid payload type from IP: ${clientIp}`);
        return res.status(400).json({
@@ -108,9 +106,6 @@ export const loginAdmin = async (req: Request, res: Response) => {
     }
 
     if (!email.trim() || !password.trim()) {
-      console.log(`⚠️  Login attempt with missing credentials from IP: ${clientIp}`);
-      // Add delay to prevent timing attacks
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       return res.status(400).json({
         success: false,
         message: "Please provide email and password",
@@ -122,21 +117,20 @@ export const loginAdmin = async (req: Request, res: Response) => {
     email = validator.trim(email);
 
     if (!validator.isEmail(email)) {
-      console.log(`⚠️  Login attempt with invalid email format from IP: ${clientIp}`);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       return res.status(400).json({
         success: false,
         message: "Please provide a valid email address",
       });
     }
 
-    // Find admin
-    const admin = await Admin.findOne({ email });
+    // Find admin - Explicitly select password
+    const admin = await Admin.findOne({ email }).select("+password");
 
     if (!admin) {
       console.log(`⚠️  Login attempt for non-existent account: ${email} from IP: ${clientIp}`);
-      // Add delay to prevent user enumeration
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Do not return immediately - rely on bcrypt comparison of a dummy string if needed, 
+      // or just return 401. Since we don't have a user, just return 401.
+      // Modificating to return generic error to prevent enumeration
       return res.status(401).json({
         success: false,
         message: "Invalid email or password",
@@ -152,11 +146,12 @@ export const loginAdmin = async (req: Request, res: Response) => {
       
       return res.status(423).json({
         success: false,
-        message: `Account is locked due to too many failed login attempts. Please try again after ${lockUntil}`,
+        message: `Account is locked. Please try again after ${lockUntil}`,
       });
     }
 
     // Verify password
+    // If password is not set in DB (should not happen), fail
     const isPasswordValid = admin.password && (await bcrypt.compare(password, admin.password));
 
     if (!isPasswordValid) {
@@ -168,22 +163,16 @@ export const loginAdmin = async (req: Request, res: Response) => {
         `❌ Failed login attempt for ${email} from IP: ${clientIp} (Attempt ${admin.loginAttempts + 1})`
       );
 
-      // Add delay to prevent timing attacks
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
       return res.status(401).json({
         success: false,
         message: "Invalid email or password",
       });
     }
 
-    // Successful login
-    console.log(`✅ Successful login: ${email} from IP: ${clientIp}`);
-
-    // Reset login attempts
+    // Successful login - Reset attempts
     await admin.resetLoginAttempts();
-
-    // Update last login time
+    
+    // Update last login
     await admin.updateOne({ $set: { lastLogin: new Date() } });
 
     // Add successful login to history
@@ -192,12 +181,7 @@ export const loginAdmin = async (req: Request, res: Response) => {
     // Generate token
     const token = generateToken(admin._id as string);
 
-    // Ensure minimum response time to prevent timing attacks
-    const elapsedTime = Date.now() - startTime;
-    if (elapsedTime < 1000) {
-      await new Promise((resolve) => setTimeout(resolve, 1000 - elapsedTime));
-    }
-
+    // Return success response
     res.json({
       success: true,
       _id: admin._id,
@@ -205,15 +189,9 @@ export const loginAdmin = async (req: Request, res: Response) => {
       token,
       lastLogin: admin.lastLogin,
     });
-  } catch (error: any) {
-    console.error(`❌ Server error during login from IP: ${clientIp}`, error);
     
-    // Ensure minimum response time even on error
-    const elapsedTime = Date.now() - startTime;
-    if (elapsedTime < 1000) {
-      await new Promise((resolve) => setTimeout(resolve, 1000 - elapsedTime));
-    }
-
+  } catch (error: any) {
+    console.error(`❌ Server error during login for IP: ${clientIp}`, error);
     res.status(500).json({
       success: false,
       message: "Server error during login. Please try again later.",

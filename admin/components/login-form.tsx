@@ -42,23 +42,28 @@ export default function LoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/auth/login`, {
+      const apiUrl = API_URL || "http://localhost:5000"; // Fallback URL
+      const res = await fetch(`${apiUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({})); // Handle non-JSON responses
 
       if (!res.ok) {
-        throw new Error(data.message || "فشل تسجيل الدخول");
+        throw new Error(data.message || `خطأ في الخادم (${res.status})`);
       }
 
       login(data.token, { _id: data._id, email: data.email });
       toast.success("تم تسجيل الدخول بنجاح");
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message || "حدث خطأ ما");
+      if (error.message.includes("Failed to fetch")) {
+        toast.error("لا يمكن الاتصال بالخادم. تأكد من تشغيل الخادم.");
+      } else {
+        toast.error(error.message || "حدث خطأ غير متوقع");
+      }
     } finally {
       setLoading(false);
     }
@@ -82,7 +87,6 @@ export default function LoginForm() {
                     <Input 
                       placeholder="admin@example.com" 
                       {...field} 
-                      onChange={(e) => field.onChange(e.target.value.replace(/\s/g, ""))}
                     />
                   </FormControl>
                   <FormMessage />

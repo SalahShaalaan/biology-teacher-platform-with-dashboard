@@ -455,9 +455,9 @@ export const isBlogFormData = (data: unknown): data is BlogFormData => {
 export const questionSchema = z
   .object({
     questionType: z.enum(["mcq", "external_link"]),
-    grade: z.string().min(1, "المرحلة الدراسية مطلوبة"),
-    unitTitle: z.string().min(1, "اسم الوحدة مطلوب"),
-    lessonTitle: z.string().min(1, "اسم الدرس مطلوب"),
+    grade: z.string().optional(),
+    unitTitle: z.string().optional(),
+    lessonTitle: z.string().optional(),
     questionText: z.string().min(1, "نص السؤال مطلوب"),
     image: optionalImageValidator,
     externalLink: z.string().optional().or(z.literal("")),
@@ -473,6 +473,29 @@ export const questionSchema = z
   .superRefine((data, ctx) => {
     // Only validate options for MCQ type
     if (data.questionType === "mcq") {
+      // Validate Curriculum Info for MCQ
+      if (!data.grade || data.grade.trim() === "") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "المرحلة الدراسية مطلوبة",
+          path: ["grade"],
+        });
+      }
+      if (!data.unitTitle || data.unitTitle.trim() === "") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "اسم الوحدة مطلوب",
+          path: ["unitTitle"],
+        });
+      }
+      if (!data.lessonTitle || data.lessonTitle.trim() === "") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "اسم الدرس مطلوب",
+          path: ["lessonTitle"],
+        });
+      }
+
       // Check if options exist and have at least 2
       if (!data.options || data.options.length < 2) {
         ctx.addIssue({
