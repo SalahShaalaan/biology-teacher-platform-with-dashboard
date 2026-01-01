@@ -62,7 +62,7 @@ AdminSchema.methods.incLoginAttempts = function (this: IAdmin) {
   const updates: any = { $inc: { loginAttempts: 1 } };
 
   // Lock account if max attempts reached
-  const attemptsAfterIncrement = this.loginAttempts + 1;
+  const attemptsAfterIncrement = (this.loginAttempts || 0) + 1;
   if (attemptsAfterIncrement >= MAX_LOGIN_ATTEMPTS && !this.isLocked) {
     updates.$set = { lockUntil: new Date(Date.now() + LOCK_TIME) };
     console.log(`🔒 Account locked: ${this.email} until ${new Date(Date.now() + LOCK_TIME)}`);

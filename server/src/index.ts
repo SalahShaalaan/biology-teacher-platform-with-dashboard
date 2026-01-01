@@ -60,10 +60,10 @@ app.options("*", cors(corsOptions));
 
 // Middleware
 app.use(cors(corsOptions));
-app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } })); // Set security headers
-
+// app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } })); // Removed by request
 // Prevent NoSQL injection attacks
-app.use(mongoSanitize());
+// app.use(mongoSanitize()); // Removed by request
+
 app.use(express.json({ limit: "600mb" }));
 app.use(express.urlencoded({ limit: "600mb", extended: true }));
 

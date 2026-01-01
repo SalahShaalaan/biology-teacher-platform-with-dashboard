@@ -73,7 +73,8 @@ const addLoginHistory = async (
   };
 
   // Keep only last 20 login attempts
-  const updatedHistory = [historyEntry, ...admin.loginHistory].slice(0, 20);
+  const currentHistory = Array.isArray(admin.loginHistory) ? admin.loginHistory : [];
+  const updatedHistory = [historyEntry, ...currentHistory].slice(0, 20);
 
   await admin.updateOne({
     $set: { loginHistory: updatedHistory },
