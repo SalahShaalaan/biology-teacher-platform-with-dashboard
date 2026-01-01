@@ -3,7 +3,7 @@
 import { useFieldArray, UseFormReturn, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import {
@@ -31,15 +31,26 @@ import { QuestionFormData, questionSchema } from "@/lib/validators";
 import { uploadToBlob, generateUniqueFilename } from "@/lib/blob-upload";
 import { addQuestion, updateQuestion } from "@/lib/api";
 import { Question } from "@/types";
-
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/questions`;
-// Removed local addQuestion function in favor of api.ts import
 
-// ...
-
-
+const fetchGrades = async (): Promise<string[]> => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL 
+    ? `${process.env.NEXT_PUBLIC_API_URL}/api/grades`
+    : "http://localhost:5000/api/grades";
+    
+  const res = await fetch(apiUrl);
+  if (!res.ok) throw new Error("Failed to fetch grades");
+  const result = await res.json();
+  return result.data;
+};
 
 interface AddQuestionFormProps {
   form?: UseFormReturn<QuestionFormData>; // Make optional as we might initialize it inside
@@ -88,6 +99,11 @@ export function AddQuestionForm({
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "options",
+  });
+
+  const { data: grades = [] } = useQuery<string[]>({
+    queryKey: ["grades"],
+    queryFn: fetchGrades,
   });
 
   const mutation = useMutation({
@@ -157,8 +173,6 @@ export function AddQuestionForm({
           imageUrl = initialData.image;
       }
 
-
-
       const payload: any = {
         questionType: data.questionType,
         grade: data.grade,
@@ -223,13 +237,24 @@ export function AddQuestionForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>المرحلة الدراسية</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="مثال: الصف الأول الإعدادي"
-                          {...field}
-                          className="bg-gray-700 border-gray-600 text-white"
-                        />
-                      </FormControl>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                            <SelectValue placeholder="اختر المرحلة الدراسية" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="bg-gray-700 border-gray-600 text-white">
+                          {grades.map((grade) => (
+                            <SelectItem key={grade} value={grade} className="focus:bg-gray-600 cursor-pointer">
+                              {grade}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

@@ -96,6 +96,7 @@ export const addQuestion = async (req: Request, res: Response) => {
       correctAnswer,
       image,
       externalLink,
+      questionType,
     } = newQuestionData;
 
     const question = await Question.create({
@@ -107,6 +108,7 @@ export const addQuestion = async (req: Request, res: Response) => {
       correctAnswer,
       image,
       externalLink,
+      questionType,
     });
 
     res.status(201).json({ success: true, data: question });

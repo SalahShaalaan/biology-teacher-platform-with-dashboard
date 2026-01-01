@@ -104,6 +104,9 @@ export interface Question {
   image?: string;
   options: string[];
   correctAnswer: number;
+  questionType?: "mcq" | "external_link";
+  externalLink?: string;
+  createdAt?: string;
 }
 
 export interface Exam {
