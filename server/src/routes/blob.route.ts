@@ -47,6 +47,7 @@ router.post("/", protect, admin, async (req, res) => {
   try {
     console.log("[Blob] Received upload request");
     console.log("[Blob] Request body:", JSON.stringify(req.body, null, 2));
+    console.log("[Blob] Request headers:", req.headers);
 
     const body = req.body as HandleUploadBody;
 
@@ -68,6 +69,13 @@ router.post("/", protect, admin, async (req, res) => {
             "video/webm",
             "video/quicktime",
             "application/pdf",
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "text/csv",
+            "text/plain",
+            "application/zip",
           ],
           maximumSizeInBytes: 500 * 1024 * 1024, // 500MB
         };

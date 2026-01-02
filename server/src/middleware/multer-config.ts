@@ -14,6 +14,16 @@ const ALLOWED_MIME_TYPES = {
   IMAGES: ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"],
   PDF: ["application/pdf"],
   VIDEOS: ["video/mp4", "video/webm", "video/quicktime"], // Added video support
+  DOCUMENTS: [
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "text/csv",
+    "text/plain",
+    "application/pdf",
+    "application/zip",
+  ],
 } as const;
 
 // Combine all allowed types
@@ -21,6 +31,7 @@ const ALL_ALLOWED_TYPES = [
   ...ALLOWED_MIME_TYPES.IMAGES,
   ...ALLOWED_MIME_TYPES.PDF,
   ...ALLOWED_MIME_TYPES.VIDEOS, // Added video types
+  ...ALLOWED_MIME_TYPES.DOCUMENTS,
 ] as const;
 
 /**
@@ -40,7 +51,7 @@ const fileFilter = (
   } else {
     callback(
       new Error(
-        `Invalid file type: ${file.mimetype}. Only images (JPEG, PNG, WebP, GIF), videos (MP4, WebM, MOV), and PDF files are allowed.`
+        `Invalid file type: ${file.mimetype}. Only images, videos, PDF, and Office documents are allowed.`
       )
     );
   }
