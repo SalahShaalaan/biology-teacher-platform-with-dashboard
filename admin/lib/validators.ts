@@ -454,13 +454,14 @@ export const isBlogFormData = (data: unknown): data is BlogFormData => {
 
 export const questionSchema = z
   .object({
-    questionType: z.enum(["mcq", "external_link"]),
+    questionType: z.enum(["mcq", "external_link", "file_upload"]),
     grade: z.string().optional(),
     unitTitle: z.string().optional(),
     lessonTitle: z.string().optional(),
     questionText: z.string().min(1, "نص السؤال مطلوب"),
-    image: optionalImageValidator,
+    image: optionalImageValidator, // Used for MCQ optional image
     externalLink: z.string().optional().or(z.literal("")),
+    file: z.any().optional(), // Used for file_upload (array of files)
     options: z
       .array(
         z.object({
@@ -545,6 +546,26 @@ export const questionSchema = z
             path: ["externalLink"],
           });
         }
+      }
+    }
+
+    // Validate file for file_upload type
+    if (data.questionType === "file_upload") {
+      if (!data.file || data.file.length === 0) {
+        // Check if there's an existing fileUrl (logic to be handled in form, but here checks form state)
+        // Since we don't have fileUrl in form state, we rely on 'file'. 
+        // If editing and no new file, we check if strictly required? 
+        // For add: required. For edit: optional if already exists?
+        // Zod validation is usually stateless validation of current input.
+        // We will handle 'editing' state logic in the component or assume 'file' is populated if new.
+        // Let's require it if it is a fresh add logic, but schemas are static.
+        // We will require it here, and in component make sure to populate it or skip validation if edit mode?
+        // Actually, let's just warn if empty.
+        ctx.addIssue({
+           code: z.ZodIssueCode.custom,
+           message: "يجب رفع ملف للسؤال.",
+           path: ["file"],
+        });
       }
     }
   });

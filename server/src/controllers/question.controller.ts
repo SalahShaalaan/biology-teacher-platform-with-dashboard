@@ -74,19 +74,6 @@ export const getQuestionById = async (req: Request, res: Response) => {
 export const addQuestion = async (req: Request, res: Response) => {
   try {
     const newQuestionData = req.body;
-    // Updated validation: Ensure there are at least 2 options ONLY if not external_link
-    if (newQuestionData.questionType !== "external_link") {
-      if (
-        !newQuestionData.options ||
-        !Array.isArray(newQuestionData.options) ||
-        newQuestionData.options.length < 2
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: "A question must have at least 2 options.",
-        });
-      }
-    }
     const {
       grade,
       unitTitle,
@@ -97,18 +84,45 @@ export const addQuestion = async (req: Request, res: Response) => {
       image,
       externalLink,
       questionType,
+      fileUrl, // Added fileUrl to destructuring
     } = newQuestionData;
+
+    // Validate input
+    if (
+      !grade ||
+      !unitTitle ||
+      !lessonTitle ||
+      !questionText ||
+      !questionType
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide all required fields",
+      });
+    }
+
+    // For MCQ, validate options and correct answer
+    if (questionType === "mcq") {
+      if (!options || options.length < 2 || correctAnswer === undefined) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Please provide at least 2 options and a correct answer for MCQ.",
+        });
+      }
+    }
 
     const question = await Question.create({
       grade,
       unitTitle,
       lessonTitle,
       questionText,
-      options,
-      correctAnswer,
       image,
       externalLink,
+      fileUrl,
       questionType,
+      options: questionType === "mcq" ? options : [],
+      correctAnswer: questionType === "mcq" ? correctAnswer : undefined,
     });
 
     res.status(201).json({ success: true, data: question });
@@ -125,8 +139,11 @@ export const updateQuestion = async (req: Request, res: Response) => {
     const updateData = req.body;
 
     // If options are being updated, validate them
-    // Skip if we are explicitly setting type to external_link
-    if (updateData.questionType !== "external_link") {
+    // Skip if we are explicitly setting type to external_link or file_upload
+    if (
+      updateData.questionType !== "external_link" &&
+      updateData.questionType !== "file_upload"
+    ) {
       if (
         updateData.options &&
         (!Array.isArray(updateData.options) || updateData.options.length < 2)

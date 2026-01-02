@@ -66,7 +66,7 @@ export const FileUpload = ({
     multiple: false,
     noClick: true,
     onDrop: handleFileChange,
-    accept: { "image/*": [".png", ".gif", ".jpeg", ".jpg", ".webp"] },
+    // Accept all files
   });
 
   return (
@@ -81,7 +81,6 @@ export const FileUpload = ({
           type="file"
           onChange={(e) => handleFileChange(Array.from(e.target.files || []))}
           className="hidden"
-          accept="image/*"
         />
         <div className="absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,white,transparent)]">
           <GridPattern />

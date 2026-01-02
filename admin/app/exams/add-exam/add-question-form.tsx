@@ -72,6 +72,7 @@ export function AddQuestionForm({
           questionText: initialData.questionText,
           image: initialData.image ? ([{ name: "image", size: 0, type: "image/png" }] as unknown as File[]) : [], // Mock file for existing image
           externalLink: (initialData as any).externalLink || "",
+          file: (initialData as any).fileUrl ? ([{ name: "file_exists", size: 0, type: "application/pdf" }] as unknown as File[]) : [],
           options: initialData.options?.map((opt) => ({ text: opt })) || [],
           correctAnswer: initialData.correctAnswer?.toString() || "",
         }
@@ -83,6 +84,7 @@ export function AddQuestionForm({
           questionText: "",
           image: undefined,
           externalLink: "",
+          file: undefined,
           options: [{ text: "" }, { text: "" }],
           correctAnswer: undefined,
         },
@@ -141,30 +143,50 @@ export function AddQuestionForm({
   const onSubmit = async (data: QuestionFormData) => {
     try {
       let imageUrl = undefined;
-      const imageFiles = data.image as unknown as File[];
+      let fileUrl = undefined;
 
+      // Handle Image Upload (for MCQ)
+      const imageFiles = data.image as unknown as File[];
       if (imageFiles && imageFiles.length > 0) {
         const file = imageFiles[0];
-        // Only upload if it's a real File object (new upload)
-        // If it's a mock file or existing image, we handle it below
         if (file instanceof File) {
             const toastId = toast.loading("جاري رفع الصورة...");
             try {
-            const filename = generateUniqueFilename(file.name, "questions");
-            const result = await uploadToBlob(file, filename);
-            imageUrl = result.url;
-            toast.success("تم رفع الصورة بنجاح", { id: toastId });
+              const filename = generateUniqueFilename(file.name, "questions");
+              const result = await uploadToBlob(file, filename);
+              imageUrl = result.url;
+              toast.success("تم رفع الصورة بنجاح", { id: toastId });
             } catch (uploadError: any) {
-            toast.error("فشل في رفع الصورة: " + uploadError.message, { id: toastId });
-            throw uploadError; 
+              toast.error("فشل في رفع الصورة: " + uploadError.message, { id: toastId });
+              throw uploadError; 
             }
         } else if (initialData?.image) {
-            // If it's not a File (e.g. mock) but we have initialData, keep existing
             imageUrl = initialData.image;
         }
       } else if (initialData?.image) {
-        
           imageUrl = initialData.image;
+      }
+
+      // Handle File Upload (for file_upload type)
+      const fileFiles = data.file as unknown as File[];
+      if (fileFiles && fileFiles.length > 0) {
+        const file = fileFiles[0];
+        if (file instanceof File) {
+            const toastId = toast.loading("جاري رفع الملف...");
+            try {
+              const filename = generateUniqueFilename(file.name, "resources");
+              const result = await uploadToBlob(file, filename);
+              fileUrl = result.url;
+              toast.success("تم رفع الملف بنجاح", { id: toastId });
+            } catch (uploadError: any) {
+              toast.error("فشل في رفع الملف: " + uploadError.message, { id: toastId });
+              throw uploadError; 
+            }
+        } else if ((initialData as any)?.fileUrl) {
+            fileUrl = (initialData as any).fileUrl;
+        }
+      } else if ((initialData as any)?.fileUrl) {
+          fileUrl = (initialData as any).fileUrl;
       }
 
       const payload: any = {
@@ -174,6 +196,7 @@ export function AddQuestionForm({
         lessonTitle: data.lessonTitle,
         questionText: data.questionText,
         image: imageUrl,
+        fileUrl: fileUrl,
       };
 
       // Add fields based on question type
@@ -182,6 +205,8 @@ export function AddQuestionForm({
         payload.correctAnswer = data.correctAnswer;
       } else if (data.questionType === "external_link") {
         payload.externalLink = data.externalLink;
+      } else if (data.questionType === "file_upload") {
+        // fileUrl is already added to base payload
       }
 
       console.log("Submitting payload:", payload);
@@ -305,9 +330,10 @@ export function AddQuestionForm({
                         onValueChange={field.onChange}
                         className="w-full"
                       >
-                        <TabsList className="grid w-full grid-cols-2">
+                        <TabsList className="grid w-full grid-cols-3">
                           <TabsTrigger value="mcq">سؤال اختيارات متعددة</TabsTrigger>
                           <TabsTrigger value="external_link">رابط خارجي</TabsTrigger>
+                          <TabsTrigger value="file_upload">ملف أسئلة</TabsTrigger>
                         </TabsList>
                       </Tabs>
                     </FormControl>
@@ -322,7 +348,9 @@ export function AddQuestionForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      {form.watch("questionType") === "external_link" ? "الوصف" : "نص السؤال"}
+                      {["external_link", "file_upload"].includes(form.watch("questionType"))
+                        ? "الوصف"
+                        : "نص السؤال"}
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -349,6 +377,26 @@ export function AddQuestionForm({
                           type="url"
                           placeholder="https://example.com"
                           className="bg-gray-700 border-gray-600 text-white"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {/* File Upload Field - only for file_upload type */}
+              {form.watch("questionType") === "file_upload" && (
+                <FormField
+                  control={form.control}
+                  name="file"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ملف السؤال (PDF, Excel, Word, ...)</FormLabel>
+                      <FormControl>
+                        <FileUpload
+                          onChange={(files) => field.onChange(files)}
+                          initialImageUrl={(initialData as any)?.fileUrl || null}
                         />
                       </FormControl>
                       <FormMessage />

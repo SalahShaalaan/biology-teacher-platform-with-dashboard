@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
-import { BookOpen, PlayCircle, ExternalLink, ArrowRight, Sparkles } from "lucide-react";
+import { BookOpen, PlayCircle, ExternalLink, ArrowRight, Sparkles, FileText, Download } from "lucide-react";
 
 import { Student, ExamInfo, Question } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -209,7 +209,7 @@ export function ExamsClient({ exams }: ExamsClientProps) {
       }
       const group = lessonsMap.get(q.lessonTitle)!;
       group.all.push(q);
-      if (q.questionType === 'external_link') {
+      if (q.questionType === 'external_link' || q.questionType === 'file_upload') {
         group.resources.push(q);
       } else {
         group.mcq.push(q);
@@ -283,7 +283,10 @@ export function ExamsClient({ exams }: ExamsClientProps) {
                          const isNew = resource.createdAt
                           ? (new Date().getTime() - new Date(resource.createdAt).getTime()) / (1000 * 3600 * 24) < 7
                           : false;
-                          
+                         
+                         const isFile = resource.questionType === 'file_upload';
+                         const url = isFile ? resource.fileUrl : resource.externalLink;
+                         
                          return (
                           <div 
                             key={resource._id} 
@@ -296,27 +299,28 @@ export function ExamsClient({ exams }: ExamsClientProps) {
                             )}
 
                             <div className="flex items-start gap-4 flex-1">
-                              <div className="p-2 bg-blue-100 text-blue-600 rounded-lg shrink-0">
-                                <ExternalLink className="w-5 h-5" />
+                              <div className={`p-2 ${isFile ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'} rounded-lg shrink-0`}>
+                                {isFile ? <FileText className="w-5 h-5" /> : <ExternalLink className="w-5 h-5" />}
                               </div>
                               <div className="space-y-1">
                                 <h4 className="font-semibold text-gray-900 leading-tight">{resource.questionText}</h4>
-                                {resource.externalLink && (
+                                {url && (
                                     <a 
-                                        href={resource.externalLink} 
+                                        href={url} 
                                         target="_blank" 
                                         rel="noopener noreferrer" 
-                                        className="text-sm text-blue-600 hover:text-blue-800 hover:underline block truncate max-w-xs sm:max-w-md"
+                                        className={`text-sm ${isFile ? 'text-purple-600 hover:text-purple-800' : 'text-blue-600 hover:text-blue-800'} hover:underline block truncate max-w-xs sm:max-w-md`}
                                         dir="ltr"
                                     >
-                                        {resource.externalLink}
+                                        {isFile ? "اضغط لتحميل الملف" : url}
                                     </a>
                                 )}
-                                <p className="text-xs text-gray-500">رابط خارجي</p>
+                                <p className="text-xs text-gray-500">{isFile ? "ملف مرفق" : "رابط خارجي"}</p>
                               </div>
                             </div>
-                            <Button size="sm" variant="outline" className="shrink-0" onClick={() => window.open(resource.externalLink, "_blank")}>
-                                فتح
+                            <Button size="sm" variant="outline" className="shrink-0" onClick={() => window.open(url, "_blank")}>
+                                {isFile ? <Download className="w-4 h-4 ml-2" /> : <ExternalLink className="w-4 h-4 ml-2" />}
+                                {isFile ? "تحميل" : "فتح"}
                             </Button>
                           </div>
                       )})}

@@ -23,19 +23,25 @@ function groupQuestionsIntoExams(questions: Question[]): ExamInfo[] {
   const examsMap = new Map<string, Question[]>();
 
   questions.forEach((question) => {
-    const unitTitle = question.unitTitle;
-    if (!examsMap.has(unitTitle)) {
-      examsMap.set(unitTitle, []);
+    // Group by both Grade and Unit Title to prevent mixing distinct grades with same unit names
+    const key = `${question.grade}||${question.unitTitle}`;
+    if (!examsMap.has(key)) {
+      examsMap.set(key, []);
     }
-    examsMap.get(unitTitle)!.push(question);
+    examsMap.get(key)!.push(question);
   });
 
-  return Array.from(examsMap.entries()).map(([title, questions]) => ({
-    title,
-    grade: questions[0]?.grade || "غير محدد",
-    questionCount: questions.length,
-    questions,
-  }));
+  return Array.from(examsMap.entries()).map(([key, questions]) => {
+    const parts = key.split("||");
+    const title = parts.length > 1 ? parts[1] : parts[0];
+    
+    return {
+      title,
+      grade: questions[0]?.grade || "غير محدد",
+      questionCount: questions.length,
+      questions,
+    };
+  });
 }
 
 export default async function ExamsPage() {

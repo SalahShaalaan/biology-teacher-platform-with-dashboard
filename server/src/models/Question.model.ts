@@ -13,13 +13,14 @@ export interface IQuestion extends Document {
 }
 
 const QuestionSchema: Schema = new Schema({
-  questionType: { type: String, enum: ["mcq", "external_link"], default: "mcq" },
+  questionType: { type: String, enum: ["mcq", "external_link", "file_upload"], default: "mcq" },
   grade: { type: String, required: true },
   unitTitle: { type: String, required: true },
   lessonTitle: { type: String, required: true },
   questionText: { type: String, required: true },
-  image: { type: String, required: false },
+  image: { type: String, required: false }, // used for MCQ image
   externalLink: { type: String, required: false },
+  fileUrl: { type: String, required: false }, // used for file_upload
   options: [{ type: String, required: false }],
   correctAnswer: { type: Number, required: false },
 });

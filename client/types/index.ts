@@ -104,8 +104,9 @@ export interface Question {
   image?: string;
   options: string[];
   correctAnswer: number;
-  questionType?: "mcq" | "external_link";
+  questionType?: "mcq" | "external_link" | "file_upload";
   externalLink?: string;
+  fileUrl?: string;
   createdAt?: string;
 }
 
