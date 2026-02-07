@@ -31,49 +31,65 @@ const normalizeImageUrl = (imagePath: string | undefined | null): string => {
   return `${baseUrl}${imagePath.startsWith("/") ? "" : "/"}${imagePath}`;
 };
 
+/**
+ * Normalize video URL to handle both local and external paths
+ */
+const normalizeVideoUrl = (videoPath: string | undefined | null): string => {
+  if (!videoPath) return "";
+  if (videoPath.startsWith("http") || videoPath.startsWith("https"))
+    return videoPath;
+
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "";
+  return `${baseUrl}${videoPath.startsWith("/") ? "" : "/"}${videoPath}`;
+};
+
+/**
+ * Extract YouTube Video ID from various URL formats
+ */
+const getYouTubeVideoId = (url: string): string | null => {
+  if (!url) return null;
+  const regExp =
+    /^.*(?:(?:youtu\.be\/|v\/|vi\/|u\/\w\/|embed\/|shorts\/|live\/)|(?:(?:watch)?\?v(?:i)?=|\&v(?:i)?=))([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return match && match[1].length === 11 ? match[1] : null;
+};
+
 const VideoPlayer = ({ url, title }: { url: string; title: string }) => {
-  // Check if it's a YouTube URL
-  const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/;
-  const isYoutube = youtubeRegex.test(url);
+  // Check if it's a YouTube URL and get ID
+  const youtubeVideoId = getYouTubeVideoId(url);
 
   const containerClasses =
     "relative rounded-3xl overflow-hidden border border-gray-200 dark:border-slate-700 aspect-video";
 
-  if (isYoutube) {
-    // Extract Video ID from various YouTube URL formats
-    const match = url.match(
-      /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/
+  if (youtubeVideoId) {
+    return (
+      <div className={containerClasses}>
+        <iframe
+          src={`https://www.youtube.com/embed/${youtubeVideoId}`}
+          title={title}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className="h-full w-full border-0"
+        />
+      </div>
     );
-    const videoId = match ? match[1] : null;
-
-    if (videoId) {
-      return (
-        <div className={containerClasses}>
-          <iframe
-            src={`https://www.youtube.com/embed/${videoId}`}
-            title={title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="h-full w-full border-0"
-          />
-        </div>
-      );
-    }
   }
 
   // Fallback for direct video links
+  const videoSrc = normalizeVideoUrl(url);
+
   return (
     <div className={containerClasses}>
       <video
-        src={url}
+        src={videoSrc}
         controls
         controlsList="nodownload"
         className="h-full w-full bg-black object-contain"
         preload="metadata"
       >
-        <source src={url} type="video/mp4" />
-        <source src={url} type="video/webm" />
-        <source src={url} type="video/quicktime" />
+        <source src={videoSrc} type="video/mp4" />
+        <source src={videoSrc} type="video/webm" />
+        <source src={videoSrc} type="video/quicktime" />
         متصفحك لا يدعم تشغيل الفيديو.
       </video>
     </div>
@@ -232,33 +248,6 @@ export default async function BlogPage({ params }: BlogPageProps) {
                 </div>
 
                 {/* Video Section */}
-                {videoUrl && (
-                  <div className="my-12">
-                    <div className="relative group">
-                      {/* Video Label */}
-                      <div className="absolute -top-12 right-0 z-10 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        <PlayCircle size={20} className="text-[#295638]" />
-                        <span>شرح الدرس بالفيديو</span>
-                      </div>
-
-                      <div className="relative rounded-3xl overflow-hidden border-18 border-gray-200 dark:border-slate-700 aspect-video">
-                        <video
-                          src={videoUrl}
-                          controls
-                          controlsList="nodownload"
-                          className="w-full h-full object-contain bg-black"
-                          preload="metadata"
-                        >
-                          <source src={videoUrl} type="video/mp4" />
-                          <source src={videoUrl} type="video/webm" />
-                          <source src={videoUrl} type="video/quicktime" />
-                          متصفحك لا يدعم تشغيل الفيديو. يرجى تحديث المتصفح أو
-                          استخدام متصفح آخر.
-                        </video>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 {videoUrl && (
                   <div className="my-12">
@@ -381,8 +370,8 @@ export default async function BlogPage({ params }: BlogPageProps) {
                         {videoUrl && pdfUrl
                           ? "يمكنك مشاهدة الفيديو والاطلاع على ملف PDF التفاعلي للحصول على شرح كامل."
                           : videoUrl
-                          ? "يمكنك مشاهدة شرح الدرس بالفيديو أعلاه."
-                          : "يمكنك الاطلاع على ملف PDF التفاعلي أسفل المحتوى."}
+                            ? "يمكنك مشاهدة شرح الدرس بالفيديو أعلاه."
+                            : "يمكنك الاطلاع على ملف PDF التفاعلي أسفل المحتوى."}
                       </p>
                     </div>
                   </div>
