@@ -55,14 +55,11 @@ const corsOptions = {
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
 };
 
-// Handle preflight requests for all routes
 app.options("*", cors(corsOptions));
 
 // Middleware
 app.use(cors(corsOptions));
-// app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } })); // Removed by request
-// Prevent NoSQL injection attacks
-// app.use(mongoSanitize()); // Removed by request
+
 
 app.use(express.json({ limit: "600mb" }));
 app.use(express.urlencoded({ limit: "600mb", extended: true }));
