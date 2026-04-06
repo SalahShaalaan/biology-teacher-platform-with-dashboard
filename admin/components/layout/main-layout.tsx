@@ -17,15 +17,15 @@ interface MainLayoutProps {
 }
 
 export default function MainLayout({ children }: MainLayoutProps) {
-  const { token, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!isLoading && !token && pathname !== "/login") {
+    if (!isLoading && !user && pathname !== "/login") {
       router.push("/login");
     }
-  }, [isLoading, token, pathname, router]);
+  }, [isLoading, user, pathname, router]);
 
   if (isLoading) {
     return (
@@ -41,7 +41,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   }
 
   // Ensure we don't render protected content while redirecting
-  if (!token && pathname !== "/login") {
+  if (!user && pathname !== "/login") {
      return null;
   }
 
