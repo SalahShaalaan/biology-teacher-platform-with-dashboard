@@ -271,7 +271,7 @@ const generateUniqueStudentCode = async (): Promise<string> => {
 export async function fetchStudents(): Promise<Student[]> {
   const { data, error } = await supabase
     .from("students")
-    .select("*, class_results(*)")
+    .select("*")
     .order("created_at", { ascending: false });
   if (error) throw new ApiError(error.message);
   return data as Student[];
@@ -361,7 +361,7 @@ export async function deleteStudent(
 export async function getStudent(studentCode: string): Promise<Student> {
   const { data, error } = await supabase
     .from("students")
-    .select("*, class_results(*)")
+    .select("*")
     .eq("code", studentCode)
     .single();
   if (error) throw new ApiError(error.message);
@@ -412,7 +412,7 @@ export async function addClassResult({
 }): Promise<any> {
   const { data: student, error: studentError } = await supabase
     .from("students")
-    .select("id")
+    .select("*")
     .eq("code", code)
     .single();
 
@@ -434,15 +434,20 @@ export async function addClassResult({
   const uploadResults = await Promise.all(uploadPromises);
   const image_urls = uploadResults.map((r) => r.url);
 
+  const newClassResult = {
+    id: crypto.randomUUID(),
+    title,
+    image_urls,
+    note,
+    date: new Date().toISOString(),
+  };
+
+  const updatedClassResults = [...(student.class_results || []), newClassResult];
+
   const { data, error } = await supabase
-    .from("class_results")
-    .insert({
-      student_id: student.id,
-      title,
-      image_urls,
-      note,
-      date: new Date().toISOString(),
-    })
+    .from("students")
+    .update({ class_results: updatedClassResults })
+    .eq("id", student.id)
     .select()
     .single();
 
@@ -454,10 +459,22 @@ export async function deleteClassResult(
   studentCode: string,
   resultId: string
 ): Promise<any> {
+  const { data: student, error: studentError } = await supabase
+    .from("students")
+    .select("*")
+    .eq("code", studentCode)
+    .single();
+
+  if (studentError || !student) throw new ApiError("الطالب غير موجود");
+
+  const updatedClassResults = (student.class_results || []).filter(
+    (cr: any) => cr.id !== resultId
+  );
+
   const { error } = await supabase
-    .from("class_results")
-    .delete()
-    .eq("id", resultId);
+    .from("students")
+    .update({ class_results: updatedClassResults })
+    .eq("code", studentCode);
 
   if (error) throw new ApiError(error.message);
   return { message: "تم حذف النتيجة بنجاح" };
