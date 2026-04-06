@@ -14,7 +14,7 @@ interface StudentInfo {
   grade: string;
   gender: string;
   profile_image: string;
-  monthlyPayment: boolean;
+  monthly_payment: boolean;
   performance: {
     "monthly-evaluation": string;
     "teacher-evaluation": string;
@@ -141,7 +141,7 @@ export default function StudentInfoTable({ studentInfo }: Props) {
                 </span>
               </TableCell>
               <TableCell className="h-14 px-6">
-                {studentInfo.monthlyPayment ? (
+                {studentInfo.monthly_payment ? (
                   <span className="bg-green-500/20 text-green-400 py-1 px-3 rounded-full text-xs font-medium">
                     مدفوع
                   </span>

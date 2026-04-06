@@ -53,84 +53,89 @@ export interface StudentProgress {
 }
 
 export interface Testimonial {
-  _id: string;
+  id: string;
   name: string;
   quote: string;
   designation: "student" | "parent";
-  imageUrl?: string;
-  createdAt: string;
-  updatedAt: string;
+  image_url?: string;
+  created_at: string;
 }
 
 export interface Blog {
-  _id: string;
+  id: string;
   name: string;
   description: string;
   grade: string;
   unit: string;
   lesson: string;
   type: "video" | "pdf";
-  url: string;
-  coverImage: string;
-  videoUrl?: string;
-  createdAt: string;
-  learningOutcomes?: string[];
+  url?: string;
+  cover_image: string;
+  video_url?: string;
+  created_at: string;
+  learning_outcomes?: string[];
 }
 
 export interface IBestOfMonth {
-  _id: string;
+  id: string;
   name: string;
   grade: string;
-  imageUrl: string;
+  image_url: string;
   description: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ClassResult {
+  id: string;
   title: string;
-  imageUrls: string[];
+  image_urls: string[];
   note: string;
   date: string;
 }
 
-
 export interface Question {
-  _id: string;
+  id: string;
   grade: string;
-  unitTitle: string;
-  lessonTitle: string;
-  questionText: string;
+  unit_title: string;
+  lesson_title: string;
+  question_text: string;
   image?: string;
   options: string[];
-  correctAnswer: number;
-  questionType?: "mcq" | "external_link" | "file_upload";
-  externalLink?: string;
-  fileUrl?: string;
-  createdAt?: string;
+  correct_answer?: number;
+  question_type?: "mcq" | "external_link" | "file_upload";
+  external_link?: string;
+  file_url?: string;
+  created_at?: string;
 }
 
 export interface Exam {
-  "exam-name": string;
+  exam_name: string;
   score: number;
-  "total-score": number;
+  total_score: number;
   feedback: string;
   date: string;
 }
 
-
 export interface Student {
+  id?: string;
   code: string;
   name: string;
-  age: number;
+  age?: number;
   gender: string;
   grade: string;
-  phoneNumber: string;
+  phone_number?: string;
   profile_image: string;
-  performance: Performance;
-  monthlyPayment: boolean;
-  exams: Exam[];
-  classResults: ClassResult[];
+  performance?: {
+    "monthly-evaluation": string;
+    "teacher-evaluation": string;
+    absences: number;
+    responsiveness: string;
+    "homework-completion": string;
+  };
+  monthly_payment: boolean;
+  exams?: Exam[];
+  class_results?: ClassResult[];
 }
 
 export interface ExamInfo {

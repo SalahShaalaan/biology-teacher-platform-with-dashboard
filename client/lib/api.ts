@@ -1,95 +1,109 @@
-import { Blog, Testimonial } from "@/types";
+import { supabase } from "./supabase";
+import { Blog, Testimonial, IBestOfMonth } from "@/types";
 
-import { IBestOfMonth } from "@/types";
+export { type Blog, type Testimonial, type IBestOfMonth };
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-
-async function handleResponse<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(
-      errorData.message || `Request failed with status ${response.status}`
-    );
-  }
-  const responseData = await response.json();
-  return responseData.data;
-}
+// ============================================================================
+// Testimonials
+// ============================================================================
 
 export const getTestimonials = async (): Promise<Testimonial[]> => {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/testimonials`,
-    {
-      cache: "no-store", // Ensures we always get the latest testimonials
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch testimonials");
-  }
-
-  const result = await response.json();
-  return result.data;
+  const { data, error } = await supabase
+    .from("testimonials")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw new Error("فشل في جلب التوصيات");
+  return data as Testimonial[];
 };
 
 export const addTestimonial = async (
   formData: FormData
 ): Promise<Testimonial> => {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/testimonials`,
-    {
-      method: "POST",
-      body: formData,
-    }
-  );
+  const name = formData.get("name") as string;
+  const quote = formData.get("quote") as string;
+  const designation = formData.get("designation") as "student" | "parent";
+  const imageFile = formData.get("image") as File | null;
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "Failed to submit testimonial");
+  let image_url: string | undefined;
+  if (imageFile && imageFile.size > 0) {
+    const timestamp = Date.now();
+    const ext = imageFile.name.split(".").pop();
+    const path = `testimonials/${timestamp}.${ext}`;
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from("testimonials")
+      .upload(path, imageFile, { upsert: true });
+    if (!uploadError && uploadData) {
+      const { data: urlData } = supabase.storage
+        .from("testimonials")
+        .getPublicUrl(uploadData.path);
+      image_url = urlData.publicUrl;
+    }
   }
 
-  const result = await response.json();
-  return result.data;
+  const { data, error } = await supabase
+    .from("testimonials")
+    .insert({ name, quote, designation, image_url })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message || "فشل في إرسال التوصية");
+  return data as Testimonial;
 };
 
+// ============================================================================
+// Blogs
+// ============================================================================
+
 export const getBlogs = async (): Promise<Blog[]> => {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs`, {
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch blogs");
-  }
-
-  const result = await response.json();
-  return result.data;
+  const { data, error } = await supabase
+    .from("blogs")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw new Error("فشل في جلب الدروس");
+  return data as Blog[];
 };
 
 export const getBlogById = async (id: string): Promise<Blog | null> => {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/blogs/${id}`
-  );
-
-  if (!response.ok) {
-    if (response.status === 404) {
-      return null; // Handle not found gracefully
-    }
-    throw new Error("Failed to fetch blog");
+  const { data, error } = await supabase
+    .from("blogs")
+    .select("*")
+    .eq("id", id)
+    .single();
+  if (error) {
+    if (error.code === "PGRST116") return null; // Not found
+    throw new Error("فشل في جلب الدرس");
   }
-
-  const result = await response.json();
-  return result.data;
+  return data as Blog;
 };
+
+// ============================================================================
+// Best of Month
+// ============================================================================
 
 export async function getAllBestOfMonth(): Promise<IBestOfMonth[]> {
   try {
-    // Fetch data and revalidate every hour to keep it fresh
-    const response = await fetch(`${API_BASE_URL}/api/best-of-month`, {
-      cache: "no-store",
-    });
-    return handleResponse<IBestOfMonth[]>(response);
+    const { data, error } = await supabase
+      .from("best_of_month")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return data as IBestOfMonth[];
   } catch (error) {
     console.error("Failed to fetch best of month students:", error);
-    // Return an empty array on error to prevent the page from breaking
     return [];
   }
 }
+
+// ============================================================================
+// Orders (public submission from client)
+// ============================================================================
+
+export const submitOrder = async (orderData: {
+  name: string;
+  phone: string;
+  grade: string;
+  age: number;
+}): Promise<void> => {
+  const { error } = await supabase.from("orders").insert(orderData);
+  if (error) throw new Error(error.message || "فشل في إرسال الطلب");
+};

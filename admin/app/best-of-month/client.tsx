@@ -52,7 +52,7 @@ function BestOfMonthClientContent({
   const handleSubmit = (formData: FormData) => {
     if (editingStudent) {
       updateStudent(
-        { id: editingStudent._id, formData },
+        { id: editingStudent.id, formData },
         {
           onSuccess: () => setOpen(false),
         }
@@ -101,7 +101,7 @@ function BestOfMonthClientContent({
             تعديل بيانات الطالب
           </h2>
           <BestOfMonthForm
-            key={editingStudent?._id}
+            key={editingStudent?.id}
             initialData={editingStudent}
             onSubmit={handleSubmit}
             isPending={isUpdating}

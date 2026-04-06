@@ -8,7 +8,7 @@ import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import Image from "next/image";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { supabase } from "@/lib/supabase";
 
 interface OrderFormProps {
   onSuccess: () => void;
@@ -22,16 +22,9 @@ interface NewOrder {
 }
 
 async function createOrder(newOrder: NewOrder) {
-  const response = await fetch(`${API_URL}/orders`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(newOrder),
-  });
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.message || "فشل إرسال الطلب");
-  }
-  return data;
+  const { error } = await supabase.from("orders").insert(newOrder);
+  if (error) throw new Error(error.message || "فشل إرسال الطلب");
+  return { success: true };
 }
 
 export function OrderForm({ onSuccess }: OrderFormProps) {

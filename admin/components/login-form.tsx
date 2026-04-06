@@ -21,16 +21,16 @@ import { useAuth } from "./auth-provider";
 
 const formSchema = z.object({
   email: z.string().trim().email({ message: "البريد الإلكتروني غير صالح" }),
-  password: z.string().trim().min(6, { message: "كلمة المرور يجب أن تكون 6 أحرف على الأقل" }),
+  password: z
+    .string()
+    .trim()
+    .min(6, { message: "كلمة المرور يجب أن تكون 6 أحرف على الأقل" }),
 });
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL
-
 
 export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
-  
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -42,28 +42,11 @@ export default function LoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
     try {
-      const apiUrl = API_URL || "http://localhost:5000"; // Fallback URL
-      const res = await fetch(`${apiUrl}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      });
-
-      const data = await res.json().catch(() => ({})); // Handle non-JSON responses
-
-      if (!res.ok) {
-        throw new Error(data.message || `خطأ في الخادم (${res.status})`);
-      }
-
-      login(data.token, { _id: data._id, email: data.email });
+      await login(values.email, values.password);
       toast.success("تم تسجيل الدخول بنجاح");
     } catch (error: any) {
       console.error(error);
-      if (error.message.includes("Failed to fetch")) {
-        toast.error("لا يمكن الاتصال بالخادم. تأكد من تشغيل الخادم.");
-      } else {
-        toast.error(error.message || "حدث خطأ غير متوقع");
-      }
+      toast.error(error.message || "البريد الإلكتروني أو كلمة المرور غير صحيحة");
     } finally {
       setLoading(false);
     }
@@ -72,7 +55,9 @@ export default function LoginForm() {
   return (
     <Card className="w-full max-w-md mx-auto shadow-lg">
       <CardHeader>
-        <CardTitle className="text-2xl text-center text-primary">تسجيل الدخول</CardTitle>
+        <CardTitle className="text-2xl text-center text-primary">
+          تسجيل الدخول
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -84,10 +69,7 @@ export default function LoginForm() {
                 <FormItem>
                   <FormLabel>البريد الإلكتروني</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="admin@example.com" 
-                      {...field} 
-                    />
+                    <Input placeholder="admin@example.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

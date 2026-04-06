@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import StudentInfoTable from "./student-info-table";
+import { supabase } from "@/lib/supabase";
 
 interface StudentInfo {
   name: string;
@@ -9,7 +10,7 @@ interface StudentInfo {
   grade: string;
   gender: string;
   profile_image: string;
-  monthlyPayment: boolean;
+  monthly_payment: boolean;
   performance: {
     "monthly-evaluation": string;
     "teacher-evaluation": string;
@@ -23,17 +24,17 @@ const fetchStudent = async (studentCode: string): Promise<StudentInfo> => {
   if (!studentCode) {
     throw new Error("Student code is required");
   }
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/students/${studentCode}`
-  );
-  if (res.status === 404) {
-    throw new Error("لم يتم العثور على الطالب");
-  }
-  if (!res.ok) {
+  const { data, error } = await supabase
+    .from("students")
+    .select("name, code, grade, gender, profile_image, monthly_payment, performance")
+    .eq("code", studentCode)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") throw new Error("لم يتم العثور على الطالب");
     throw new Error("حدث خطأ ما");
   }
-  const data = await res.json();
-  return data.data;
+  return data as StudentInfo;
 };
 
 export default function Page() {
@@ -55,7 +56,7 @@ export default function Page() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!studentCode.trim()) return;
-    setSubmittedCode(studentCode.trim());
+    setSubmittedCode(studentCode.trim().toUpperCase());
   };
 
   const loading = isLoading || isFetching;

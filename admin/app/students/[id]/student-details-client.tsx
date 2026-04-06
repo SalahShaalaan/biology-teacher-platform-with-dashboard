@@ -49,8 +49,6 @@ import {
 } from "@/components/ui/dialog";
 
 // --- Constants & Zod Schema ---
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-const API_URL = `${API_BASE_URL}/api/students`;
 
 const performanceEvaluationOptions: PerformanceEvaluation[] = [
   "ممتاز",
@@ -68,8 +66,8 @@ const homeworkCompletionOptions: HomeworkCompletion[] = [
 const formSchema = z.object({
   name: z.string().min(1, "الاسم مطلوب"),
   grade: z.string().min(1, "الصف الدراسي مطلوب"),
-  phoneNumber: z.string().optional(),
-  monthlyPayment: z.boolean().optional(),
+  phone_number: z.string().optional(),
+  monthly_payment: z.boolean().optional(),
   performance: z
     .object({
       "monthly-evaluation": z.enum(performanceEvaluationOptions),
@@ -98,14 +96,10 @@ const normalizeImageUrl = (
   imagePath: string | undefined | null
 ): string | null => {
   if (!imagePath) return null;
-
   if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
     return imagePath;
   }
-
-  return `${API_BASE_URL}${
-    imagePath.startsWith("/") ? imagePath : `/${imagePath}`
-  }`;
+  return null; // Supabase Storage always returns full URLs
 };
 
 // --- API Functions ---
@@ -196,7 +190,7 @@ const PlatformExamsSection = ({
 const InClassExamsSection = ({
   classResults,
 }: {
-  classResults: Student["classResults"];
+  classResults: Student["class_results"];
 }) => (
   <Card className="shadow-none">
     <CardHeader>
@@ -207,14 +201,14 @@ const InClassExamsSection = ({
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {classResults.map((result) => {
             const imageUrl = normalizeImageUrl(
-              result.imageUrls && result.imageUrls.length > 0
-                ? result.imageUrls[0]
+              result.image_urls && result.image_urls.length > 0
+                ? result.image_urls[0]
                 : null
             );
 
             return (
               <div
-                key={result._id}
+                key={result.id}
                 className="border rounded-lg overflow-hidden flex flex-col"
               >
                 <Dialog>
@@ -232,10 +226,10 @@ const InClassExamsSection = ({
                           <ImageIcon className="h-12 w-12 text-muted-foreground" />
                         </div>
                       )}
-                      {result.imageUrls && result.imageUrls.length > 1 && (
+                      {result.image_urls && result.image_urls.length > 1 && (
                         <div className="absolute top-2 right-2 flex items-center rounded-full bg-black/70 px-2 py-1 text-xs font-semibold text-white">
                           <ImageIcon className="mr-1 h-3 w-3" />
-                          {result.imageUrls.length}
+                          {result.image_urls.length}
                         </div>
                       )}
                     </div>
@@ -245,7 +239,7 @@ const InClassExamsSection = ({
                       <DialogTitle>{result.title}</DialogTitle>
                     </DialogHeader>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
-                      {result.imageUrls?.map((url, index) => {
+                      {result.image_urls?.map((url, index) => {
                         const normalizedUrl = normalizeImageUrl(url);
                         return normalizedUrl ? (
                           <div
@@ -530,12 +524,12 @@ export default function StudentDetailsClient({
               {isEditMode ? (
                 <FormField
                   control={form.control}
-                  name="monthlyPayment"
+                  name="monthly_payment"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
                       <FormControl>
                         <Checkbox
-                          checked={field.value}
+                          checked={field.value as boolean}
                           onCheckedChange={field.onChange}
                           className="ml-2"
                         />
@@ -549,10 +543,10 @@ export default function StudentDetailsClient({
               ) : (
                 <p
                   className={`font-medium ${
-                    student.monthlyPayment ? "text-green-600" : "text-red-600"
+                    student.monthly_payment ? "text-green-600" : "text-red-600"
                   }`}
                 >
-                  {student.monthlyPayment ? "تم الدفع" : "لم يتم الدفع"}
+                  {student.monthly_payment ? "تم الدفع" : "لم يتم الدفع"}
                 </p>
               )}
             </CardContent>
@@ -600,7 +594,7 @@ export default function StudentDetailsClient({
 
                         <FormField
                           control={form.control}
-                          name="phoneNumber"
+                          name="phone_number"
                           render={({ field }) =>
                             isEditMode ? (
                               <FormItem>
@@ -613,7 +607,7 @@ export default function StudentDetailsClient({
                             ) : (
                               <DisplayField
                                 label="رقم الهاتف"
-                                value={field.value}
+                                value={field.value as string}
                               />
                             )
                           }
@@ -820,7 +814,7 @@ export default function StudentDetailsClient({
               {activeTab === "results" && (
                 <div className="space-y-6">
                   <PlatformExamsSection exams={student.exams} />
-                  <InClassExamsSection classResults={student.classResults} />
+                  <InClassExamsSection classResults={student.class_results} />
                 </div>
               )}
             </div>

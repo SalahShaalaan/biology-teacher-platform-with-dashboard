@@ -34,31 +34,23 @@ import {
 
 // --- Types ---
 interface ClassResult {
-  _id?: string;
+  id?: string;
   title: string;
-  imageUrls: string[];
+  image_urls: string[];
   note: string;
   date: string;
 }
 
 interface Student {
-  _id: string;
+  id: string;
   code: string;
   name: string;
   grade: string;
-  classResults?: ClassResult[];
+  class_results?: ClassResult[];
 }
 
-// --- API Functions ---
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-
-// Imports at top
+// --- API (imported from lib/api) ---
 import { fetchStudents, deleteClassResult } from "@/lib/api";
-
-// Removed local fetchStudentsWithResults
-// Removed deleteClassResult local function
-
-// Removed local deleteClassResult in favor of import
 
 // --- Main Component ---
 export default function ResultsDashboardPage() {
@@ -145,20 +137,20 @@ export default function ResultsDashboardPage() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="px-4">
-                    {student.classResults && student.classResults.length > 0 ? (
+                    {student.class_results && student.class_results.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 py-4">
-                        {student.classResults.map((result) => (
+                        {student.class_results.map((result) => (
                           <div
-                            key={result._id}
+                            key={result.id}
                             className="border rounded-lg p-4 flex flex-col bg-card"
                           >
                             <Dialog>
                               <DialogTrigger asChild>
                                 <div className="relative aspect-video w-full overflow-hidden rounded-md cursor-pointer group">
-                                  {result.imageUrls &&
-                                  result.imageUrls.length > 0 ? (
+                                  {result.image_urls &&
+                                  result.image_urls.length > 0 ? (
                                     <Image
-                                      src={result.imageUrls[0]}
+                                      src={result.image_urls[0]}
                                       alt={result.title}
                                       fill
                                       className="object-cover transition-transform group-hover:scale-105"
@@ -168,11 +160,11 @@ export default function ResultsDashboardPage() {
                                       <ImageIcon className="h-12 w-12 text-muted-foreground" />
                                     </div>
                                   )}
-                                  {result.imageUrls &&
-                                    result.imageUrls.length > 1 && (
+                                  {result.image_urls &&
+                                    result.image_urls.length > 1 && (
                                       <div className="absolute top-2 right-2 flex items-center rounded-full bg-black/70 px-2 py-1 text-xs font-bold text-white">
                                         <ImageIcon className="mr-1 h-3 w-3" />
-                                        {result.imageUrls.length}
+                                        {result.image_urls.length}
                                       </div>
                                     )}
                                 </div>
@@ -182,7 +174,7 @@ export default function ResultsDashboardPage() {
                                   <DialogTitle>{result.title}</DialogTitle>
                                 </DialogHeader>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
-                                  {result.imageUrls?.map((url, index) => (
+                                  {result.image_urls?.map((url, index) => (
                                     <div
                                       key={index}
                                       className="relative aspect-square w-full overflow-hidden rounded-md"
@@ -240,7 +232,7 @@ export default function ResultsDashboardPage() {
                                       onClick={() =>
                                         deleteMutation.mutate({
                                           studentCode: student.code,
-                                          resultId: result._id!,
+                                          resultId: result.id!,
                                         })
                                       }
                                       className="bg-destructive hover:bg-destructive/90"

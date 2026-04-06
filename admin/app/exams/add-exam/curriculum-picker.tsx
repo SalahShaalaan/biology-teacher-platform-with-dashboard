@@ -19,13 +19,7 @@ type Unit = { unitTitle: string; lessons: string[] };
 type Curriculum = { grade: string; units: Unit[] };
 type SelectedLesson = { grade: string; unitTitle: string; lessonTitle: string };
 
-const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/questions`;
-const fetchCurriculum = async (): Promise<Curriculum[]> => {
-  const res = await fetch(`${API_URL}/curriculum`);
-  if (!res.ok) throw new Error("فشل في جلب المنهج الدراسي");
-  const result = await res.json();
-  return result.data;
-};
+import { getCurriculum } from "@/lib/api";
 
 interface CurriculumPickerProps {
   onSelectLesson: (lesson: SelectedLesson) => void;
@@ -34,7 +28,7 @@ interface CurriculumPickerProps {
 export function CurriculumPicker({ onSelectLesson }: CurriculumPickerProps) {
   const { data: curriculum, isLoading } = useQuery<Curriculum[]>({
     queryKey: ["curriculum"],
-    queryFn: fetchCurriculum,
+    queryFn: getCurriculum,
   });
 
   if (isLoading) {

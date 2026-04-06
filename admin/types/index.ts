@@ -6,24 +6,26 @@ export type PerformanceEvaluation =
   | "ضعيف";
 export type HomeworkCompletion = "مواظب" | "غير مواظب" | "يحتاج لتحسين";
 
-interface ClassResult {
-  _id: string;
+export interface ClassResult {
+  id: string;
+  student_id: string;
   title: string;
-  imageUrls: string[];
+  image_urls: string[];
   note: string;
   date: string;
+  created_at: string;
 }
 
 export type Student = {
-  monthlyPayment: boolean;
-
-  _id: string;
+  id: string;
   code: string;
   name: string;
   grade: string;
   age?: number;
-  phoneNumber?: string;
+  gender: string;
+  phone_number?: string;
   profile_image?: string;
+  monthly_payment?: boolean;
   performance?: {
     "monthly-evaluation": PerformanceEvaluation;
     "teacher-evaluation": PerformanceEvaluation;
@@ -38,58 +40,75 @@ export type Student = {
     feedback?: string;
     date: string;
   }[];
-  quizResults?: {
+  quiz_results?: {
     grade: string;
-    unitTitle: string;
-    lessonTitle: string;
+    unit_title: string;
+    lesson_title: string;
     score: number;
-    totalQuestions: number;
+    total_questions: number;
     date: string;
   }[];
-  classResults: ClassResult[];
+  class_results?: ClassResult[];
+  created_at?: string;
+  updated_at?: string;
 };
 
 export interface Blog {
-  _id: string;
+  id: string;
   name: string;
   description: string;
   grade: string;
   unit: string;
   lesson: string;
   type: "video" | "pdf";
-  url: string;
-  coverImage: string;
-  videoUrl?: string;
-  learningOutcomes?: string[];
+  url?: string;
+  cover_image: string;
+  video_url?: string;
+  learning_outcomes?: string[];
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface IOrder {
-  _id: string;
+  id: string;
   name: string;
   phone: string;
   grade: string;
   age: number;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface IBestOfMonth {
-  _id: string;
+  id: string;
   name: string;
   grade: string;
-  imageUrl: string;
+  image_url: string;
   description?: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Question {
-  _id: string;
+  id: string;
+  question_type: "mcq" | "external_link" | "file_upload";
   grade: string;
-  unitTitle: string;
-  lessonTitle: string;
-  questionText: string;
+  unit_title: string;
+  lesson_title: string;
+  question_text: string;
   image?: string;
+  external_link?: string;
+  file_url?: string;
   options: string[];
-  correctAnswer: number;
+  correct_answer?: number;
+  created_at?: string;
+}
+
+export interface Testimonial {
+  id: string;
+  name: string;
+  quote: string;
+  designation: "student" | "parent";
+  image_url?: string;
+  created_at?: string;
 }

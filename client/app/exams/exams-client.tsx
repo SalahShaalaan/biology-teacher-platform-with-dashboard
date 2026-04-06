@@ -16,19 +16,21 @@ import { ExamSelection } from "./exam-selection";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { supabase } from "@/lib/supabase";
 
 type ExamState = "SEARCH" | "SELECTION" | "VIEWING_UNIT" | "TAKING_QUIZ" | "RESULTS";
 
 async function fetchStudentByCode(code: string): Promise<Student> {
-  const response = await fetch(`${API_URL}/api/students/${code}`);
-  const data = await response.json();
-  if (!response.ok || !data.success) {
-    throw new Error(
-      data.message || "لم يتم العثور على الطالب. تأكد من صحة الكود."
-    );
+  const { data, error } = await supabase
+    .from("students")
+    .select("id, code, name, grade, gender, profile_image, monthly_payment, performance, exams, quiz_results")
+    .eq("code", code)
+    .single();
+
+  if (error || !data) {
+    throw new Error("لم يتم العثور على الطالب. تأكد من صحة الكود.");
   }
-  return data.data;
+  return data as Student;
 }
 
 async function submitExamResult(
@@ -36,18 +38,16 @@ async function submitExamResult(
   examName: string,
   answers: { questionId: string; answerIndex: number }[]
 ) {
-  const response = await fetch(`${API_URL}/api/students/submit-exam`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ studentCode, examName, answers }),
+  const { data, error } = await supabase.rpc("submit_exam", {
+    p_student_code: studentCode,
+    p_exam_name: examName,
+    p_answers: answers,
   });
-  const data = await response.json();
-  if (!response.ok || !data.success) {
-    throw new Error(data.message || "فشل حفظ نتيجة الاختبار.");
+
+  if (error) {
+    throw new Error(error.message || "فشل حفظ نتيجة الاختبار.");
   }
-  return data.data;
+  return data;
 }
 
 interface ExamsClientProps {
@@ -153,7 +153,7 @@ export function ExamsClient({ exams }: ExamsClientProps) {
     } else {
       // Submit
       const answersPayload = userAnswers.map((ans, idx) => ({
-          questionId: activeQuizQuestions[idx]._id,
+          questionId: activeQuizQuestions[idx].id,
           answerIndex: ans !== null ? ans : -1
       })).filter(a => a.answerIndex !== null && a.answerIndex !== -1);
 
@@ -204,12 +204,12 @@ export function ExamsClient({ exams }: ExamsClientProps) {
     }>();
 
     selectedUnit.questions.forEach(q => {
-      if (!lessonsMap.has(q.lessonTitle)) {
-        lessonsMap.set(q.lessonTitle, { all: [], mcq: [], resources: [] });
+      if (!lessonsMap.has(q.lesson_title)) {
+        lessonsMap.set(q.lesson_title, { all: [], mcq: [], resources: [] });
       }
-      const group = lessonsMap.get(q.lessonTitle)!;
+      const group = lessonsMap.get(q.lesson_title)!;
       group.all.push(q);
-      if (q.questionType === 'external_link' || q.questionType === 'file_upload') {
+      if (q.question_type === 'external_link' || q.question_type === 'file_upload') {
         group.resources.push(q);
       } else {
         group.mcq.push(q);
@@ -280,16 +280,16 @@ export function ExamsClient({ exams }: ExamsClientProps) {
                   {lesson.resources.length > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {lesson.resources.map(resource => {
-                         const isNew = resource.createdAt
-                          ? (new Date().getTime() - new Date(resource.createdAt).getTime()) / (1000 * 3600 * 24) < 7
+                         const isNew = resource.created_at
+                          ? (new Date().getTime() - new Date(resource.created_at).getTime()) / (1000 * 3600 * 24) < 7
                           : false;
                          
-                         const isFile = resource.questionType === 'file_upload';
-                         const url = isFile ? resource.fileUrl : resource.externalLink;
+                         const isFile = resource.question_type === 'file_upload';
+                         const url = isFile ? resource.file_url : resource.external_link;
                          
                          return (
                           <div 
-                            key={resource._id} 
+                            key={resource.id} 
                             className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl hover:border-blue-300 transition-colors relative overflow-hidden"
                           >
                             {isNew && (
@@ -303,7 +303,7 @@ export function ExamsClient({ exams }: ExamsClientProps) {
                                 {isFile ? <FileText className="w-5 h-5" /> : <ExternalLink className="w-5 h-5" />}
                               </div>
                               <div className="space-y-1">
-                                <h4 className="font-semibold text-gray-900 leading-tight">{resource.questionText}</h4>
+                                <h4 className="font-semibold text-gray-900 leading-tight">{resource.question_text}</h4>
                                 {url && (
                                     <a 
                                         href={url} 

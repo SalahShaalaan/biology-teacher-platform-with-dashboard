@@ -1,26 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-
-export interface Blog {
-  _id: string;
-  name: string;
-  description: string;
-  grade: string;
-  unit: string;
-  lesson: string;
-  type: "video" | "pdf" | "article";
-  url?: string;
-  coverImage?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import { supabase } from "@/lib/supabase";
+import { Blog } from "@/types";
 
 async function getBlogs(): Promise<Blog[]> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs`);
-  if (!res.ok) {
-    throw new Error("Failed to fetch blogs");
-  }
-  const data = await res.json();
-  return data.data; // <-- Extract the array from the 'data' property
+  const { data, error } = await supabase
+    .from("blogs")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw new Error("Failed to fetch blogs");
+  return (data || []) as Blog[];
 }
 
 export function useBlogs() {

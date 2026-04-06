@@ -41,8 +41,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // --- Interfaces ---
 interface IClassResult {
+  id: string;
   title: string;
-  imageUrls: string[];
+  image_urls: string[];
   note: string;
   date: string;
 }
@@ -50,7 +51,7 @@ interface IClassResult {
 interface IStudent {
   code: string;
   name: string;
-  classResults?: IClassResult[];
+  class_results?: IClassResult[];
 }
 
 // --- Helper Functions ---
@@ -76,7 +77,7 @@ function ResultDialog({ result }: { result: IClassResult }) {
         </DialogHeader>
         <div className="py-4 space-y-6">
           <div className="space-y-4">
-            {result.imageUrls.map((url, index) => (
+            {result.image_urls.map((url, index) => (
               <div key={index} className="border rounded-lg overflow-hidden">
                 <Image
                   src={url}
@@ -116,8 +117,8 @@ export default function ResultsPage() {
   const [sortedResults, setSortedResults] = useState<IClassResult[]>([]);
 
   useEffect(() => {
-    if (student?.classResults) {
-      const results = [...student.classResults].sort(
+    if (student?.class_results) {
+      const results = [...student.class_results].sort(
         (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       );
       setSortedResults(results);
@@ -132,14 +133,20 @@ export default function ResultsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/students/${studentCode}`
+      const { createClient } = await import("@supabase/supabase-js");
+      const sb = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       );
-      if (!res.ok) {
+      const { data, error: sbError } = await sb
+        .from("students")
+        .select("code, name, class_results(*)")
+        .eq("code", studentCode.toUpperCase())
+        .single();
+      if (sbError || !data) {
         throw new Error("لم يتم العثور على الطالب. يرجى التحقق من الكود.");
       }
-      const data = await res.json();
-      setStudent(data.data);
+      setStudent(data as IStudent);
     } catch (err: any) {
       setError(err.message);
       setStudent(null);
@@ -237,9 +244,9 @@ export default function ResultsPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="flex-grow flex items-center justify-center">
-                    {result.imageUrls && result.imageUrls.length > 0 ? (
+                    {result.image_urls && result.image_urls.length > 0 ? (
                       <Image
-                        src={result.imageUrls[0]}
+                        src={result.image_urls[0]}
                         alt={result.title}
                         width={400}
                         height={500}

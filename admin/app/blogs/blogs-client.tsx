@@ -32,8 +32,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Blog } from "@/types";
 import { getBlogs, deleteBlog } from "@/lib/api";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-
 const normalizeImageUrl = (
   imagePath: string | undefined | null
 ): string | null => {
@@ -41,9 +39,7 @@ const normalizeImageUrl = (
   if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
     return imagePath;
   }
-  return `${API_BASE_URL}${
-    imagePath.startsWith("/") ? imagePath : `/${imagePath}`
-  }`;
+  return null; // Supabase Storage always returns full URLs
 };
 
 const typeIcons = {
@@ -147,13 +143,13 @@ export default function BlogsClient() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {blogs.map((blog, index) => {
           const coverImageUrl =
-            normalizeImageUrl(blog.coverImage) ||
+            normalizeImageUrl(blog.cover_image) ||
             "https://picsum.photos/800/600";
           const isPriority = index < 3;
 
           return (
             <Card
-              key={blog._id}
+              key={blog.id}
               className="flex flex-col rounded-xl overflow-hidden shadow-none border-none"
               dir="rtl"
             >
@@ -195,7 +191,7 @@ export default function BlogsClient() {
               </div>
               <CardFooter className="p-3 bg-muted/50 border-t flex justify-end gap-2">
                 <Button asChild variant="outline" size="sm">
-                  <Link href={`/blogs/edit/${blog._id}`}>
+                  <Link href={`/blogs/edit/${blog.id}`}>
                     <Pencil className="ml-2 h-4 w-4" /> تعديل
                   </Link>
                 </Button>
@@ -221,7 +217,7 @@ export default function BlogsClient() {
                     <AlertDialogFooter>
                       <AlertDialogCancel>إلغاء</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() => deleteMutation.mutate(blog._id)}
+                        onClick={() => deleteMutation.mutate(blog.id)}
                         className="bg-red-500 hover:bg-red-600 cursor-pointer"
                       >
                         نعم، قم بالحذف

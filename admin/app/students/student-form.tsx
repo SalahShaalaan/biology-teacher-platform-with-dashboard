@@ -24,8 +24,6 @@ import {
 import { Student, PerformanceEvaluation, HomeworkCompletion } from "@/types";
 import { createStudentJson, updateStudentDetails, getStudent } from "@/lib/api";
 
-const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/students`;
-
 const performanceEvaluationOptions: PerformanceEvaluation[] = [
   "ممتاز",
   "جيد جدًا",
@@ -133,32 +131,20 @@ export function StudentForm({
     }
 
     try {
-      let savedStudent;
+      let savedStudent: Student;
       if (isEditMode) {
-         const response = await updateStudentDetails(studentCode!, values);
-         savedStudent = response.data; // updateStudentDetails in api.ts returns res.json() which has data inside? 
-         // Let's check api.ts: return res.json(); 
-         // Backend usually returns { success: true, data: { ... } }
-         // So it likely returns { data: ... } wrapper.
+        savedStudent = await updateStudentDetails(studentCode!, values);
       } else {
-         savedStudent = await createStudentJson(values); // createStudentJson returns student object directly (via handleResponse)
+        savedStudent = await createStudentJson(values);
       }
-      
-      // Wait, api.ts functions are inconsistent.
-      // createStudentJson returns handleResponse<Student>(response) -> returns data directly.
-      // updateStudentDetails returns res.json() -> returns { success: true, data: ... } wrapper.
-      // I should fix api.ts to be consistent or handle it here.
-      // Better to fix api.ts updateStudentDetails to use handleResponse.
-      
-      // For now I will assume updateStudentDetails returns raw json, so savedStudent = response.data;
-      // createStudentJson returns student directly, so savedStudent = response;
-      
-      // Actually, I should check api.ts again to be sure.
-      // If I pause here, I can verify api.ts.
-      
-      // Let's assume inconsistent for now and patch logic here or better verify api.ts first.
+
+      if (onSaveSuccess) {
+        onSaveSuccess(savedStudent);
+      } else {
+        router.push("/students");
+      }
     } catch (error) {
-       console.error("Error saving student", error);
+      console.error("Error saving student", error);
     }
   }
 

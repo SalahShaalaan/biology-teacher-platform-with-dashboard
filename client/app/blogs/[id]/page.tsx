@@ -26,9 +26,7 @@ const normalizeImageUrl = (imagePath: string | undefined | null): string => {
   const fallback = "https://picsum.photos/1200/675";
   if (!imagePath) return fallback;
   if (imagePath.startsWith("http")) return imagePath;
-
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "";
-  return `${baseUrl}${imagePath.startsWith("/") ? "" : "/"}${imagePath}`;
+  return fallback; // Supabase Storage always returns full URLs
 };
 
 /**
@@ -38,9 +36,7 @@ const normalizeVideoUrl = (videoPath: string | undefined | null): string => {
   if (!videoPath) return "";
   if (videoPath.startsWith("http") || videoPath.startsWith("https"))
     return videoPath;
-
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "";
-  return `${baseUrl}${videoPath.startsWith("/") ? "" : "/"}${videoPath}`;
+  return ""; // Supabase Storage always returns full URLs
 };
 
 /**
@@ -103,7 +99,7 @@ export async function generateMetadata({
   const blog = await getBlogById(params.id);
   if (!blog) return { title: "Blog Not Found" };
 
-  const imageUrl = normalizeImageUrl(blog.coverImage);
+  const imageUrl = normalizeImageUrl(blog.cover_image);
 
   return {
     title: blog.name,
@@ -131,9 +127,9 @@ export default async function BlogPage({ params }: BlogPageProps) {
     notFound();
   }
 
-  const videoUrl = blog.videoUrl;
+  const videoUrl = blog.video_url;
   const pdfUrl = blog.url;
-  const coverImageUrl = normalizeImageUrl(blog.coverImage);
+  const coverImageUrl = normalizeImageUrl(blog.cover_image);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
@@ -180,7 +176,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
                   <Calendar size={16} />
                 </div>
                 <span className="text-sm sm:text-base font-medium">
-                  {new Date(blog.createdAt).toLocaleDateString("ar-EG", {
+                  {new Date(blog.created_at).toLocaleDateString("ar-EG", {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
@@ -264,7 +260,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
                 )}
 
                 {/* Learning Outcomes Section */}
-                {blog.learningOutcomes && blog.learningOutcomes.length > 0 && (
+                {blog.learning_outcomes && blog.learning_outcomes.length > 0 && (
                   <div className="my-12 pt-8 border-t border-gray-100 dark:border-slate-800">
                     <div className="flex items-center gap-4 mb-6">
                       <h3 className="text-xl font-bold text-slate-800 dark:text-gray-100">
@@ -272,7 +268,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
                       </h3>
                     </div>
                     <ul className="space-y-4 text-lg text-gray-700 dark:text-gray-300">
-                      {blog.learningOutcomes.map((outcome, index) => (
+                      {blog.learning_outcomes!.map((outcome, index) => (
                         <li key={index} className="flex items-start gap-4">
                           <span className="mt-2 flex-shrink-0 w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                           <span>{outcome}</span>
@@ -342,7 +338,7 @@ export default async function BlogPage({ params }: BlogPageProps) {
                       تاريخ النشر
                     </span>
                     <span className="font-semibold text-gray-900 dark:text-gray-100">
-                      {new Date(blog.createdAt).toLocaleDateString("ar-EG", {
+                      {new Date(blog.created_at).toLocaleDateString("ar-EG", {
                         month: "short",
                         day: "numeric",
                       })}

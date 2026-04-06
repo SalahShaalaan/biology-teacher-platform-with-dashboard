@@ -1,59 +1,50 @@
-import { upload } from "@vercel/blob/client";
-import type { PutBlobResult } from "@vercel/blob";
+import { supabase } from "./supabase";
 
-import Cookies from "js-cookie";
-
-export interface BlobUploadProgress {
+export interface SupabaseUploadProgress {
   loaded: number;
   total: number;
   percentage: number;
 }
 
 /**
- * Upload a file directly to Vercel Blob storage from the client.
+ * Upload a file to Supabase Storage and return its public URL.
+ * Replaces the old Vercel Blob uploadToBlob function.
  */
-export async function uploadToBlob(
+export async function uploadToSupabase(
   file: File,
-  filename: string, // The unique filename generated on the client
-  onProgress?: (progress: BlobUploadProgress) => void
-): Promise<PutBlobResult> {
-  const token = Cookies.get("admin_token");
-  const handleUploadUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/upload${
-    token ? `?token=${token}` : ""
-  }`;
+  bucket: string,
+  path: string,
+  onProgress?: (progress: SupabaseUploadProgress) => void
+): Promise<{ url: string }> {
+  // Simulate progress start
+  onProgress?.({ loaded: 0, total: file.size, percentage: 0 });
 
-  try {
-    const blob = await upload(filename, file, {
-      access: "public",
-      handleUploadUrl,
-      // This payload sends the filename and file type to the server
-      clientPayload: JSON.stringify({
-        pathname: filename,
-        contentType: file.type,
-      }),
-      onUploadProgress: (event) => {
-        if (onProgress) {
-          onProgress({
-            loaded: event.loaded,
-            total: event.total,
-            percentage: Math.round((event.loaded / event.total) * 100),
-          });
-        }
-      },
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .upload(path, file, {
+      upsert: true,
+      contentType: file.type,
     });
 
-    return blob;
-  } catch (error: any) {
-    console.error("[BlobUpload] Error:", error);
-    // Re-throw a cleaner error message
-    throw new Error(`Failed to upload file to blob storage: ${error.message}`);
+  if (error) {
+    throw new Error(`فشل رفع الملف: ${error.message}`);
   }
+
+  // Simulate progress complete
+  onProgress?.({ loaded: file.size, total: file.size, percentage: 100 });
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from(bucket).getPublicUrl(data.path);
+
+  return { url: publicUrl };
 }
 
 /**
- * Helper function to generate a unique filename for blob storage
+ * Generate a unique path for storage upload.
+ * bucket/timestamp-random-sanitizedname.ext
  */
-export function generateUniqueFilename(
+export function generateStoragePath(
   originalName: string,
   folder: string
 ): string {
@@ -69,3 +60,7 @@ export function generateUniqueFilename(
 
   return `${folder}/${timestamp}-${random}-${sanitized}.${extension}`;
 }
+
+// Keep the old export names as aliases so existing call sites don't break
+export const uploadToBlob = uploadToSupabase;
+export const generateUniqueFilename = generateStoragePath;

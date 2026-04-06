@@ -28,23 +28,9 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlusCircle, Trash2, ArrowRight } from "lucide-react";
 import { FileUpload } from "@/components/ui/file-upload";
 import { QuestionFormData, questionSchema } from "@/lib/validators";
-import { uploadToBlob, generateUniqueFilename } from "@/lib/blob-upload";
-import { addQuestion, updateQuestion } from "@/lib/api";
+import { uploadToSupabase, generateStoragePath } from "@/lib/blob-upload";
+import { addQuestion, updateQuestion, fetchGrades } from "@/lib/api";
 import { Question } from "@/types";
-// Select imports removed
-
-const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/questions`;
-
-const fetchGrades = async (): Promise<string[]> => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL 
-    ? `${process.env.NEXT_PUBLIC_API_URL}/api/grades`
-    : "http://localhost:5000/api/grades";
-    
-  const res = await fetch(apiUrl);
-  if (!res.ok) throw new Error("Failed to fetch grades");
-  const result = await res.json();
-  return result.data;
-};
 
 interface AddQuestionFormProps {
   form?: UseFormReturn<QuestionFormData>; // Make optional as we might initialize it inside
@@ -65,16 +51,16 @@ export function AddQuestionForm({
     resolver: zodResolver(questionSchema),
     defaultValues: initialData
       ? {
-          questionType: (initialData as any).questionType || "mcq",
+          questionType: initialData.question_type || "mcq",
           grade: initialData.grade,
-          unitTitle: initialData.unitTitle,
-          lessonTitle: initialData.lessonTitle,
-          questionText: initialData.questionText,
-          image: initialData.image ? ([{ name: "image", size: 0, type: "image/png" }] as unknown as File[]) : [], // Mock file for existing image
-          externalLink: (initialData as any).externalLink || "",
-          file: (initialData as any).fileUrl ? ([{ name: "file_exists", size: 0, type: "application/pdf" }] as unknown as File[]) : [],
+          unitTitle: initialData.unit_title,
+          lessonTitle: initialData.lesson_title,
+          questionText: initialData.question_text,
+          image: initialData.image ? ([{ name: "image", size: 0, type: "image/png" }] as unknown as File[]) : [],
+          externalLink: initialData.external_link || "",
+          file: initialData.file_url ? ([{ name: "file_exists", size: 0, type: "application/pdf" }] as unknown as File[]) : [],
           options: initialData.options?.map((opt) => ({ text: opt })) || [],
-          correctAnswer: initialData.correctAnswer?.toString() || "",
+          correctAnswer: initialData.correct_answer?.toString() || "",
         }
       : {
           questionType: "mcq",
@@ -105,7 +91,7 @@ export function AddQuestionForm({
   const mutation = useMutation({
     mutationFn: async (data: QuestionFormData & { image?: string }) => {
       if (initialData) {
-        return updateQuestion(initialData._id, data);
+        return updateQuestion(initialData.id, data);
       } else {
         return addQuestion(data);
       }
@@ -152,8 +138,8 @@ export function AddQuestionForm({
         if (file instanceof File) {
             const toastId = toast.loading("جاري رفع الصورة...");
             try {
-              const filename = generateUniqueFilename(file.name, "questions");
-              const result = await uploadToBlob(file, filename);
+              const path = generateStoragePath(file.name, "questions");
+              const result = await uploadToSupabase(file, "questions", path);
               imageUrl = result.url;
               toast.success("تم رفع الصورة بنجاح", { id: toastId });
             } catch (uploadError: any) {
@@ -174,19 +160,19 @@ export function AddQuestionForm({
         if (file instanceof File) {
             const toastId = toast.loading("جاري رفع الملف...");
             try {
-              const filename = generateUniqueFilename(file.name, "resources");
-              const result = await uploadToBlob(file, filename);
+              const path = generateStoragePath(file.name, "pdfs");
+              const result = await uploadToSupabase(file, "pdfs", path);
               fileUrl = result.url;
               toast.success("تم رفع الملف بنجاح", { id: toastId });
             } catch (uploadError: any) {
               toast.error("فشل في رفع الملف: " + uploadError.message, { id: toastId });
               throw uploadError; 
             }
-        } else if ((initialData as any)?.fileUrl) {
-            fileUrl = (initialData as any).fileUrl;
+        } else if (initialData?.file_url) {
+            fileUrl = initialData.file_url;
         }
-      } else if ((initialData as any)?.fileUrl) {
-          fileUrl = (initialData as any).fileUrl;
+      } else if (initialData?.file_url) {
+          fileUrl = initialData.file_url;
       }
 
       const payload: any = {
@@ -206,7 +192,7 @@ export function AddQuestionForm({
       } else if (data.questionType === "external_link") {
         payload.externalLink = data.externalLink;
       } else if (data.questionType === "file_upload") {
-        // fileUrl is already added to base payload
+        payload.fileUrl = fileUrl;
       }
 
       console.log("Submitting payload:", payload);
@@ -396,7 +382,7 @@ export function AddQuestionForm({
                       <FormControl>
                         <FileUpload
                           onChange={(files) => field.onChange(files)}
-                          initialImageUrl={(initialData as any)?.fileUrl || null}
+                          initialImageUrl={initialData?.file_url || null}
                         />
                       </FormControl>
                       <FormMessage />

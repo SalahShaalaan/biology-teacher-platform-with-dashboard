@@ -1,7 +1,5 @@
 import type { NextConfig } from "next";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -10,28 +8,15 @@ const nextConfig: NextConfig = {
         hostname: "picsum.photos",
       },
       {
-        protocol: "http",
-        hostname: "localhost",
-        port: "5000",
-        pathname: "/**",
+        protocol: "https",
+        hostname: "*.supabase.co",
+        pathname: "/storage/v1/object/public/**",
       },
       {
         protocol: "https",
         hostname: "*",
       },
     ],
-  },
-  async rewrites() {
-    return [
-      {
-        source: "/images/:path*",
-        destination: `${API_URL}/images/:path*`,
-      },
-      {
-        source: "/content/:path*",
-        destination: `${API_URL}/content/:path*`,
-      },
-    ];
   },
 };
 
