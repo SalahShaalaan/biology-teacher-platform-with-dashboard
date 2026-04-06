@@ -11,9 +11,12 @@ const mainFont = Rubik({
 });
 
 export const metadata: Metadata = {
-  title: "الأستاذ أكـرم مسلم",
+  title: "منصة الاستاذ اكرم مسلم",
   description:
     "منصة الاستاذ اكرم مسلم المتخصصه في علوم الاحياء وكل ما يتعلق بالماده وتقديم كورسات وشروحات تجعل الماده بسيطه للطلاب",
+  verification: {
+    google: "O-cKdqwjHYrbVVVuet0Rqjses6YJqDGw_8-wJ8V0wZA",
+  },
 };
 
 export default function RootLayout({
