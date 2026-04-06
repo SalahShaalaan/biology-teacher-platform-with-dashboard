@@ -42,10 +42,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Route protection — redirect to login if not authenticated
+  // Route protection — redirect to login if not authenticated, and away from login if authenticated
   useEffect(() => {
-    if (!isLoading && !user && pathname !== "/login") {
-      router.push("/login");
+    if (!isLoading) {
+      if (!user && pathname !== "/login") {
+        router.push("/login");
+      } else if (user && pathname === "/login") {
+        router.push("/");
+      }
     }
   }, [isLoading, user, pathname, router]);
 
@@ -55,6 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password,
     });
     if (error) throw new Error(error.message);
+    router.refresh();
     router.push("/");
   };
 

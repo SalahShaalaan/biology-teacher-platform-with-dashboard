@@ -11,7 +11,7 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://salahsalah20191988_db_user:YPru8Kpe4wVsloN5@akram-platform.nl3vlkq.mongodb.net/";
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://vbtscwcpollmkeaseslg.supabase.co";
 // You MUST use the service_role key to bypass RLS policies
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZidHNjd2Nwb2xsbWtlYXNlc2xnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTQxMzk4OSwiZXhwIjoyMDkwOTg5OTg5fQ.vJGS93rOrVppBvJfiI28170l6qSfml3vwXdJkTcYgY0"; 
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZidHNjd2Nwb2xsbWtlYXNlc2xnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTQxMzk4OSwiZXhwIjoyMDkwOTg5OTg5fQ.vJGS93rOrVppBvJfiI28170l6qSfml3vwXdJkTcYgY0q "; 
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
