@@ -82,7 +82,7 @@ export async function createBlogWithUploads(
   const coverPath = generateStoragePath(coverImageFile.name, "covers");
   const coverResult = await uploadToSupabase(
     coverImageFile,
-    "covers",
+    "blog-covers",
     coverPath,
     (p) => onProgress?.({ ...p, percentage: p.percentage * 0.2 })
   );
@@ -90,7 +90,7 @@ export async function createBlogWithUploads(
   let contentUrl: string | undefined;
   if (contentFile) {
     const pdfPath = generateStoragePath(contentFile.name, "pdfs");
-    const result = await uploadToSupabase(contentFile, "pdfs", pdfPath, (p) =>
+    const result = await uploadToSupabase(contentFile, "blog-contents", pdfPath, (p) =>
       onProgress?.({ ...p, percentage: 20 + p.percentage * 0.7 })
     );
     contentUrl = result.url;
@@ -101,7 +101,7 @@ export async function createBlogWithUploads(
     const videoPath = generateStoragePath(videoFile.name, "videos");
     const result = await uploadToSupabase(
       videoFile,
-      "videos",
+      "blog-contents",
       videoPath,
       (p) => onProgress?.({ ...p, percentage: 20 + p.percentage * 0.7 })
     );
@@ -164,7 +164,7 @@ export async function updateBlogWithUploads({
 
   if (coverImageFile) {
     const path = generateStoragePath(coverImageFile.name, "covers");
-    const result = await uploadToSupabase(coverImageFile, "covers", path, (p) =>
+    const result = await uploadToSupabase(coverImageFile, "blog-covers", path, (p) =>
       onProgress?.({ ...p, percentage: Math.round(p.percentage * 0.3) })
     );
     payload.cover_image = result.url;
@@ -172,7 +172,7 @@ export async function updateBlogWithUploads({
 
   if (contentFile) {
     const path = generateStoragePath(contentFile.name, "pdfs");
-    const result = await uploadToSupabase(contentFile, "pdfs", path, (p) =>
+    const result = await uploadToSupabase(contentFile, "blog-contents", path, (p) =>
       onProgress?.({ ...p, percentage: Math.round(30 + p.percentage * 0.6) })
     );
     payload.url = result.url;
@@ -182,7 +182,7 @@ export async function updateBlogWithUploads({
 
   if (videoFile) {
     const path = generateStoragePath(videoFile.name, "videos");
-    const result = await uploadToSupabase(videoFile, "videos", path, (p) =>
+    const result = await uploadToSupabase(videoFile, "blog-contents", path, (p) =>
       onProgress?.({ ...p, percentage: Math.round(30 + p.percentage * 0.6) })
     );
     payload.video_url = result.url;
