@@ -190,15 +190,15 @@ export function BlogsList() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {contentForSelectedUnit[lesson].map((blog) => (
                     <Link
-                      href={`/blogs/${blog._id}`}
-                      key={blog._id}
+                      href={`/blogs/${blog.id}`}
+                      key={blog.id}
                       className="blog-card group"
                     >
                       <div className="bg-white border-t border-l border-gray-200 rounded-tl-[40px] overflow-hidden transform hover:-translate-y-2 transition-transform duration-300 h-full flex flex-col">
                         <div className="relative h-56 w-full">
                           <Image
                             src={
-                              blog.coverImage || "https://picsum.photos/800/600"
+                              blog.cover_image || "https://picsum.photos/800/600"
                             }
                             alt={blog.name}
                             fill

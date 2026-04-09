@@ -160,8 +160,8 @@ export function AddQuestionForm({
         if (file instanceof File) {
             const toastId = toast.loading("جاري رفع الملف...");
             try {
-              const path = generateStoragePath(file.name, "pdfs");
-              const result = await uploadToSupabase(file, "pdfs", path);
+              const path = generateStoragePath(file.name, "question-pdfs");
+              const result = await uploadToSupabase(file, "questions", path);
               fileUrl = result.url;
               toast.success("تم رفع الملف بنجاح", { id: toastId });
             } catch (uploadError: any) {

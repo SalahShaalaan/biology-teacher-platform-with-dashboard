@@ -289,7 +289,7 @@ export async function createStudent(formData: FormData): Promise<Student> {
   let profile_image: string;
   if (imageFile && imageFile.size > 0) {
     const path = generateStoragePath(imageFile.name, "profiles");
-    const result = await uploadToSupabase(imageFile, "profiles", path);
+    const result = await uploadToSupabase(imageFile, "students", path);
     profile_image = result.url;
   } else {
     profile_image =
@@ -387,7 +387,7 @@ export async function updateStudentImage(
   imageFile: File
 ): Promise<Student> {
   const path = generateStoragePath(imageFile.name, "profiles");
-  const result = await uploadToSupabase(imageFile, "profiles", path);
+  const result = await uploadToSupabase(imageFile, "students", path);
 
   const { data, error } = await supabase
     .from("students")
@@ -429,7 +429,7 @@ export async function addClassResult({
   // Upload all images in parallel
   const uploadPromises = files.map((file) => {
     const path = generateStoragePath(file.name, "class-results");
-    return uploadToSupabase(file, "class-results", path);
+    return uploadToSupabase(file, "students", path);
   });
   const uploadResults = await Promise.all(uploadPromises);
   const image_urls = uploadResults.map((r) => r.url);
