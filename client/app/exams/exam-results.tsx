@@ -112,14 +112,14 @@ export const ExamResults: FC<ExamResultsProps> = ({
           <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center">مراجعة الإجابات</h3>
           <div className="space-y-6">
             {questions.map((q, idx) => {
-              const detail = resultsDetails.find(r => r.questionId === q._id);
+              const detail = resultsDetails.find(r => r.questionId === q.id);
               if (!detail) return null;
 
               const isCorrect = detail.isCorrect;
               const userAnswerIndex = detail.userAnswer;
               
               return (
-                <div key={q._id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm text-right" dir="rtl">
+                <div key={q.id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm text-right" dir="rtl">
                   <div className="flex justify-between items-start mb-4">
                      <span className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-2 ${isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                         {isCorrect ? (
@@ -135,7 +135,7 @@ export const ExamResults: FC<ExamResultsProps> = ({
                      <span className="text-gray-400 font-mono text-sm">#{idx + 1}</span>
                   </div>
 
-                  <h4 className="text-lg font-semibold text-gray-800 mb-4">{q.questionText}</h4>
+                  <h4 className="text-lg font-semibold text-gray-800 mb-4">{q.question_text}</h4>
 
                   <div className="space-y-2">
                     {q.options.map((opt, optIdx) => {

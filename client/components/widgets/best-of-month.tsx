@@ -17,7 +17,7 @@ export default async function BestOfMonth() {
     quote: student.description,
     name: student.name,
     designation: student.grade,
-    src: student.imageUrl,
+    src: student.image_url,
   }));
 
   return (

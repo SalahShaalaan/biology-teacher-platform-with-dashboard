@@ -35,24 +35,26 @@ export function TestimonialsSection() {
   const studentTestimonials = useMemo(() => {
     if (!testimonials) return [];
     return testimonials
-      .filter((t) => t.designation === "student" && t.imageUrl)
+      .filter((t) => t.designation === "student" && t.image_url)
+      .slice(0, 3)
       .map((t) => ({
         quote: t.quote,
         name: t.name,
         designation: "طالب",
-        src: t.imageUrl!,
+        src: t.image_url!,
       }));
   }, [testimonials]);
 
   const parentTestimonials = useMemo(() => {
     if (!testimonials) return [];
     return testimonials
-      .filter((t) => t.designation === "parent" && t.imageUrl)
+      .filter((t) => t.designation === "parent" && t.image_url)
+      .slice(0, 3)
       .map((t) => ({
         quote: t.quote,
         name: t.name,
         designation: "ولي أمر",
-        src: t.imageUrl!,
+        src: t.image_url!,
       }));
   }, [testimonials]);
 

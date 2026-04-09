@@ -20,15 +20,15 @@ export const QuestionCard: FC<QuestionCardProps> = ({
   onSelectAnswer,
   isAnswered,
 }) => {
-  const isNew = question.createdAt
-    ? (new Date().getTime() - new Date(question.createdAt).getTime()) /
+  const is_new = question.created_at
+    ? (new Date().getTime() - new Date(question.created_at).getTime()) /
         (1000 * 3600 * 24) <
       7
     : false;
 
   const getOptionClass = (index: number) => {
-    // If correctAnswer is missing (Secure Mode), just show selection state
-    if (question.correctAnswer === undefined) {
+    // If correct_answer is missing (Secure Mode), just show selection state
+    if (question.correct_answer === undefined) {
       if (selectedAnswer === index) {
         return "bg-blue-100 border-blue-500 ring-2 ring-blue-500";
       }
@@ -40,10 +40,10 @@ export const QuestionCard: FC<QuestionCardProps> = ({
         ? "bg-blue-100 border-blue-500 ring-2 ring-blue-500"
         : "bg-white hover:bg-slate-50";
     }
-    if (index === question.correctAnswer) {
+    if (index === question.correct_answer) {
       return "bg-green-100 border-green-500";
     }
-    if (index === selectedAnswer && index !== question.correctAnswer) {
+    if (index === selectedAnswer && index !== question.correct_answer) {
       return "bg-red-100 border-red-500";
     }
     return "bg-slate-50 text-gray-500";
@@ -51,13 +51,13 @@ export const QuestionCard: FC<QuestionCardProps> = ({
 
   const getOptionIcon = (index: number) => {
     // In Secure Mode, do not show icons
-    if (question.correctAnswer === undefined) return null;
+    if (question.correct_answer === undefined) return null;
 
     if (!isAnswered) return null;
-    if (index === question.correctAnswer) {
+    if (index === question.correct_answer) {
       return <CheckCircle className="text-green-600" />;
     }
-    if (index === selectedAnswer && index !== question.correctAnswer) {
+    if (index === selectedAnswer && index !== question.correct_answer) {
       return <XCircle className="text-red-600" />;
     }
     return null;
@@ -65,7 +65,7 @@ export const QuestionCard: FC<QuestionCardProps> = ({
 
   return (
     <motion.div
-      key={question._id}
+      key={question.id}
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
@@ -73,7 +73,7 @@ export const QuestionCard: FC<QuestionCardProps> = ({
       className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 w-full max-w-2xl relative overflow-hidden"
     >
       {/* New Badge */}
-      {isNew && (
+      {is_new && (
         <div className="absolute top-0 right-0 bg-gradient-to-l from-yellow-400 to-yellow-300 text-yellow-900 text-xs font-bold px-3 py-1 rounded-bl-xl shadow-sm flex items-center gap-1">
           <Sparkles className="w-3 h-3" />
           جديد
@@ -81,7 +81,7 @@ export const QuestionCard: FC<QuestionCardProps> = ({
       )}
 
       <p className="text-sm text-gray-500 mb-2 mt-2">
-        {question.unitTitle} - {question.lessonTitle}
+        {question.unit_title} - {question.lesson_title}
       </p>
 
       {question.image && (
@@ -96,11 +96,11 @@ export const QuestionCard: FC<QuestionCardProps> = ({
       )}
 
       <h2 className="text-2xl font-semibold text-blue-950 mb-6" dir="rtl">
-        {question.questionText}
+        {question.question_text}
       </h2>
 
       {/* Render based on Question Type */}
-      {question.questionType === "external_link" ? (
+      {question.question_type === "external_link" ? (
         <div className="flex flex-col items-center gap-4">
           <p className="text-gray-600 text-center">
             هذا محتوى خارجي، انقر أدناه للوصول إليه.
@@ -109,7 +109,7 @@ export const QuestionCard: FC<QuestionCardProps> = ({
             size="lg"
             className="w-full sm:w-auto gap-2"
             onClick={() =>
-              window.open(question.externalLink, "_blank", "noopener,noreferrer")
+              window.open(question.external_link, "_blank", "noopener,noreferrer")
             }
           >
             <ExternalLink className="w-4 h-4" />
@@ -122,7 +122,7 @@ export const QuestionCard: FC<QuestionCardProps> = ({
             <button
               key={index}
               onClick={() => onSelectAnswer(index)}
-              disabled={isAnswered && question.correctAnswer !== undefined}
+              disabled={isAnswered && question.correct_answer !== undefined}
               className={cn(
                 "p-4 rounded-lg border-2 text-right transition-all duration-200 flex justify-between items-center text-lg",
                 getOptionClass(index)
